@@ -25,7 +25,6 @@ int max_x = 0;
 int max_y = 0;
 
 Card *selection = NULL;
-Pile *selection_pile = NULL;
 Card *cursor_card = NULL;
 Pile *cursor_pile = NULL;
 
@@ -136,7 +135,8 @@ int print_tableau(int y, int x, Card *bottom, Theme *theme) {
     return print_tableau(y, x, bottom->next, theme);
   } else {
     if (bottom->next) {
-      return print_card_top(y, x, bottom, theme) || print_tableau(y + 1, x, bottom->next, theme);
+      int cursor_below = print_card_top(y, x, bottom, theme);
+      return print_tableau(y + 1, x, bottom->next, theme) || cursor_below;
     } else {
       int cursor_below = cur_x == x && cur_y >= y;
       return print_card_full(y, x, bottom, theme) || cursor_below;
@@ -158,9 +158,11 @@ void print_pile(Pile *pile, Theme *theme) {
 
 int ui_loop(Game *game, Theme *theme, Pile *piles) {
   int run = 1;
+  selection = NULL;
   while (run) {
     cursor_card = NULL;
     cursor_pile = NULL;
+    max_x = max_y = 0;
     for (Pile *pile = piles; pile; pile = pile->next) {
       print_pile(pile, theme);
     }
@@ -205,6 +207,15 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
             selection = NULL;
           }
         }
+        break;
+      case 'a':
+        if (auto_move_to_foundation(piles)) {
+          clear();
+        }
+        break;
+      case 27:
+        clear();
+        selection = NULL;
         break;
       case 'r':
         return 1;

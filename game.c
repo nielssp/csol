@@ -260,3 +260,26 @@ int legal_move_stack(Pile *dest, Card *src) {
     return 1;
   }
 }
+
+int auto_move_to_foundation(Pile *piles) {
+  for (Pile *src = piles; src; src = src->next) {
+    if (src->rule->type != RULE_FOUNDATION) {
+      Card *src_card = get_top(src->stack);
+      if (!(src_card->suit & BOTTOM)) {
+        if (!src_card->up) {
+          src_card->up = 1;
+          return 1;
+        } else {
+          for (Pile *dest = piles; dest; dest = dest->next) {
+            if (dest->rule->type == RULE_FOUNDATION) {
+              if (legal_move_stack(dest, src_card)) {
+                return 1;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  return 0;
+}

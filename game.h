@@ -96,5 +96,6 @@ Game *get_game(const char *name);
 Pile *deal_cards(Game *game, Card *deck);
 void delete_piles(Pile *piles);
 int legal_move_stack(Pile *dest, Card *src);
+int auto_move_to_foundation(Pile *piles);
 
 #endif
