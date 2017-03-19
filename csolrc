@@ -70,3 +70,36 @@ game {
     }
   }
 }
+
+game {
+  name klondike
+  title Klondike
+  repeat 4 {
+    foundation {
+      x 3+
+      first_rank a
+      next_suit same
+      next_rank up
+    }
+  }
+  repeat 7 {
+    tableau {
+      y 1
+      x 0+
+      deal 1+
+      hide -1
+      first_rank k
+      next_suit diff
+      next_rank down
+      move_group group
+    }
+  }
+  stock {
+    deal 52
+    redeal 2
+  }
+  waste {
+    x 1
+    from stock
+  }
+}

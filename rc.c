@@ -51,7 +51,9 @@ typedef enum {
   K_FIRST_SUIT,
   K_NEXT_RANK,
   K_NEXT_SUIT,
-  K_MOVE_GROUP
+  K_MOVE_GROUP,
+  K_FROM,
+  K_REDEAL
 } Keyword;
 
 struct symbol {
@@ -104,12 +106,14 @@ struct symbol game_rule_commands[] ={
   {"x", K_X},
   {"y", K_Y},
   {"deal", K_DEAL},
+  {"redeal", K_REDEAL},
   {"hide", K_HIDE},
   {"first_rank", K_FIRST_RANK},
   {"first_suit", K_FIRST_SUIT},
   {"next_rank", K_NEXT_RANK},
   {"next_suit", K_NEXT_SUIT},
   {"move_group", K_MOVE_GROUP},
+  {"from", K_FROM},
   {NULL, K_UNDEFINED}
 };
 
@@ -488,6 +492,21 @@ GameRuleMove read_move_rule(FILE *file) {
   return move;
 }
 
+GameRuleType read_from_rule(FILE *file) {
+  char *symbol = read_value(file);
+  GameRuleType type = RULE_ANY;
+  if (strcmp(symbol, "foundation") == 0) {
+    type = RULE_FOUNDATION;
+  } else if (strcmp(symbol, "tableau") == 0) {
+    type = RULE_TABLEAU;
+  } else if (strcmp(symbol, "stock") == 0) {
+    type = RULE_STOCK;
+  } else if (strcmp(symbol, "waste") == 0) {
+    type = RULE_WASTE;
+  }
+  return type;
+}
+
 GameRule *define_game_rule(FILE *file, GameRuleType type, int index) {
   Keyword command;
   GameRule *rule = new_game_rule(type);
@@ -502,6 +521,9 @@ GameRule *define_game_rule(FILE *file, GameRuleType type, int index) {
         break;
       case K_DEAL:
         rule->deal = read_expr(file, index);
+        break;
+      case K_REDEAL:
+        rule->redeals = read_expr(file, index);
         break;
       case K_HIDE:
         rule->hide = read_expr(file, index);
@@ -520,6 +542,9 @@ GameRule *define_game_rule(FILE *file, GameRuleType type, int index) {
         break;
       case K_MOVE_GROUP:
         rule->move_group = read_move_rule(file);
+        break;
+      case K_FROM:
+        rule->from = read_from_rule(file);
         break;
     }
   }

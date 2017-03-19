@@ -25,6 +25,7 @@ int max_x = 0;
 int max_y = 0;
 
 Card *selection = NULL;
+Pile *selection_pile = NULL;
 Card *cursor_card = NULL;
 Pile *cursor_pile = NULL;
 
@@ -147,7 +148,13 @@ int print_tableau(int y, int x, Card *bottom, Theme *theme) {
 
 void print_pile(Pile *pile, Theme *theme) {
   int y = pile->rule->y * (theme->height + theme->y_spacing);
-  if (pile->stack->suit == TABLEAU) {
+  if (pile->rule->type == RULE_STOCK) {
+    Card *top = get_top(pile->stack);
+    top->up = 0;
+    if (print_card_full(y, pile->rule->x, top, theme)) {
+      cursor_pile = pile;
+    }
+  } else if (pile->stack->suit == TABLEAU) {
     if (print_tableau(y, pile->rule->x, pile->stack, theme)) {
       cursor_pile = pile;
     }
@@ -157,9 +164,10 @@ void print_pile(Pile *pile, Theme *theme) {
 }
 
 int ui_loop(Game *game, Theme *theme, Pile *piles) {
-  int run = 1;
   selection = NULL;
-  while (run) {
+  selection_pile = NULL;
+  clear();
+  while (1) {
     cursor_card = NULL;
     cursor_pile = NULL;
     max_x = max_y = 0;
@@ -192,19 +200,33 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
         if (cur_x > max_x) cur_x = max_x;
         break;
       case ' ':
-        if (cursor_card && !(cursor_card->suit & BOTTOM)) {
-          if (cursor_card->up) {
-            selection = cursor_card;
-          } else if (!cursor_card->next) {
-            cursor_card->up = 1;
+        if (cursor_card) {
+          if (!(cursor_card->suit & BOTTOM)) {
+            if (cursor_card->up) {
+              selection = cursor_card;
+              selection_pile = cursor_pile;
+            } else if (cursor_pile->rule->type == RULE_STOCK) {
+              if (move_to_waste(cursor_card, cursor_pile, piles)) {
+                clear();
+              }
+            } else if (!cursor_card->next) {
+              cursor_card->up = 1;
+            }
+          } else if (cursor_pile->rule->type == RULE_STOCK) {
+            if (redeal(cursor_pile, piles)) {
+              clear();
+            } else {
+              mvprintw(0, 0, "no more redeals");
+            }
           }
         }
         break;
       case 'm':
         if (selection && cursor_pile) {
-          if (legal_move_stack(cursor_pile, selection)) {
+          if (legal_move_stack(cursor_pile, selection, selection_pile)) {
             clear();
             selection = NULL;
+            selection_pile = NULL;
           }
         }
         break;
@@ -216,6 +238,7 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
       case 27:
         clear();
         selection = NULL;
+        selection_pile = NULL;
         break;
       case 'r':
         return 1;
@@ -225,6 +248,7 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
         mvprintw(0, 0, "%d", ch);
     }
   }
+  return 0;
 }
 
 void ui_main(Game *game, Theme *theme, int enable_color, unsigned int seed) {

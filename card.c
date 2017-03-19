@@ -32,7 +32,7 @@ Card *new_deck() {
   Card *prev = deck;
   for (char suit = 0; suit < 4; suit++) {
     for (char rank = 1; rank <= 13; rank++) {
-      Card *card = new_card(suits[suit], rank);
+      Card *card = new_card(suits[(int)suit], rank);
       prev->next = card;
       card->prev = prev;
       prev = card;
@@ -97,11 +97,13 @@ Card *take_stack(Card *stack) {
 }
 
 void move_stack(Card *dest, Card *src) {
-  if (dest->next)
-    return move_stack(dest->next, src);
-  dest->next = src;
-  if (src->prev) src->prev->next = NULL;
-  src->prev = dest;
+  if (dest->next) {
+    move_stack(dest->next, src);
+  } else {
+    dest->next = src;
+    if (src->prev) src->prev->next = NULL;
+    src->prev = dest;
+  }
 }
 
 Card *get_bottom(Card *stack) {

@@ -8,6 +8,7 @@ typedef struct game_list GameList;
 typedef struct game Game;
 typedef struct game_rule GameRule;
 typedef enum {
+  RULE_ANY,
   RULE_TABLEAU,
   RULE_STOCK,
   RULE_FOUNDATION,
@@ -74,18 +75,21 @@ struct game_rule {
   short x;
   short y;
   short deal;
+  short redeals;
   short hide;
   GameRuleSuit first_suit;
   GameRuleRank first_rank;
   GameRuleSuit next_suit;
   GameRuleRank next_rank;
   GameRuleMove move_group;
+  GameRuleType from;
 };
 
 struct pile {
   Pile *next;
   Card *stack;
   GameRule *rule;
+  int redeals;
 };
 
 Game *new_game();
@@ -95,7 +99,9 @@ GameList *list_games();
 Game *get_game(const char *name);
 Pile *deal_cards(Game *game, Card *deck);
 void delete_piles(Pile *piles);
-int legal_move_stack(Pile *dest, Card *src);
+int legal_move_stack(Pile *dest, Card *src, Pile *src_pile);
+int move_to_waste(Card *card, Pile *stock, Pile *piles);
+int redeal(Pile *stock, Pile *piles);
 int auto_move_to_foundation(Pile *piles);
 
 #endif

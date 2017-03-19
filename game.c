@@ -29,12 +29,14 @@ GameRule *new_game_rule(GameRuleType type) {
   rule->x = 0;
   rule->y = 0;
   rule->deal = 0;
+  rule->redeals = 0;
   rule->hide = 0;
   rule->first_suit = SUIT_ANY;
   rule->first_rank = RANK_ANY;
   rule->next_suit = SUIT_ANY;
   rule->next_rank = RANK_ANY;
   rule->move_group = MOVE_ONE;
+  rule->from = RULE_ANY;
   switch (type) {
     case RULE_FOUNDATION:
       rule->first_rank = RANK_ACE;
@@ -52,7 +54,7 @@ GameRule *new_game_rule(GameRuleType type) {
       rule->next_rank = RANK_NONE;
       break;
     case RULE_WASTE:
-      // TODO: only from stock
+      rule->from = RULE_STOCK;
       break;
   }
   return rule;
@@ -138,10 +140,11 @@ Pile *deal_cards(Game *game, Card *deck) {
   Pile *first = NULL;
   Pile *last = NULL;
   for (GameRule *rule = game->first_rule; rule; rule = rule->next) {
-    Pile *pile = malloc(sizeof(pile));
+    Pile *pile = malloc(sizeof(Pile));
     pile->next = NULL;
     pile->rule = rule;
     pile->stack = new_pile(rule);
+    pile->redeals = 0;
     deal_pile(pile->stack, pile->rule, deck);
     if (last) {
       last->next = pile;
@@ -228,8 +231,11 @@ int check_stack(Card *stack, GameRuleSuit suit, GameRuleRank rank) {
     check_next_rank(stack, stack->prev, rank) && check_stack(stack->next, suit, rank);
 }
 
-int legal_move_stack(Pile *dest, Card *src) {
+int legal_move_stack(Pile *dest, Card *src, Pile *src_pile) {
   if (get_bottom(src) == get_bottom(dest->stack)) {
+    return 0;
+  }
+  if (dest->rule->from != RULE_ANY && dest->rule->from != src_pile->rule->type) {
     return 0;
   }
   if (dest->rule->move_group == MOVE_ONE && src->next) {
@@ -261,9 +267,39 @@ int legal_move_stack(Pile *dest, Card *src) {
   }
 }
 
+int move_to_waste(Card *card, Pile *stock, Pile *piles) {
+  for (Pile *dest = piles; dest; dest = dest->next) {
+    if (dest->rule->type == RULE_WASTE) {
+      if (legal_move_stack(dest, card, stock)) {
+        card->up = 1;
+        return 1;
+      }
+    }
+  }
+  return 0;
+}
+
+int redeal(Pile *stock, Pile *piles) {
+  if (stock->redeals < stock->rule->redeals) {
+    stock->redeals++;
+    for (Pile *src = piles; src; src = src->next) {
+      if (src->rule->type == RULE_WASTE) {
+        Card *src_card = get_top(src->stack);
+        while (!(src_card->suit & BOTTOM)) {
+          Card *prev = src_card->prev;
+          move_stack(stock->stack, src_card);
+          src_card = prev;
+        }
+      }
+    }
+    return 1;
+  }
+  return 0;
+}
+
 int auto_move_to_foundation(Pile *piles) {
   for (Pile *src = piles; src; src = src->next) {
-    if (src->rule->type != RULE_FOUNDATION) {
+    if (src->rule->type != RULE_FOUNDATION && src->rule->type != RULE_STOCK) {
       Card *src_card = get_top(src->stack);
       if (!(src_card->suit & BOTTOM)) {
         if (!src_card->up) {
@@ -272,7 +308,7 @@ int auto_move_to_foundation(Pile *piles) {
         } else {
           for (Pile *dest = piles; dest; dest = dest->next) {
             if (dest->rule->type == RULE_FOUNDATION) {
-              if (legal_move_stack(dest, src_card)) {
+              if (legal_move_stack(dest, src_card, src)) {
                 return 1;
               }
             }
