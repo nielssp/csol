@@ -103,3 +103,75 @@ game {
     from stock
   }
 }
+
+game {
+  name freecell
+  title Freecell
+  repeat 4 {
+    cell {
+      x 0+
+    }
+  }
+  repeat 4 {
+    foundation {
+      x 4+
+      first_rank a
+      next_suit same
+      next_rank up
+    }
+  }
+  repeat 4 {
+    tableau {
+      y 1
+      x 0+
+      deal 7
+      first_rank any
+      next_suit diff
+      next_rank down
+    }
+  }
+  repeat 4 {
+    tableau {
+      y 1
+      x 4+
+      deal 6
+      first_rank any
+      next_suit diff
+      next_rank down
+    }
+  }
+}
+
+game {
+  name eightoff
+  title Eight Off
+  repeat 4 {
+    foundation {
+      y 0+
+      first_rank a
+      next_suit same
+      next_rank up
+    }
+  }
+  repeat 4 {
+    cell {
+      x 1+
+      deal 1
+    }
+  }
+  repeat 4 {
+    cell {
+      x 5+
+    }
+  }
+  repeat 8 {
+    tableau {
+      y 1
+      x 1+
+      deal 6
+      first_rank any
+      next_suit same
+      next_rank down
+    }
+  }
+}

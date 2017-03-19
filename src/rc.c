@@ -43,6 +43,7 @@ typedef enum {
   K_TABLEAU,
   K_STOCK,
   K_WASTE,
+  K_CELL,
   K_X,
   K_Y,
   K_DEAL,
@@ -97,6 +98,7 @@ struct symbol game_commands[] ={
   {"repeat", K_REPEAT},
   {"tableau", K_TABLEAU},
   {"foundation", K_FOUNDATION},
+  {"cell", K_CELL},
   {"stock", K_STOCK},
   {"waste", K_WASTE},
   {NULL, K_UNDEFINED}
@@ -127,6 +129,8 @@ int line = 0;
 int column = 0;
 
 int previous_column = 0;
+
+int has_error = 0;
 
 int read_char(FILE *file) {
   int c = fgetc(file);
@@ -161,6 +165,7 @@ void set_position(struct position pos, FILE *file) {
 
 void syntax_error(const char *format, ...) {
   va_list va;
+  has_error = 1;
   va_start(va, format);
   printf("syntax error in csolrc: ");
   vprintf(format, va);
@@ -497,6 +502,8 @@ GameRuleType read_from_rule(FILE *file) {
   GameRuleType type = RULE_ANY;
   if (strcmp(symbol, "foundation") == 0) {
     type = RULE_FOUNDATION;
+  } else if (strcmp(symbol, "cell") == 0) {
+    type = RULE_CELL;
   } else if (strcmp(symbol, "tableau") == 0) {
     type = RULE_TABLEAU;
   } else if (strcmp(symbol, "stock") == 0) {
@@ -583,6 +590,9 @@ void execute_rule_block(FILE *file, Game *game, int index) {
       case K_STOCK:
         rule = define_game_rule(file, RULE_STOCK, index);
         break;
+      case K_CELL:
+        rule = define_game_rule(file, RULE_CELL, index);
+        break;
       case K_WASTE:
         rule = define_game_rule(file, RULE_WASTE, index);
         break;
@@ -609,7 +619,8 @@ void define_game(FILE *file) {
 }
 
 
-void execute_file(FILE *file) {
+int execute_file(FILE *file) {
+  has_error = 0;
   line = 1;
   column = 1;
   Keyword command;
@@ -623,4 +634,5 @@ void execute_file(FILE *file) {
         break;
     }
   }
+  return !has_error;
 }

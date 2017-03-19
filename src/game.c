@@ -56,6 +56,10 @@ GameRule *new_game_rule(GameRuleType type) {
     case RULE_WASTE:
       rule->from = RULE_STOCK;
       break;
+    case RULE_CELL:
+      rule->next_suit = SUIT_NONE;
+      rule->next_rank = RANK_NONE;
+      break;
   }
   return rule;
 }
@@ -98,6 +102,7 @@ Card *new_pile(GameRule *rule) {
     case RULE_STOCK:
     case RULE_FOUNDATION:
     case RULE_WASTE:
+    case RULE_CELL:
       return new_card(FOUNDATION, rank);
   }
 }

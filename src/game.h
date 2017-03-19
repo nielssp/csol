@@ -12,6 +12,7 @@ typedef enum {
   RULE_TABLEAU,
   RULE_STOCK,
   RULE_FOUNDATION,
+  RULE_CELL,
   RULE_WASTE
 } GameRuleType;
 typedef enum {

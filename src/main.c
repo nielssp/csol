@@ -80,11 +80,17 @@ int main(int argc, char *argv[]) {
     game_name = argv[optind];
   }
   FILE *f = fopen("csolrc", "r");
+  int error = 0;
   if (!f) {
     printf("csolrc: %s\n", strerror(errno));
+    error = 1;
   } else {
-    execute_file(f);
+    error = !execute_file(f);
     fclose(f);
+  }
+  if (error) {
+    printf("Errors encountered, press enter to continue\n");
+    getchar();
   }
   Theme *theme;
   Game *game;
