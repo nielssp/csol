@@ -1,5 +1,13 @@
+/* yuk
+ * Copyright (c) 2017 Niels Sonnich Poulsen (http://nielssp.dk)
+ * Licensed under the MIT license.
+ * See the LICENSE file or http://opensource.org/licenses/MIT for more information.
+ */
+
 #ifndef THEME_H
 #define THEME_H
+
+#include "card.h"
 
 typedef struct color Color;
 typedef struct color_pair ColorPair;
@@ -51,7 +59,10 @@ struct theme {
   char *club;
   int width;
   int height;
-  int padding;
+  int x_spacing;
+  int y_spacing;
+  int x_margin;
+  int y_margin;
   Color *colors;
   Layout empty_layout;
   Layout back_layout;
@@ -71,5 +82,6 @@ void register_theme(Theme *theme);
 ThemeList *list_themes();
 
 Theme *get_theme(const char *name);
+char *card_suit(Card *card, Theme *theme);
 
 #endif

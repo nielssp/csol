@@ -1,3 +1,9 @@
+/* yuk
+ * Copyright (c) 2017 Niels Sonnich Poulsen (http://nielssp.dk)
+ * Licensed under the MIT license.
+ * See the LICENSE file or http://opensource.org/licenses/MIT for more information.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <getopt.h>
@@ -8,6 +14,7 @@
 #include "rc.h"
 #include "theme.h"
 #include "game.h"
+#include "ui.h"
 
 const char *short_options = "hvlt:Tms:";
 
@@ -103,6 +110,7 @@ int main(int argc, char *argv[]) {
         printf("game not found: %s\n", game_name);
         return 1;
       }
+      ui_main(game, theme, colors, seed);
       break;
   }
   return 0;

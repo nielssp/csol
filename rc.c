@@ -1,3 +1,9 @@
+/* yuk
+ * Copyright (c) 2017 Niels Sonnich Poulsen (http://nielssp.dk)
+ * Licensed under the MIT license.
+ * See the LICENSE file or http://opensource.org/licenses/MIT for more information.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -471,6 +477,17 @@ GameRuleRank read_rank(FILE *file) {
   return rank;
 }
 
+GameRuleMove read_move_rule(FILE *file) {
+  char *symbol = read_value(file);
+  GameRuleMove move = MOVE_ONE;
+  if (strcmp(symbol, "any") == 0) {
+    move = MOVE_ANY;
+  } else if (strcmp(symbol, "group") == 0) {
+    move = MOVE_GROUP;
+  }
+  return move;
+}
+
 GameRule *define_game_rule(FILE *file, GameRuleType type, int index) {
   Keyword command;
   GameRule *rule = new_game_rule(type);
@@ -502,7 +519,7 @@ GameRule *define_game_rule(FILE *file, GameRuleType type, int index) {
         rule->next_suit = read_suit(file);
         break;
       case K_MOVE_GROUP:
-        read_value(file);
+        rule->move_group = read_move_rule(file);
         break;
     }
   }

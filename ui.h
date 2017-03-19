@@ -4,9 +4,12 @@
  * See the LICENSE file or http://opensource.org/licenses/MIT for more information.
  */
 
-#ifndef RC_H
-#define RC_H
+#ifndef UI_H
+#define UI_H
 
-void execute_file(FILE *file);
+#include "game.h"
+#include "theme.h"
+
+void ui_main(Game *game, Theme *theme, int enable_color, unsigned int seed);
 
 #endif

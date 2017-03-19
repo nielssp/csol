@@ -1,6 +1,9 @@
 #ifndef GAME_H
 #define GAME_H
 
+#include "card.h"
+
+typedef struct pile Pile;
 typedef struct game_list GameList;
 typedef struct game Game;
 typedef struct game_rule GameRule;
@@ -26,7 +29,6 @@ typedef enum {
 } GameRuleSuit;
 typedef enum {
   RANK_NONE,
-  RANK_ANY,
   RANK_ACE,
   RANK_2,
   RANK_3,
@@ -40,6 +42,7 @@ typedef enum {
   RANK_JACK,
   RANK_QUEEN,
   RANK_KING,
+  RANK_ANY,
   RANK_SAME,
   RANK_DOWN,
   RANK_UP,
@@ -50,7 +53,7 @@ typedef enum {
 typedef enum {
   MOVE_GROUP,
   MOVE_ANY,
-  MOVE_NONE
+  MOVE_ONE
 } GameRuleMove;
 
 struct game_list {
@@ -79,10 +82,19 @@ struct game_rule {
   GameRuleMove move_group;
 };
 
+struct pile {
+  Pile *next;
+  Card *stack;
+  GameRule *rule;
+};
+
 Game *new_game();
 GameRule *new_game_rule(GameRuleType type);
 void register_game(Game *game);
 GameList *list_games();
 Game *get_game(const char *name);
+Pile *deal_cards(Game *game, Card *deck);
+void delete_piles(Pile *piles);
+int legal_move_stack(Pile *dest, Card *src);
 
 #endif

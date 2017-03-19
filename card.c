@@ -1,16 +1,14 @@
+/* yuk
+ * Copyright (c) 2017 Niels Sonnich Poulsen (http://nielssp.dk)
+ * Licensed under the MIT license.
+ * See the LICENSE file or http://opensource.org/licenses/MIT for more information.
+ */
+
 #include <stdlib.h>
 
 #include "card.h"
 
 char suits[] = {HEART, DIAMOND, SPADE, CLUB};
-
-struct card {
-  Card *prev;
-  Card *next;
-  char up;
-  char suit;
-  char rank;
-};
 
 Card *new_card(char suit, char rank) {
   Card *card = malloc(sizeof(Card));
@@ -20,6 +18,13 @@ Card *new_card(char suit, char rank) {
   card->suit = suit;
   card->rank = rank;
   return card;
+}
+
+void delete_stack(Card *stack) {
+  if (stack->next) {
+    delete_stack(stack->next);
+  }
+  free(stack);
 }
 
 Card *new_deck() {
@@ -102,6 +107,12 @@ void move_stack(Card *dest, Card *src) {
 Card *get_bottom(Card *stack) {
   if (stack->prev)
     return get_bottom(stack->prev);
+  return stack;
+}
+
+Card *get_top(Card *stack) {
+  if (stack->next)
+    return get_top(stack->next);
   return stack;
 }
 

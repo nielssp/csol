@@ -1,3 +1,9 @@
+/* yuk
+ * Copyright (c) 2017 Niels Sonnich Poulsen (http://nielssp.dk)
+ * Licensed under the MIT license.
+ * See the LICENSE file or http://opensource.org/licenses/MIT for more information.
+ */
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -28,7 +34,7 @@ GameRule *new_game_rule(GameRuleType type) {
   rule->first_rank = RANK_ANY;
   rule->next_suit = SUIT_ANY;
   rule->next_rank = RANK_ANY;
-  rule->move_group = MOVE_NONE;
+  rule->move_group = MOVE_ONE;
   switch (type) {
     case RULE_FOUNDATION:
       rule->first_rank = RANK_ACE;
@@ -79,3 +85,178 @@ Game *get_game(const char *name) {
   return NULL;
 }
 
+Card *new_pile(GameRule *rule) {
+  char rank = 0;
+  if (rule->first_rank <= RANK_KING) {
+    rank = (char)rule->first_rank;
+  }
+  switch (rule->type) {
+    case RULE_TABLEAU:
+      return new_card(TABLEAU, rank);
+    case RULE_STOCK:
+    case RULE_FOUNDATION:
+    case RULE_WASTE:
+      return new_card(FOUNDATION, rank);
+  }
+}
+
+void deal_pile(Card *stack, GameRule *rule, Card *deck) {
+  if (rule->deal > 0) {
+    for (int i = 0; i < rule->deal && deck->next; i++) {
+      move_stack(stack, take_card(deck->next));
+    }
+    if (rule->hide > 0) {
+      Card *card = stack->next;
+      for (int i = 0; i < rule->hide && card; i++, card = card->next) {
+        card->up = 0;
+      }
+      for (; card; card = card->next) {
+        card->up = 1;
+      }
+    } else if (rule->hide < 0) {
+      Card *card = get_top(stack);
+      int hide = -rule->hide;
+      for (int i = 0; i < hide && !(card->suit & BOTTOM); i++, card = card->prev) {
+        card->up = 1;
+      }
+      for (; !(card->suit & BOTTOM); card = card->prev) {
+        card->up = 0;
+      }
+    }
+  }
+}
+
+void delete_piles(Pile *piles) {
+  if (piles->next) {
+    delete_piles(piles->next);
+  }
+  delete_stack(piles->stack);
+  free(piles);
+}
+
+Pile *deal_cards(Game *game, Card *deck) {
+  Pile *first = NULL;
+  Pile *last = NULL;
+  for (GameRule *rule = game->first_rule; rule; rule = rule->next) {
+    Pile *pile = malloc(sizeof(pile));
+    pile->next = NULL;
+    pile->rule = rule;
+    pile->stack = new_pile(rule);
+    deal_pile(pile->stack, pile->rule, deck);
+    if (last) {
+      last->next = pile;
+      last = pile;
+    } else {
+      first = last = pile;
+    }
+  }
+  return first;
+}
+
+int check_first_suit(Card *card, GameRuleSuit suit) {
+  switch (suit) {
+    case SUIT_NONE:
+      return 0;
+    case SUIT_ANY:
+      return 1;
+    case SUIT_HEART:
+      return card->suit == HEART;
+    case SUIT_DIAMOND:
+      return card->suit == DIAMOND;
+    case SUIT_SPADE:
+      return card->suit == SPADE;
+    case SUIT_CLUB:
+      return card->suit == CLUB;
+    case SUIT_RED:
+      return card->suit & RED;
+    case SUIT_BLACK:
+      return card->suit & BLACK;
+  }
+  return 0;
+}
+
+int check_first_rank(Card *card, GameRuleRank rank) {
+  if (rank > 0 && rank <= RANK_KING) {
+    return card->rank == (char)rank;
+  }
+  return rank == RANK_ANY;
+}
+
+int check_next_suit(Card *card, Card *previous, GameRuleSuit suit) {
+  if (check_first_suit(card, suit)) {
+    return 1;
+  }
+  switch (suit) {
+    case SUIT_SAME:
+      return card->suit == previous->suit;
+    case SUIT_SAME_COLOR:
+      return card->suit & RED == previous->suit & RED;
+    case SUIT_DIFF:
+      return card->suit != previous->suit;
+    case SUIT_DIFF_COLOR:
+      return card->suit & RED != previous->suit & RED;
+  }
+  return 0;
+}
+
+int check_next_rank(Card *card, Card *previous, GameRuleRank rank) {
+  if (check_first_rank(card, rank)) {
+    return 1;
+  }
+  switch (rank) {
+    case RANK_SAME:
+      return card->rank == previous->rank;
+    case RANK_DOWN:
+      return card->rank == previous->rank - 1;
+    case RANK_UP:
+      return card->rank == previous->rank + 1;
+    case RANK_UP_DOWN:
+      return card->rank == previous->rank - 1 || card->rank == previous->rank + 1;
+    case RANK_LOWER:
+      return card->rank < previous->rank;
+    case RANK_HIGHER:
+      return card->rank > previous->rank;
+  }
+  return 0;
+}
+
+int check_stack(Card *stack, GameRuleSuit suit, GameRuleRank rank) {
+  if (!stack) {
+    return 1;
+  }
+  return check_next_suit(stack, stack->prev, suit) &&
+    check_next_rank(stack, stack->prev, rank) && check_stack(stack->next, suit, rank);
+}
+
+int legal_move_stack(Pile *dest, Card *src) {
+  if (get_bottom(src) == get_bottom(dest->stack)) {
+    return 0;
+  }
+  if (dest->rule->move_group == MOVE_ONE && src->next) {
+    return 0;
+  }
+  if (dest->rule->move_group == MOVE_GROUP && src->next && !check_stack(src->next, dest->rule->next_suit, dest->rule->next_rank)) {
+    return 0;
+  }
+  if (dest->stack->next) {
+    Card *top = get_top(dest->stack);
+    if (!top->up) {
+      return 0;
+    }
+    if (!check_next_suit(src, top, dest->rule->next_suit) || !check_next_rank(src, top, dest->rule->next_rank)) {
+      return 0;
+    }
+    top->next = src;
+    if (src->prev) src->prev->next = NULL;
+    src->prev = top;
+    return 1;
+  } else {
+    if (!check_first_suit(src, dest->rule->first_suit) || !check_first_rank(src, dest->rule->first_rank)) {
+      return 0;
+    }
+    dest->stack->next = src;
+    if (src->prev) src->prev->next = NULL;
+    src->prev = dest->stack;
+    return 1;
+  }
+}
