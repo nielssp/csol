@@ -18,7 +18,7 @@
 #define QUEEN 12
 #define KING 13
 
-const char SUITS[] = {HEART, DIAMOND, SPADE, CLUB};
+extern char suits[];
 
 typedef struct card Card;
 

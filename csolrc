@@ -52,8 +52,8 @@ game {
     y 1
     x 0
     deal 1
-    first_suit k
-    next_suit alter
+    first_rank k
+    next_suit diff
     next_rank down
     move_group any
   }
@@ -63,8 +63,8 @@ game {
       x 1+
       deal 6+
       hide -5
-      first_suit k
-      next_suit alter
+      first_rank k
+      next_suit diff
       next_rank down
       move_group any
     }

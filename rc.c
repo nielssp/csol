@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdarg.h>
 
 #include "theme.h"
 #include "game.h"
@@ -30,15 +31,34 @@ typedef enum {
   K_RED,
   K_BLACK,
   K_FG,
-  K_BG
+  K_BG,
+  K_REPEAT,
+  K_FOUNDATION,
+  K_TABLEAU,
+  K_STOCK,
+  K_WASTE,
+  K_X,
+  K_Y,
+  K_DEAL,
+  K_HIDE,
+  K_FIRST_RANK,
+  K_FIRST_SUIT,
+  K_NEXT_RANK,
+  K_NEXT_SUIT,
+  K_MOVE_GROUP
 } Keyword;
 
 struct symbol {
   char *symbol;
   Keyword keyword;
-} commands[] = {
+};
+
+struct symbol root_commands[] = {
   {"theme", K_THEME},
   {"game", K_GAME},
+};
+
+struct symbol theme_commands[] ={
   {"name", K_NAME},
   {"title", K_TITLE},
   {"heart", K_HEART},
@@ -47,22 +67,101 @@ struct symbol {
   {"club", K_CLUB},
   {"width", K_WIDTH},
   {"height", K_HEIGHT},
-  {"top", K_TOP},
-  {"middle", K_MIDDLE},
-  {"bottom", K_BOTTOM},
   {"empty", K_EMPTY},
   {"back", K_BACK},
   {"red", K_RED},
   {"black", K_BLACK},
+  {NULL, K_UNDEFINED}
+};
+
+struct symbol layout_commands[] = {
+  {"top", K_TOP},
+  {"middle", K_MIDDLE},
+  {"bottom", K_BOTTOM},
   {"fg", K_FG},
   {"bg", K_BG},
   {NULL, K_UNDEFINED}
 };
 
+struct symbol game_commands[] ={
+  {"name", K_NAME},
+  {"title", K_TITLE},
+  {"repeat", K_REPEAT},
+  {"tableau", K_TABLEAU},
+  {"foundation", K_FOUNDATION},
+  {"stock", K_STOCK},
+  {"waste", K_WASTE},
+  {NULL, K_UNDEFINED}
+};
+
+struct symbol game_rule_commands[] ={
+  {"x", K_X},
+  {"y", K_Y},
+  {"deal", K_DEAL},
+  {"hide", K_HIDE},
+  {"first_rank", K_FIRST_RANK},
+  {"first_suit", K_FIRST_SUIT},
+  {"next_rank", K_NEXT_RANK},
+  {"next_suit", K_NEXT_SUIT},
+  {"move_group", K_MOVE_GROUP},
+  {NULL, K_UNDEFINED}
+};
+
+struct position {
+  long offset;
+  int line;
+  int column;
+};
+
+int line = 0;
+int column = 0;
+
+int previous_column = 0;
+
+int read_char(FILE *file) {
+  int c = fgetc(file);
+  if (c == '\n') {
+    line++;
+    previous_column = column;
+    column = 1;
+  } else {
+    column++;
+  }
+  return c;
+}
+
+void unread_char(int c, FILE *file) {
+  ungetc(c, file);
+  column--;
+  if (column <= 0) {
+    column = previous_column;
+    line--;
+  }
+}
+
+struct position get_position(FILE *file) {
+  return (struct position){ .offset = ftell(file), .line = line, .column = column };
+}
+
+void set_position(struct position pos, FILE *file) {
+  fseek(file, pos.offset, SEEK_SET);
+  line = pos.line;
+  column = pos.column;
+}
+
+void syntax_error(const char *format, ...) {
+  va_list va;
+  va_start(va, format);
+  printf("syntax error in csolrc: ");
+  vprintf(format, va);
+  printf(" on line %d column %d\n", line, column);
+  va_end(va);
+}
+
 void skip_whitespace(FILE *file) {
   int c;
-  while (isspace(c = fgetc(file))) { }
-  ungetc(c, file);
+  while (isspace(c = read_char(file))) { }
+  unread_char(c, file);
 }
 
 char *resize_buffer(char *buffer, size_t oldsize, size_t newsize) {
@@ -82,28 +181,28 @@ char *resize_buffer(char *buffer, size_t oldsize, size_t newsize) {
 char *read_symbol(FILE *file) {
   size_t size = BUFFER_INC, i = 0;
   char *buffer;
-  int c = fgetc(file);
+  int c = read_char(file);
   if (!isalpha(c)) {
-    ungetc(c, file);
+    unread_char(c, file);
     return NULL;
   }
   buffer = malloc(size);
-  while (isalnum(c)) {
+  while (isalnum(c) || c == '_') {
     buffer[i++] = c;
     if (i >= size) {
       buffer = resize_buffer(buffer, size, size + BUFFER_INC);
       size = size + BUFFER_INC;
     }
-    c = fgetc(file);
+    c = read_char(file);
   }
-  ungetc(c, file);
+  unread_char(c, file);
   buffer[i] = '\0';
   return buffer;
 }
 
 char *read_quoted(FILE *file) {
   size_t size = BUFFER_INC, i = 0;
-  int c = fgetc(file);
+  int c = read_char(file);
   char *buffer = malloc(size);
   while (c != EOF && c != '"') {
     buffer[i++] = c;
@@ -111,7 +210,7 @@ char *read_quoted(FILE *file) {
       buffer = resize_buffer(buffer, size, size + BUFFER_INC);
       size = size + BUFFER_INC;
     }
-    c = fgetc(file);
+    c = read_char(file);
   }
   buffer[i] = '\0';
   return buffer;
@@ -119,7 +218,7 @@ char *read_quoted(FILE *file) {
 
 char *read_line(FILE *file) {
   size_t size = BUFFER_INC, i = 0;
-  int c = fgetc(file);
+  int c = read_char(file);
   char *buffer = malloc(size);
   while (c != EOF && c != '\r' && c != '\n') {
     buffer[i++] = c;
@@ -127,12 +226,12 @@ char *read_line(FILE *file) {
       buffer = resize_buffer(buffer, size, size + BUFFER_INC);
       size = size + BUFFER_INC;
     }
-    c = fgetc(file);
+    c = read_char(file);
   }
   if (c == '\r') {
-    c = fgetc(file);
+    c = read_char(file);
     if (c != '\n') {
-      ungetc(c, file);
+      unread_char(c, file);
     }
   }
   buffer[i] = '\0';
@@ -141,44 +240,71 @@ char *read_line(FILE *file) {
 
 char *read_value(FILE *file) {
   skip_whitespace(file);
-  int c = fgetc(file);
+  int c = read_char(file);
   if (c == '"') {
     return read_quoted(file);
   }
-  ungetc(c, file);
+  unread_char(c, file);
   return read_line(file);
 }
 
 int read_int(FILE *file) {
-  char *str = read_value(file);
-  int value = atoi(str);
-  free(str);
-  return value;
+  skip_whitespace(file);
+  char c = read_char(file);
+  int sign = 1;
+  int value = 0;
+  if (c == '-') {
+    sign = -1;
+    c = read_char(file);
+  }
+  if (!isdigit(c)) {
+    unread_char(c, file);
+    return 0;
+  }
+  while (isdigit(c)) {
+    value = value * 10 + c - '0';
+    c = read_char(file);
+  }
+  unread_char(c, file);
+  return value * sign;
 }
 
-Keyword read_command(FILE *file) {
+int read_expr(FILE *file, int index) {
+  int value = read_int(file);
+  int c = read_char(file);
+  if (c != '+') {
+    unread_char(c, file);
+    return value;
+  }
+  int increment = read_int(file);
+  if (increment == 0) {
+    increment = 1;
+  }
+  return value + increment * index;
+}
+
+Keyword read_command(FILE *file, struct symbol *commands) {
   skip_whitespace(file);
   char *keyword = read_symbol(file);
   if (!keyword) {
     return K_END_OF_BLOCK;
   }
-  struct symbol *current = commands;
-  while (current->symbol) {
-    if (strcmp(current->symbol, keyword) == 0) {
+  while (commands->symbol) {
+    if (strcmp(commands->symbol, keyword) == 0) {
       free(keyword);
-      return current->keyword;
+      return commands->keyword;
     }
-    current++;
+    commands++;
   }
-  printf("undefined keyword: %s\n", keyword);
+  syntax_error("undefined keyword: %s", keyword);
   free(keyword);
   return K_UNDEFINED;
 }
 
 int expect(int expected, FILE *file) {
-  int actual = fgetc(file);
+  int actual = read_char(file);
   if (actual != expected) {
-    printf("unexpected '%c', expected '%c'\n", actual, expected);
+    syntax_error("unexpected '%c', expected '%c'", actual, expected);
     return 0;
   }
   return 1;
@@ -198,7 +324,7 @@ Layout define_layout(FILE *file) {
   Keyword command;
   Layout layout;
   begin_block(file);
-  while (command = read_command(file)) {
+  while (command = read_command(file, layout_commands)) {
     switch (command) {
       case K_TOP:
         layout.top = read_value(file);
@@ -223,9 +349,9 @@ Layout define_layout(FILE *file) {
 
 void define_theme(FILE *file) {
   Keyword command;
-  Theme *theme = malloc(sizeof(Theme));
+  Theme *theme = new_theme();
   begin_block(file);
-  while (command = read_command(file)) {
+  while (command = read_command(file, theme_commands)) {
     switch (command) {
       case K_NAME:
         theme->name = read_value(file);
@@ -269,11 +395,128 @@ void define_theme(FILE *file) {
   register_theme(theme);
 }
 
-void define_game(FILE *file) {
+GameRuleSuit read_suit(FILE *file) {
+  char *symbol = read_value(file);
+  GameRuleSuit suit = SUIT_NONE;
+  if (strcmp(symbol, "any") == 0) {
+    suit = SUIT_ANY;
+  } else if (strcmp(symbol, "heart") == 0) {
+    suit = SUIT_HEART;
+  } else if (strcmp(symbol, "diamond") == 0) {
+    suit = SUIT_DIAMOND;
+  } else if (strcmp(symbol, "spade") == 0) {
+    suit = SUIT_SPADE;
+  } else if (strcmp(symbol, "club") == 0) {
+    suit = SUIT_CLUB;
+  } else if (strcmp(symbol, "red") == 0) {
+    suit = SUIT_RED;
+  } else if (strcmp(symbol, "black") == 0) {
+    suit = SUIT_BLACK;
+  } else if (strcmp(symbol, "same") == 0) {
+    suit = SUIT_SAME;
+  } else if (strcmp(symbol, "same_color") == 0) {
+    suit = SUIT_SAME_COLOR;
+  } else if (strcmp(symbol, "diff") == 0) {
+    suit = SUIT_DIFF;
+  } else if (strcmp(symbol, "diff_color") == 0) {
+    suit = SUIT_DIFF_COLOR;
+  }
+  return suit;
+}
+
+GameRuleRank read_rank(FILE *file) {
+  char *symbol = read_value(file);
+  GameRuleRank rank = RANK_NONE;
+  if (strcmp(symbol, "any") == 0) {
+    rank = RANK_ANY;
+  } else if (strcmp(symbol, "a") == 0) {
+    rank = RANK_ACE;
+  } else if (strcmp(symbol, "2") == 0) {
+    rank = RANK_2;
+  } else if (strcmp(symbol, "3") == 0) {
+    rank = RANK_3;
+  } else if (strcmp(symbol, "4") == 0) {
+    rank = RANK_4;
+  } else if (strcmp(symbol, "5") == 0) {
+    rank = RANK_5;
+  } else if (strcmp(symbol, "6") == 0) {
+    rank = RANK_6;
+  } else if (strcmp(symbol, "7") == 0) {
+    rank = RANK_7;
+  } else if (strcmp(symbol, "8") == 0) {
+    rank = RANK_8;
+  } else if (strcmp(symbol, "9") == 0) {
+    rank = RANK_9;
+  } else if (strcmp(symbol, "10") == 0) {
+    rank = RANK_10;
+  } else if (strcmp(symbol, "j") == 0) {
+    rank = RANK_JACK;
+  } else if (strcmp(symbol, "q") == 0) {
+    rank = RANK_QUEEN;
+  } else if (strcmp(symbol, "k") == 0) {
+    rank = RANK_KING;
+  } else if (strcmp(symbol, "same") == 0) {
+    rank = RANK_SAME;
+  } else if (strcmp(symbol, "down") == 0) {
+    rank = RANK_DOWN;
+  } else if (strcmp(symbol, "up") == 0) {
+    rank = RANK_UP;
+  } else if (strcmp(symbol, "up_down") == 0) {
+    rank = RANK_UP_DOWN;
+  } else if (strcmp(symbol, "lower") == 0) {
+    rank = RANK_LOWER;
+  } else if (strcmp(symbol, "higher") == 0) {
+    rank = RANK_HIGHER;
+  }
+  return rank;
+}
+
+GameRule *define_game_rule(FILE *file, GameRuleType type, int index) {
   Keyword command;
-  Game *game = malloc(sizeof(Game));
+  GameRule *rule = new_game_rule(type);
   begin_block(file);
-  while (command = read_command(file)) {
+  while (command = read_command(file, game_rule_commands)) {
+    switch (command) {
+      case K_X:
+        rule->x = read_expr(file, index);
+        break;
+      case K_Y:
+        rule->y = read_expr(file, index);
+        break;
+      case K_DEAL:
+        rule->deal = read_expr(file, index);
+        break;
+      case K_HIDE:
+        rule->hide = read_expr(file, index);
+        break;
+      case K_FIRST_RANK:
+        rule->first_rank = read_rank(file);
+        break;
+      case K_FIRST_SUIT:
+        rule->first_suit = read_suit(file);
+        break;
+      case K_NEXT_RANK:
+        rule->next_rank = read_rank(file);
+        break;
+      case K_NEXT_SUIT:
+        rule->next_suit = read_suit(file);
+        break;
+      case K_MOVE_GROUP:
+        read_value(file);
+        break;
+    }
+  }
+  end_block(file);
+  return rule;
+}
+
+void execute_rule_block(FILE *file, Game *game, int index) {
+  Keyword command;
+  int rep;
+  struct position pos;
+  GameRule *rule = NULL;
+  begin_block(file);
+  while (command = read_command(file, game_commands)) {
     switch (command) {
       case K_NAME:
         game->name = read_value(file);
@@ -281,16 +524,54 @@ void define_game(FILE *file) {
       case K_TITLE:
         game->title = read_value(file);
         break;
+      case K_REPEAT:
+        rep = read_int(file);
+        pos = get_position(file);
+        for (int i = 0; i < rep; i++) {
+          set_position(pos, file);
+          execute_rule_block(file, game, i);
+        }
+        break;
+      case K_FOUNDATION:
+        rule = define_game_rule(file, RULE_FOUNDATION, index);
+        break;
+      case K_TABLEAU:
+        rule = define_game_rule(file, RULE_TABLEAU, index);
+        break;
+      case K_STOCK:
+        rule = define_game_rule(file, RULE_STOCK, index);
+        break;
+      case K_WASTE:
+        rule = define_game_rule(file, RULE_WASTE, index);
+        break;
+    }
+    if (rule) {
+      if (game->last_rule) {
+        game->last_rule->next = rule;
+        game->last_rule = rule;
+      } else {
+        game->first_rule = rule;
+        game->last_rule = rule;
+      }
+      rule = NULL;
     }
   }
   end_block(file);
+}
+
+void define_game(FILE *file) {
+  Keyword command;
+  Game *game = new_game();
+  execute_rule_block(file, game, 0);
   register_game(game);
 }
 
 
 void execute_file(FILE *file) {
+  line = 1;
+  column = 1;
   Keyword command;
-  while (command = read_command(file)) {
+  while (command = read_command(file, root_commands)) {
     switch (command) {
       case K_THEME:
         define_theme(file);

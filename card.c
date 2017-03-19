@@ -2,6 +2,8 @@
 
 #include "card.h"
 
+char suits[] = {HEART, DIAMOND, SPADE, CLUB};
+
 struct card {
   Card *prev;
   Card *next;
@@ -25,7 +27,7 @@ Card *new_deck() {
   Card *prev = deck;
   for (char suit = 0; suit < 4; suit++) {
     for (char rank = 1; rank <= 13; rank++) {
-      Card *card = new_card(SUITS[suit], rank);
+      Card *card = new_card(suits[suit], rank);
       prev->next = card;
       card->prev = prev;
       prev = card;

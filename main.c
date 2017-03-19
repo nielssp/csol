@@ -3,12 +3,13 @@
 #include <getopt.h>
 #include <string.h>
 #include <errno.h>
+#include <time.h>
 
 #include "rc.h"
 #include "theme.h"
 #include "game.h"
 
-const char *short_options = "hvlt:Tm";
+const char *short_options = "hvlt:Tms:";
 
 const struct option long_options[] = {
   {"help", no_argument, NULL, 'h'},
@@ -17,6 +18,7 @@ const struct option long_options[] = {
   {"theme", required_argument, NULL, 't'},
   {"themes", no_argument, NULL, 'T'},
   {"mono", no_argument, NULL, 'm'},
+  {"seed", required_argument, NULL, 's'},
   {0, 0, 0, 0}
 };
 
@@ -30,9 +32,10 @@ int main(int argc, char *argv[]) {
   int opt;
   int option_index = 0;
   int colors = 1;
+  unsigned int seed = time(NULL);
   enum action action = PLAY;
-  char *game = NULL;
-  char *theme = NULL;
+  char *game_name = "yukon";
+  char *theme_name = "default";
   while ((opt = getopt_long(argc, argv, short_options, long_options, &option_index)) != -1) {
     switch (opt) {
       case 'h':
@@ -44,6 +47,7 @@ int main(int argc, char *argv[]) {
         describe_option("t <name>", "theme <name>", "Select a theme.");
         describe_option("T", "themes", "List available themes.");
         describe_option("m", "mono", "Disable colors.");
+        describe_option("s <seed>", "seed <seed>", "Select seed.");
         return 0;
       case 'v':
         puts("csol 0.1.0");
@@ -52,7 +56,7 @@ int main(int argc, char *argv[]) {
         action = LIST_GAMES;
         break;
       case 't':
-        theme = optarg;
+        theme_name = optarg;
         break;
       case 'T':
         action = LIST_THEMES;
@@ -60,10 +64,13 @@ int main(int argc, char *argv[]) {
       case 'm':
         colors = 0;
         break;
+      case 's':
+        seed = atol(optarg);
+        break;
     }
   }
   if (optind < argc) {
-    game = argv[optind];
+    game_name = argv[optind];
   }
   FILE *f = fopen("csolrc", "r");
   if (!f) {
@@ -72,6 +79,8 @@ int main(int argc, char *argv[]) {
     execute_file(f);
     fclose(f);
   }
+  Theme *theme;
+  Game *game;
   switch (action) {
     case LIST_GAMES:
       for (GameList *list = list_games(); list; list = list->next) {
@@ -84,6 +93,16 @@ int main(int argc, char *argv[]) {
       }
       break;
     case PLAY:
+      theme = get_theme(theme_name);
+      if (!theme) {
+        printf("theme not found: %s\n", theme_name);
+        return 1;
+      }
+      game = get_game(game_name);
+      if (!game) {
+        printf("game not found: %s\n", game_name);
+        return 1;
+      }
       break;
   }
   return 0;

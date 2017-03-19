@@ -70,4 +70,6 @@ void register_theme(Theme *theme);
 
 ThemeList *list_themes();
 
+Theme *get_theme(const char *name);
+
 #endif

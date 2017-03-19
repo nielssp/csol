@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 
 #include "theme.h"
 
@@ -29,3 +30,11 @@ ThemeList *list_themes() {
   return first_theme;
 }
 
+Theme *get_theme(const char *name) {
+  for (ThemeList *themes = list_themes(); themes; themes = themes->next) {
+    if (strcmp(themes->theme->name, name) == 0) {
+      return themes->theme;
+    }
+  }
+  return NULL;
+}
