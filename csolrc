@@ -1,0 +1,72 @@
+theme {
+  name default
+  title "Default theme"
+  heart   ♥
+  spade   ♠
+  diamond ♦
+  club    ♣
+  width 6
+  height 4
+  empty {
+    top    ┌────┐
+    middle │    │
+    bottom └────┘
+    fg 7
+    bg 0
+  }
+  back {
+    top    ┌────┐
+    middle │    │
+    bottom └────┘
+    fg 7
+    bg 4
+  }
+  red {
+    top    ┌────┐
+    middle │    │
+    bottom └────┘
+    fg 1
+    bg 7
+  }
+  black {
+    top    ┌────┐
+    middle │    │
+    bottom └────┘
+    fg 0
+    bg 7
+  }
+}
+
+game {
+  name yukon
+  title Yukon
+  repeat 4 {
+    foundation {
+      x 3+
+      first_rank a
+      next_suit same
+      next_rank up
+    }
+  }
+  tableau {
+    y 1
+    x 0
+    deal 1
+    first_suit k
+    next_suit alter
+    next_rank down
+    move_group any
+  }
+  repeat 4 {
+    tableau {
+      y 1
+      x 1+
+      deal 6+
+      hide -5
+      first_suit k
+      next_suit alter
+      next_rank down
+      move_group any
+    }
+  }
+}

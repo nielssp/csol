@@ -4,6 +4,7 @@
 #include <ctype.h>
 
 #include "theme.h"
+#include "game.h"
 #include "rc.h"
 
 #define BUFFER_INC 32
@@ -268,6 +269,25 @@ void define_theme(FILE *file) {
   register_theme(theme);
 }
 
+void define_game(FILE *file) {
+  Keyword command;
+  Game *game = malloc(sizeof(Game));
+  begin_block(file);
+  while (command = read_command(file)) {
+    switch (command) {
+      case K_NAME:
+        game->name = read_value(file);
+        break;
+      case K_TITLE:
+        game->title = read_value(file);
+        break;
+    }
+  }
+  end_block(file);
+  register_game(game);
+}
+
+
 void execute_file(FILE *file) {
   Keyword command;
   while (command = read_command(file)) {
@@ -276,6 +296,7 @@ void execute_file(FILE *file) {
         define_theme(file);
         break;
       case K_GAME:
+        define_game(file);
         break;
     }
   }

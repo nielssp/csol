@@ -6,6 +6,7 @@
 
 #include "rc.h"
 #include "theme.h"
+#include "game.h"
 
 const char *short_options = "hvlt:Tm";
 
@@ -73,7 +74,9 @@ int main(int argc, char *argv[]) {
   }
   switch (action) {
     case LIST_GAMES:
-      printf("yukon - Yukon\n");
+      for (GameList *list = list_games(); list; list = list->next) {
+        printf("%s - %s\n", list->game->name, list->game->title);
+      }
       break;
     case LIST_THEMES:
       for (ThemeList *list = list_themes(); list; list = list->next) {
