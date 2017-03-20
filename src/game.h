@@ -103,6 +103,8 @@ void delete_piles(Pile *piles);
 int legal_move_stack(Pile *dest, Card *src, Pile *src_pile);
 int move_to_waste(Card *card, Pile *stock, Pile *piles);
 int redeal(Pile *stock, Pile *piles);
+int move_to_foundation(Card *src, Pile *src_pile, Pile *piles);
+int move_to_free_cell(Card *src, Pile *src_pile, Pile *piles);
 int auto_move_to_foundation(Pile *piles);
 
 #endif

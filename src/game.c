@@ -302,6 +302,27 @@ int redeal(Pile *stock, Pile *piles) {
   return 0;
 }
 
+int move_to_foundation(Card *src, Pile *src_pile, Pile *piles) {
+  for (Pile *dest = piles; dest; dest = dest->next) {
+    if (dest->rule->type == RULE_FOUNDATION) {
+      if (legal_move_stack(dest, src, src_pile)) {
+        return 1;
+      }
+    }
+  }
+}
+
+int move_to_free_cell(Card *src, Pile *src_pile, Pile *piles) {
+  for (Pile *dest = piles; dest; dest = dest->next) {
+    if (dest->rule->type == RULE_CELL) {
+      if (legal_move_stack(dest, src, src_pile)) {
+        return 1;
+      }
+    }
+  }
+}
+
+
 int auto_move_to_foundation(Pile *piles) {
   for (Pile *src = piles; src; src = src->next) {
     if (src->rule->type != RULE_FOUNDATION && src->rule->type != RULE_STOCK) {
