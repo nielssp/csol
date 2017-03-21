@@ -11,6 +11,7 @@
 #include <errno.h>
 #include <time.h>
 
+#include "config.h"
 #include "rc.h"
 #include "theme.h"
 #include "game.h"
@@ -35,6 +36,68 @@ void describe_option(const char *short_option, const char *long_option, const ch
   printf("  -%-14s --%-18s %s\n", short_option, long_option, description);
 }
 
+char *combine_paths(const char *path1, const char *path2) {
+  size_t length1 = strlen(path1);
+  size_t length2 = strlen(path2);
+  size_t combined_length = length1 + length2 + 2;
+  char *combined_path = malloc(combined_length);
+  strcpy(combined_path, path1);
+  if (path1[length1 - 1] != '/') {
+    strcat(combined_path, "/");
+  }
+  strcat(combined_path, path2);
+  return combined_path;
+
+}
+
+FILE *find_csolrc() {
+  FILE *f;
+  char *config_dir = getenv("XDG_CONFIG_HOME");
+  char *config_file = NULL;
+  if (config_dir) {
+    config_file = combine_paths(config_dir, "csol/csolrc");
+  } else {
+    config_dir = getenv("HOME");
+    if (config_dir) {
+      config_file = combine_paths(config_dir, ".config/csol/csolrc");
+    }
+  }
+  if (config_file) {
+    f = fopen(config_file, "r");
+    free(config_file);
+    if (f) {
+      return f;
+    }
+  }
+  config_dir = getenv("XDG_CONFIG_DIRS");
+  if (config_dir) {
+    int i = 0;
+    while (1) {
+      if (!config_dir[i] || config_dir[i] == ':') {
+        char *dir = malloc(i + 1);
+        strncpy(dir, config_dir, i);
+        dir[i] = '\0';
+        config_file = combine_paths(dir, "csol/csolrc");
+        f = fopen(config_file, "r");
+        free(config_file);
+        free(dir);
+        if (f) {
+          return f;
+        }
+        if (!config_dir[i]) {
+          break;
+        }
+        config_dir = config_dir + i + 1;
+        i = 0;
+      } else {
+        i++;
+      }
+    }
+  }
+  f = fopen("./csolrc", "r");
+  return f;
+}
+
 int main(int argc, char *argv[]) {
   int opt;
   int option_index = 0;
@@ -57,7 +120,7 @@ int main(int argc, char *argv[]) {
         describe_option("s <seed>", "seed <seed>", "Select seed.");
         return 0;
       case 'v':
-        puts("csol 0.1.0");
+        puts("csol " CSOL_VERSION);
         return 0;
       case 'l':
         action = LIST_GAMES;
@@ -79,14 +142,14 @@ int main(int argc, char *argv[]) {
   if (optind < argc) {
     game_name = argv[optind];
   }
-  FILE *f = fopen("csolrc", "r");
+  FILE *rc_file = find_csolrc();
   int error = 0;
-  if (!f) {
+  if (!rc_file) {
     printf("csolrc: %s\n", strerror(errno));
     error = 1;
   } else {
-    error = !execute_file(f);
-    fclose(f);
+    error = !execute_file(rc_file);
+    fclose(rc_file);
   }
   if (error) {
     printf("Errors encountered, press enter to continue\n");

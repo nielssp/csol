@@ -436,6 +436,7 @@ GameRuleSuit read_suit(FILE *file) {
   } else if (strcmp(symbol, "diff_color") == 0) {
     suit = SUIT_DIFF_COLOR;
   }
+  free(symbol);
   return suit;
 }
 
@@ -483,6 +484,7 @@ GameRuleRank read_rank(FILE *file) {
   } else if (strcmp(symbol, "higher") == 0) {
     rank = RANK_HIGHER;
   }
+  free(symbol);
   return rank;
 }
 
@@ -494,6 +496,7 @@ GameRuleMove read_move_rule(FILE *file) {
   } else if (strcmp(symbol, "group") == 0) {
     move = MOVE_GROUP;
   }
+  free(symbol);
   return move;
 }
 
@@ -511,6 +514,7 @@ GameRuleType read_from_rule(FILE *file) {
   } else if (strcmp(symbol, "waste") == 0) {
     type = RULE_WASTE;
   }
+  free(symbol);
   return type;
 }
 
