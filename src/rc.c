@@ -175,7 +175,11 @@ void syntax_error(const char *format, ...) {
 
 void skip_whitespace(FILE *file) {
   int c;
-  while (isspace(c = read_char(file))) { }
+  while (isspace(c = read_char(file)) || c == '#') {
+    if (c == '#') {
+      while ((c = read_char(file)) != '\n' && c != EOF) { }
+    }
+  }
   unread_char(c, file);
 }
 
@@ -235,7 +239,7 @@ char *read_line(FILE *file) {
   size_t size = BUFFER_INC, i = 0;
   int c = read_char(file);
   char *buffer = malloc(size);
-  while (c != EOF && c != '\r' && c != '\n') {
+  while (c != EOF && c != '\r' && c != '\n' && c != '#') {
     buffer[i++] = c;
     if (i >= size) {
       buffer = resize_buffer(buffer, size, size + BUFFER_INC);
@@ -243,7 +247,9 @@ char *read_line(FILE *file) {
     }
     c = read_char(file);
   }
-  if (c == '\r') {
+  if (c == '#') {
+    unread_char(c, file);
+  } else if (c == '\r') {
     c = read_char(file);
     if (c != '\n') {
       unread_char(c, file);
