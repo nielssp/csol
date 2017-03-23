@@ -24,6 +24,11 @@ int cur_y = 0;
 int max_x = 0;
 int max_y = 0;
 
+int win_w = 0;
+int win_h = 0;
+
+int off_y = 0;
+
 Card *selection = NULL;
 Pile *selection_pile = NULL;
 Card *cursor_card = NULL;
@@ -70,10 +75,19 @@ void print_card_name_r(int y, int x, Card *card, Theme *theme) {
 }
 
 void print_layout(int y, int x, Card *card, Layout layout, int full, Theme *theme) {
+  if (y > win_h - 1) {
+    return;
+  }
   mvprintw(y, x, layout.top);
   if (full && theme->height > 1) {
-    for (int i = 1; i < theme->height; i++) {
+    for (int i = 1; i < theme->height - 1; i++) {
+      if (y + i > win_h - 1) {
+        return;
+      }
       mvprintw(y + i, x, layout.middle);
+    }
+    if (y + theme->height > win_h) {
+      return;
     }
     mvprintw(y + theme->height - 1, x, layout.bottom);
   }
@@ -84,8 +98,13 @@ int print_card(int y, int x, Card *card, int full, Theme *theme) {
   if (y2 > max_y) max_y = y2;
   if (x > max_x) max_x = x;
   if (y <= cur_y && y2 >= cur_y && x == cur_x) cursor_card = card;
-  y = theme->y_margin + y;
+  card->x = x;
+  card->y = y;
+  y = theme->y_margin + off_y + y;
   x = theme->x_margin + x * (theme->width + theme->x_spacing);
+  if (win_h - 1 < y) {
+    return 0;
+  }
   if (card == selection) {
     attron(A_REVERSE);
   }
@@ -106,7 +125,7 @@ int print_card(int y, int x, Card *card, int full, Theme *theme) {
       attron(COLOR_PAIR(COLOR_PAIR_BLACK));
       print_layout(y, x, card, theme->black_layout, full, theme);
     }
-    if (full && theme->height > 1) {
+    if (full && theme->height > 1 && y + theme->height <= win_h) {
       print_card_name_r(y + theme->height - 1, x + theme->width - 2, card, theme);
     }
     print_card_name_l(y, x + 1, card, theme);
@@ -167,14 +186,27 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
   selection = NULL;
   selection_pile = NULL;
   clear();
+  off_y = 0;
   while (1) {
     cursor_card = NULL;
     cursor_pile = NULL;
     max_x = max_y = 0;
+    getmaxyx(stdscr, win_h, win_w);
+    if (theme->y_margin + off_y + cur_y >= win_h) {
+      clear();
+      off_y = win_h - cur_y - theme->y_margin - 1;
+    }
+    if (theme->y_margin + off_y + cur_y < 0) {
+      clear();
+      off_y = -theme->y_margin - cur_y;
+      if (cur_y == 0) {
+        off_y = 0;
+      }
+    }
     for (Pile *pile = piles; pile; pile = pile->next) {
       print_pile(pile, theme);
     }
-    move(theme->y_margin + cur_y, theme->x_margin + cur_x * (theme->width + theme->x_spacing));
+    move(theme->y_margin + off_y + cur_y, theme->x_margin + cur_x * (theme->width + theme->x_spacing));
     refresh();
 
     int ch = getch();
@@ -198,6 +230,39 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
       case KEY_RIGHT:
         cur_x++;
         if (cur_x > max_x) cur_x = max_x;
+        break;
+      case 'K':
+      case 337: // shift-up
+        if (cursor_card) {
+          if (cursor_card->prev && NOT_BOTTOM(cursor_card->prev)) {
+            Card *card = cursor_card->prev;
+            while (card->prev && card->prev->up == card->up && NOT_BOTTOM(card->prev)) {
+              card = card->prev;
+            }
+            cur_y = card->y;
+          } else {
+            cur_y -= theme->height;
+          }
+        } else if (cursor_pile) {
+          Card *card = get_top(cursor_pile->stack);
+          cur_y = card->y;
+        } else {
+          cur_y -= theme->height;
+        }
+        if (cur_y < 0) cur_y = 0;
+        break;
+      case 'J':
+      case 336: // shift-down
+        if (cursor_card && cursor_card->next) {
+          Card *card = cursor_card->next;
+          while (card->next && card->next->up == card->up) {
+            card = card->next;
+          }
+          cur_y = card->y;
+        } else {
+          cur_y += theme->height;
+        }
+        if (cur_y > max_y) cur_y = max_y;
         break;
       case ' ':
         if (cursor_card) {
@@ -246,6 +311,9 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
         clear();
         selection = NULL;
         selection_pile = NULL;
+        break;
+      case KEY_RESIZE:
+        clear();
         break;
       case 'r':
         return 1;

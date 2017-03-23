@@ -14,6 +14,8 @@ Card *new_card(char suit, char rank) {
   Card *card = malloc(sizeof(Card));
   card->prev = NULL;
   card->next = NULL;
+  card->x = 0;
+  card->y = 0;
   card->up = 1;
   card->suit = suit;
   card->rank = rank;

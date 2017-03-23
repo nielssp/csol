@@ -24,6 +24,9 @@
 #define QUEEN 12
 #define KING 13
 
+#define IS_BOTTOM(card) ((card)->suit & BOTTOM)
+#define NOT_BOTTOM(card) (!((card)->suit & BOTTOM))
+
 extern char suits[];
 
 typedef struct card Card;
@@ -31,6 +34,8 @@ typedef struct card Card;
 struct card {
   Card *prev;
   Card *next;
+  int x;
+  int y;
   char up;
   char suit;
   char rank;
