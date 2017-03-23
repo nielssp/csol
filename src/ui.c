@@ -35,6 +35,9 @@ Card *cursor_card = NULL;
 Pile *cursor_pile = NULL;
 
 void print_card_name_l(int y, int x, Card *card, Theme *theme) {
+  if (y < 0 || y >= win_h) {
+    return;
+  }
   switch (card->rank) {
     case ACE:
       mvprintw(y, x, "A");
@@ -55,6 +58,9 @@ void print_card_name_l(int y, int x, Card *card, Theme *theme) {
 }
 
 void print_card_name_r(int y, int x, Card *card, Theme *theme) {
+  if (y < 0 || y >= win_h) {
+    return;
+  }
   mvprintw(y, x - 1 - (card->rank == 10), card_suit(card, theme));
   switch (card->rank) {
     case ACE:
@@ -75,21 +81,21 @@ void print_card_name_r(int y, int x, Card *card, Theme *theme) {
 }
 
 void print_layout(int y, int x, Card *card, Layout layout, int full, Theme *theme) {
-  if (y > win_h - 1) {
+  if (y >= win_h) {
     return;
   }
-  mvprintw(y, x, layout.top);
+  if (y >= 0) {
+    mvprintw(y, x, layout.top);
+  }
   if (full && theme->height > 1) {
     for (int i = 1; i < theme->height - 1; i++) {
-      if (y + i > win_h - 1) {
-        return;
+      if (y + i >= 0 && y + i < win_h) {
+        mvprintw(y + i, x, layout.middle);
       }
-      mvprintw(y + i, x, layout.middle);
     }
-    if (y + theme->height > win_h) {
-      return;
+    if (y + theme->height > 0 && y + theme->height <= win_h) {
+      mvprintw(y + theme->height - 1, x, layout.bottom);
     }
-    mvprintw(y + theme->height - 1, x, layout.bottom);
   }
 }
 
@@ -125,7 +131,7 @@ int print_card(int y, int x, Card *card, int full, Theme *theme) {
       attron(COLOR_PAIR(COLOR_PAIR_BLACK));
       print_layout(y, x, card, theme->black_layout, full, theme);
     }
-    if (full && theme->height > 1 && y + theme->height <= win_h) {
+    if (full && theme->height > 1) {
       print_card_name_r(y + theme->height - 1, x + theme->width - 2, card, theme);
     }
     print_card_name_l(y, x + 1, card, theme);
