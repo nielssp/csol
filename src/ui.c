@@ -192,6 +192,7 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
   selection = NULL;
   selection_pile = NULL;
   clear();
+  clear_undo_history();
   off_y = 0;
   while (1) {
     cursor_card = NULL;
@@ -280,8 +281,8 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
               if (move_to_waste(cursor_card, cursor_pile, piles)) {
                 clear();
               }
-            } else if (!cursor_card->next) {
-              cursor_card->up = 1;
+            } else {
+              turn_card(cursor_card);
             }
           } else if (cursor_pile->rule->type == RULE_STOCK) {
             if (redeal(cursor_pile, piles)) {
@@ -305,6 +306,16 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
         if (auto_move_to_foundation(piles)) {
           clear();
         }
+        break;
+      case 'u':
+      case 26: // ^z
+        undo_move();
+        clear();
+        break;
+      case 'U':
+      case 25: // ^y
+        redo_move();
+        clear();
         break;
       case 10:
         if (cursor_card && !(cursor_card->suit & BOTTOM)) {

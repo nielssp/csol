@@ -106,5 +106,10 @@ int redeal(Pile *stock, Pile *piles);
 int move_to_foundation(Card *src, Pile *src_pile, Pile *piles);
 int move_to_free_cell(Card *src, Pile *src_pile, Pile *piles);
 int auto_move_to_foundation(Pile *piles);
+int turn_card(Card *card);
+
+void clear_undo_history();
+void undo_move();
+void redo_move();
 
 #endif

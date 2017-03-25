@@ -13,6 +13,18 @@
 GameList *first_game = NULL;
 GameList *last_game = NULL;
 
+struct move {
+  struct move *prev;
+  Card *stack;
+  Card *src;
+  char up;
+  Pile *stock;
+  Pile *waste;
+};
+
+struct move *undo_moves = NULL;
+struct move *redo_moves = NULL;
+
 Game *new_game() {
   Game *game = malloc(sizeof(Game));
   game->name = NULL;
@@ -236,6 +248,96 @@ int check_stack(Card *stack, GameRuleSuit suit, GameRuleRank rank) {
     check_next_rank(stack, stack->prev, rank) && check_stack(stack->next, suit, rank);
 }
 
+
+void clear_redo_history() {
+  while (redo_moves) {
+    struct move *m = redo_moves;
+    redo_moves = m->prev;
+    free(m);
+  }
+}
+
+void clear_undo_history() {
+  clear_redo_history();
+  while (undo_moves) {
+    struct move *m = undo_moves;
+    undo_moves = m->prev;
+    free(m);
+  }
+}
+
+void record_move() {
+  struct move *m = malloc(sizeof(struct move));
+  clear_redo_history();
+  m->prev = undo_moves;
+  m->stack = NULL;
+  m->src = NULL;
+  m->up = 0;
+  m->stock = NULL;
+  m->waste = NULL;
+  undo_moves = m;
+}
+
+void record_turn(Card *card) {
+  record_move();
+  undo_moves->stack = card;
+  undo_moves->up = card->up;
+}
+
+void record_location(Card *stack) {
+  record_turn(stack);
+  undo_moves->src = stack->prev;
+}
+
+void record_redeal(Pile *stock, Pile *waste) {
+  record_move();
+  undo_moves->stock = stock;
+  undo_moves->waste = waste;
+}
+
+void do_move(struct move **history1, struct move **history2) {
+  if (*history1) {
+    struct move *m = *history1;
+    *history1 = m->prev;
+    if (m->stock) {
+      Pile *stock = m->stock;
+      if (stock->rule->type == RULE_STOCK) {
+        stock->redeals--;
+      } else {
+        m->waste->redeals++;
+      }
+      Card *src_card = get_top(stock->stack);
+      while (!(src_card->suit & BOTTOM)) {
+        Card *prev = src_card->prev;
+        move_stack(m->waste->stack, src_card);
+        src_card = prev;
+      }
+      m->stock = m->waste;
+      m->waste = stock;
+    } else {
+      char up  = m->stack->up;
+      Card *dest = m->stack->prev;
+      m->stack->up = m->up;
+      if (m->src) {
+        move_stack(m->src, m->stack);
+        m->src = dest;
+      }
+      m->up = up;
+    }
+    m->prev = *history2;
+    *history2 = m;
+  }
+}
+
+void undo_move() {
+  do_move(&undo_moves, &redo_moves);
+}
+
+void redo_move() {
+  do_move(&redo_moves, &undo_moves);
+}
+
+
 int legal_move_stack(Pile *dest, Card *src, Pile *src_pile) {
   if (get_bottom(src) == get_bottom(dest->stack)) {
     return 0;
@@ -257,6 +359,7 @@ int legal_move_stack(Pile *dest, Card *src, Pile *src_pile) {
     if (!check_next_suit(src, top, dest->rule->next_suit) || !check_next_rank(src, top, dest->rule->next_rank)) {
       return 0;
     }
+    record_location(src);
     top->next = src;
     if (src->prev) src->prev->next = NULL;
     src->prev = top;
@@ -265,6 +368,7 @@ int legal_move_stack(Pile *dest, Card *src, Pile *src_pile) {
     if (!check_first_suit(src, dest->rule->first_suit) || !check_first_rank(src, dest->rule->first_rank)) {
       return 0;
     }
+    record_location(src);
     dest->stack->next = src;
     if (src->prev) src->prev->next = NULL;
     src->prev = dest->stack;
@@ -289,15 +393,16 @@ int redeal(Pile *stock, Pile *piles) {
     stock->redeals++;
     for (Pile *src = piles; src; src = src->next) {
       if (src->rule->type == RULE_WASTE) {
+        record_redeal(stock, src);
         Card *src_card = get_top(src->stack);
         while (!(src_card->suit & BOTTOM)) {
           Card *prev = src_card->prev;
           move_stack(stock->stack, src_card);
           src_card = prev;
         }
+        return 1;
       }
     }
-    return 1;
   }
   return 0;
 }
@@ -328,8 +433,7 @@ int auto_move_to_foundation(Pile *piles) {
     if (src->rule->type != RULE_FOUNDATION && src->rule->type != RULE_STOCK) {
       Card *src_card = get_top(src->stack);
       if (!(src_card->suit & BOTTOM)) {
-        if (!src_card->up) {
-          src_card->up = 1;
+        if (turn_card(src_card)) {
           return 1;
         } else {
           for (Pile *dest = piles; dest; dest = dest->next) {
@@ -342,6 +446,15 @@ int auto_move_to_foundation(Pile *piles) {
         }
       }
     }
+  }
+  return 0;
+}
+
+int turn_card(Card *card) {
+  if (!card->next && !card->up) {
+    record_turn(card);
+    card->up = 1;
+    return 1;
   }
   return 0;
 }
