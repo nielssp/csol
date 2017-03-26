@@ -16,17 +16,32 @@ Theme *new_theme() {
   Theme *theme = malloc(sizeof(Theme));
   theme->name = NULL;
   theme->title = NULL;
-  theme->heart = "H";
-  theme->spade = "S";
-  theme->diamond = "D";
-  theme->club = "C";
+  theme->heart = NULL;
+  theme->spade = NULL;
+  theme->diamond = NULL;
+  theme->club = NULL;
   theme->width = 6;
   theme->height = 4;
   theme->x_spacing = 2;
   theme->y_spacing = 1;
   theme->x_margin = 2;
   theme->y_margin = 1;
+  theme->background = (ColorPair){.fg = 7, .bg = 0};
+  theme->empty_layout = init_layout();
+  theme->back_layout = init_layout();
+  theme->red_layout = init_layout();
+  theme->black_layout = init_layout();
   return theme;
+}
+
+Layout init_layout() {
+  return (Layout){
+    .color = (ColorPair){.fg = 7, .bg = 0},
+    .top = NULL,
+    .middle = NULL,
+    .bottom = NULL,
+    .text_fields = NULL
+  };
 }
 
 void register_theme(Theme *theme) {
@@ -41,6 +56,9 @@ void register_theme(Theme *theme) {
       first_theme = last_theme = next;
     }
   }
+}
+
+void register_theme_dir(const char *dir) {
 }
 
 ThemeList *list_themes() {

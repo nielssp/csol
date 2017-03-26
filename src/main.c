@@ -50,7 +50,7 @@ char *combine_paths(const char *path1, const char *path2) {
 
 }
 
-FILE *find_csolrc() {
+char *find_csolrc() {
   FILE *f;
   char *config_dir = getenv("XDG_CONFIG_HOME");
   char *config_file = NULL;
@@ -64,10 +64,11 @@ FILE *find_csolrc() {
   }
   if (config_file) {
     f = fopen(config_file, "r");
-    free(config_file);
     if (f) {
-      return f;
+      fclose(f);
+      return config_file;
     }
+    free(config_file);
   }
   config_dir = getenv("XDG_CONFIG_DIRS");
   if (config_dir) {
@@ -79,11 +80,12 @@ FILE *find_csolrc() {
         dir[i] = '\0';
         config_file = combine_paths(dir, "csol/csolrc");
         f = fopen(config_file, "r");
-        free(config_file);
         free(dir);
         if (f) {
-          return f;
+          fclose(f);
+          return config_file;
         }
+        free(config_file);
         if (!config_dir[i]) {
           break;
         }
@@ -95,7 +97,11 @@ FILE *find_csolrc() {
     }
   }
   f = fopen("./csolrc", "r");
-  return f;
+  if (f) {
+    fclose(f);
+    return "./csolrc";
+  }
+  return NULL;
 }
 
 int main(int argc, char *argv[]) {
@@ -142,14 +148,13 @@ int main(int argc, char *argv[]) {
   if (optind < argc) {
     game_name = argv[optind];
   }
-  FILE *rc_file = find_csolrc();
+  char *rc_file = find_csolrc();
   int error = 0;
   if (!rc_file) {
     printf("csolrc: %s\n", strerror(errno));
     error = 1;
   } else {
     error = !execute_file(rc_file);
-    fclose(rc_file);
   }
   if (error) {
     printf("Errors encountered, press enter to continue\n");

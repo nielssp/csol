@@ -9,6 +9,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdarg.h>
+#include <errno.h>
 
 #include "theme.h"
 #include "game.h"
@@ -54,7 +55,14 @@ typedef enum {
   K_NEXT_SUIT,
   K_MOVE_GROUP,
   K_FROM,
-  K_REDEAL
+  K_REDEAL,
+  K_X_SPACING,
+  K_Y_SPACING,
+  K_X_MARGIN,
+  K_Y_MARGIN,
+  K_INCLUDE,
+  K_GAME_DIR,
+  K_THEME_DIR
 } Keyword;
 
 struct symbol {
@@ -65,6 +73,9 @@ struct symbol {
 struct symbol root_commands[] = {
   {"theme", K_THEME},
   {"game", K_GAME},
+  {"include", K_INCLUDE},
+  {"theme_dir", K_THEME_DIR},
+  {"game_dir", K_GAME_DIR},
 };
 
 struct symbol theme_commands[] ={
@@ -80,6 +91,12 @@ struct symbol theme_commands[] ={
   {"back", K_BACK},
   {"red", K_RED},
   {"black", K_BLACK},
+  {"x_spacing", K_X_SPACING},
+  {"y_spacing", K_Y_SPACING},
+  {"x_margin", K_X_MARGIN},
+  {"y_margin", K_Y_MARGIN},
+  {"fg", K_FG},
+  {"bg", K_BG},
   {NULL, K_UNDEFINED}
 };
 
@@ -125,6 +142,7 @@ struct position {
   int column;
 };
 
+char *current_file = NULL;
 int line = 0;
 int column = 0;
 
@@ -163,14 +181,16 @@ void set_position(struct position pos, FILE *file) {
   column = pos.column;
 }
 
-void syntax_error(const char *format, ...) {
+void rc_error(const char *format, ...) {
   va_list va;
   has_error = 1;
+  if (current_file) {
+    printf("%s:%d:%d: error: ", current_file, line, column);
+  }
   va_start(va, format);
-  printf("syntax error in csolrc: ");
   vprintf(format, va);
-  printf(" on line %d column %d\n", line, column);
   va_end(va);
+  printf("\n");
 }
 
 void skip_whitespace(FILE *file) {
@@ -269,6 +289,14 @@ char *read_value(FILE *file) {
   return read_line(file);
 }
 
+void redefine_property(char **property, FILE *file) {
+  char *value = read_value(file);
+  if (*property) {
+    free(*property);
+  }
+  *property = value;
+}
+
 int read_int(FILE *file) {
   skip_whitespace(file);
   char c = read_char(file);
@@ -317,7 +345,7 @@ Keyword read_command(FILE *file, struct symbol *commands) {
     }
     commands++;
   }
-  syntax_error("undefined keyword: %s", keyword);
+  rc_error("undefined keyword: %s", keyword);
   free(keyword);
   return K_UNDEFINED;
 }
@@ -325,7 +353,7 @@ Keyword read_command(FILE *file, struct symbol *commands) {
 int expect(int expected, FILE *file) {
   int actual = read_char(file);
   if (actual != expected) {
-    syntax_error("unexpected '%c', expected '%c'", actual, expected);
+    rc_error("unexpected '%c', expected '%c'", actual, expected);
     return 0;
   }
   return 1;
@@ -343,18 +371,19 @@ int end_block(FILE *file) {
 
 Layout define_layout(FILE *file) {
   Keyword command;
-  Layout layout;
+  Layout layout = init_layout();
   begin_block(file);
   while (command = read_command(file, layout_commands)) {
     switch (command) {
       case K_TOP:
-        layout.top = read_value(file);
+        redefine_property(&layout.top, file);
         break;
       case K_MIDDLE:
-        layout.middle = read_value(file);
+        redefine_property(&layout.middle, file);
         break;
       case K_BOTTOM:
-        layout.bottom = read_value(file);
+        redefine_property(&layout.bottom, file);
+        break;
         break;
       case K_FG:
         layout.color.fg = read_int(file);
@@ -375,22 +404,22 @@ void define_theme(FILE *file) {
   while (command = read_command(file, theme_commands)) {
     switch (command) {
       case K_NAME:
-        theme->name = read_value(file);
+        redefine_property(&theme->name, file);
         break;
       case K_TITLE:
-        theme->title = read_value(file);
+        redefine_property(&theme->title, file);
         break;
       case K_HEART:
-        theme->heart = read_value(file);
+        redefine_property(&theme->heart, file);
         break;
       case K_DIAMOND:
-        theme->diamond = read_value(file);
+        redefine_property(&theme->diamond, file);
         break;
       case K_SPADE:
-        theme->spade = read_value(file);
+        redefine_property(&theme->spade, file);
         break;
       case K_CLUB:
-        theme->club = read_value(file);
+        redefine_property(&theme->club, file);
         break;
       case K_WIDTH:
         theme->width = read_int(file);
@@ -409,6 +438,24 @@ void define_theme(FILE *file) {
         break;
       case K_BLACK:
         theme->black_layout = define_layout(file);
+        break;
+      case K_X_SPACING:
+        theme->x_spacing = read_int(file);
+        break;
+      case K_Y_SPACING:
+        theme->y_spacing = read_int(file);
+        break;
+      case K_X_MARGIN:
+        theme->x_margin = read_int(file);
+        break;
+      case K_Y_MARGIN:
+        theme->y_margin = read_int(file);
+        break;
+      case K_FG:
+        theme->background.fg = read_int(file);
+        break;
+      case K_BG:
+        theme->background.bg = read_int(file);
         break;
     }
   }
@@ -578,10 +625,10 @@ void execute_rule_block(FILE *file, Game *game, int index) {
   while (command = read_command(file, game_commands)) {
     switch (command) {
       case K_NAME:
-        game->name = read_value(file);
+        redefine_property(&game->name, file);
         break;
       case K_TITLE:
-        game->title = read_value(file);
+        redefine_property(&game->title, file);
         break;
       case K_REPEAT:
         rep = read_int(file);
@@ -628,8 +675,14 @@ void define_game(FILE *file) {
   register_game(game);
 }
 
-
-int execute_file(FILE *file) {
+int execute_file(const char *file_name) {
+  FILE *file = fopen(file_name, "r");
+  if (!file) {
+    rc_error("%s: error: %s", file_name, strerror(errno));
+    return 1;
+  }
+  char *include_file = NULL;
+  current_file = file_name;
   has_error = 0;
   line = 1;
   column = 1;
@@ -641,6 +694,22 @@ int execute_file(FILE *file) {
         break;
       case K_GAME:
         define_game(file);
+        break;
+      case K_INCLUDE:
+        include_file = read_value(file);
+        int this_line = line;
+        int this_column = column;
+        has_error |= !execute_file(include_file);
+        line = this_line;
+        column = this_column;
+        current_file = file_name;
+        free(include_file);
+        break;
+      case K_GAME_DIR:
+        // TODO
+        break;
+      case K_THEME_DIR:
+        // TODO
         break;
     }
   }

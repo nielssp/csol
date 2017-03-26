@@ -64,6 +64,7 @@ struct theme {
   int x_margin;
   int y_margin;
   Color *colors;
+  ColorPair background;
   Layout empty_layout;
   Layout back_layout;
   Layout red_layout;
@@ -76,6 +77,7 @@ struct theme_list {
 };
 
 Theme *new_theme();
+Layout init_layout();
 
 void register_theme(Theme *theme);
 

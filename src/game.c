@@ -25,6 +25,8 @@ struct move {
 struct move *undo_moves = NULL;
 struct move *redo_moves = NULL;
 
+int move_counter = 0;
+
 Game *new_game() {
   Game *game = malloc(sizeof(Game));
   game->name = NULL;
@@ -286,6 +288,7 @@ void record_turn(Card *card) {
 
 void record_location(Card *stack) {
   record_turn(stack);
+  move_counter++;
   undo_moves->src = stack->prev;
 }
 
@@ -295,13 +298,15 @@ void record_redeal(Pile *stock, Pile *waste) {
   undo_moves->waste = waste;
 }
 
-void do_move(struct move **history1, struct move **history2) {
+void do_move(struct move **history1, struct move **history2, int inc) {
   if (*history1) {
     struct move *m = *history1;
     *history1 = m->prev;
     if (m->stock) {
+      move_counter += inc;
       Pile *stock = m->stock;
-      if (stock->rule->type == RULE_STOCK) {
+      int from_stock = stock->rule->type == RULE_STOCK;
+      if (from_stock) {
         stock->redeals--;
       } else {
         m->waste->redeals++;
@@ -309,6 +314,9 @@ void do_move(struct move **history1, struct move **history2) {
       Card *src_card = get_top(stock->stack);
       while (!(src_card->suit & BOTTOM)) {
         Card *prev = src_card->prev;
+        if (from_stock) {
+          prev->up = 1;
+        }
         move_stack(m->waste->stack, src_card);
         src_card = prev;
       }
@@ -319,6 +327,7 @@ void do_move(struct move **history1, struct move **history2) {
       Card *dest = m->stack->prev;
       m->stack->up = m->up;
       if (m->src) {
+        move_counter += inc;
         move_stack(m->src, m->stack);
         m->src = dest;
       }
@@ -330,11 +339,11 @@ void do_move(struct move **history1, struct move **history2) {
 }
 
 void undo_move() {
-  do_move(&undo_moves, &redo_moves);
+  do_move(&undo_moves, &redo_moves, -1);
 }
 
 void redo_move() {
-  do_move(&redo_moves, &undo_moves);
+  do_move(&redo_moves, &undo_moves, 1);
 }
 
 

@@ -13,10 +13,11 @@
 #include "card.h"
 #include "theme.h"
 
-#define COLOR_PAIR_EMPTY 1
-#define COLOR_PAIR_BACK 2
-#define COLOR_PAIR_RED 3
-#define COLOR_PAIR_BLACK 4
+#define COLOR_PAIR_BACKGROUND 1
+#define COLOR_PAIR_EMPTY 2
+#define COLOR_PAIR_BACK 3
+#define COLOR_PAIR_RED 4
+#define COLOR_PAIR_BLACK 5
 
 int cur_x = 0;
 int cur_y = 0;
@@ -193,7 +194,9 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
   selection_pile = NULL;
   clear();
   clear_undo_history();
+  move_counter = 0;
   off_y = 0;
+  wbkgd(stdscr, COLOR_PAIR(COLOR_PAIR_BACKGROUND));
   while (1) {
     cursor_card = NULL;
     cursor_pile = NULL;
@@ -216,6 +219,7 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
     move(theme->y_margin + off_y + cur_y, theme->x_margin + cur_x * (theme->width + theme->x_spacing));
     refresh();
 
+    attron(COLOR_PAIR(COLOR_PAIR_BACKGROUND));
     int ch = getch();
     switch (ch) {
       case 'h':
@@ -348,6 +352,7 @@ void ui_main(Game *game, Theme *theme, int enable_color, unsigned int seed) {
   initscr();
   if (enable_color) {
     start_color();
+    init_pair(COLOR_PAIR_BACKGROUND, theme->background.fg, theme->background.bg);
     init_pair(COLOR_PAIR_EMPTY, theme->empty_layout.color.fg, theme->empty_layout.color.bg);
     init_pair(COLOR_PAIR_BACK, theme->back_layout.color.fg, theme->back_layout.color.bg);
     init_pair(COLOR_PAIR_RED, theme->red_layout.color.fg, theme->red_layout.color.bg);

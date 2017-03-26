@@ -93,6 +93,8 @@ struct pile {
   int redeals;
 };
 
+extern int move_counter;
+
 Game *new_game();
 GameRule *new_game_rule(GameRuleType type);
 void register_game(Game *game);

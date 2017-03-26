@@ -7,6 +7,6 @@
 #ifndef RC_H
 #define RC_H
 
-int execute_file(FILE *file);
+int execute_file(const char *file);
 
 #endif
