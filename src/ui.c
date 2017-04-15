@@ -190,6 +190,8 @@ void print_pile(Pile *pile, Theme *theme) {
 }
 
 int ui_loop(Game *game, Theme *theme, Pile *piles) {
+  MEVENT mouse;
+  int mouse_action = 0;
   selection = NULL;
   selection_pile = NULL;
   clear();
@@ -220,7 +222,13 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
     refresh();
 
     attron(COLOR_PAIR(COLOR_PAIR_BACKGROUND));
-    int ch = getch();
+    int ch;
+    if (mouse_action) {
+      ch = mouse_action;
+      mouse_action = 0;
+    } else {
+      ch = getch();
+    }
     switch (ch) {
       case 'h':
       case KEY_LEFT:
@@ -340,6 +348,19 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
         return 1;
       case 'q':
         return 0;
+      case KEY_MOUSE:
+        if (getmouse(&mouse) == OK) {
+          cur_y = mouse.y - theme->y_margin - off_y;
+          cur_x = (mouse.x - theme->x_margin) / (theme->width + theme->x_spacing);
+          if (mouse.bstate & BUTTON3_PRESSED) {
+            mouse_action = 'm';
+          } else if (mouse.bstate & BUTTON1_DOUBLE_CLICKED) {
+            mouse_action = 10;
+          } else {
+            mouse_action = ' ';
+          }
+        }
+        break;
       default:
         mvprintw(0, 0, "%d", ch);
     }
@@ -363,6 +384,9 @@ void ui_main(Game *game, Theme *theme, int enable_color, unsigned int seed) {
   curs_set(1);
   keypad(stdscr, 1);
   noecho();
+
+  mmask_t oldmask;
+  mousemask(BUTTON1_PRESSED | BUTTON1_DOUBLE_CLICKED | BUTTON3_PRESSED, &oldmask);
 
   while (1) {
     srand(seed);

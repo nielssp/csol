@@ -436,7 +436,6 @@ int move_to_free_cell(Card *src, Pile *src_pile, Pile *piles) {
   }
 }
 
-
 int auto_move_to_foundation(Pile *piles) {
   for (Pile *src = piles; src; src = src->next) {
     if (src->rule->type != RULE_FOUNDATION && src->rule->type != RULE_STOCK) {
