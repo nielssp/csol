@@ -212,11 +212,11 @@ int check_next_suit(Card *card, Card *previous, GameRuleSuit suit) {
     case SUIT_SAME:
       return card->suit == previous->suit;
     case SUIT_SAME_COLOR:
-      return card->suit & RED == previous->suit & RED;
+      return (card->suit & RED) == (previous->suit & RED);
     case SUIT_DIFF:
       return card->suit != previous->suit;
     case SUIT_DIFF_COLOR:
-      return card->suit & RED != previous->suit & RED;
+      return (card->suit & RED) != (previous->suit & RED);
   }
   return 0;
 }

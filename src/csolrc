@@ -129,7 +129,7 @@ game {
     x 0
     deal 1
     first_rank k
-    next_suit diff
+    next_suit diff_color
     next_rank down
     move_group any
   }
@@ -140,7 +140,7 @@ game {
       deal 6+
       hide -5
       first_rank k
-      next_suit diff
+      next_suit diff_color
       next_rank down
       move_group any
     }
@@ -200,7 +200,7 @@ game {
       deal 1+
       hide -1
       first_rank k
-      next_suit diff
+      next_suit diff_color
       next_rank down
       move_group group
     }
@@ -237,7 +237,7 @@ game {
       x 0+
       deal 7
       first_rank any
-      next_suit diff
+      next_suit diff_color
       next_rank down
     }
   }
@@ -247,7 +247,7 @@ game {
       x 4+
       deal 6
       first_rank any
-      next_suit diff
+      next_suit diff_color
       next_rank down
     }
   }
