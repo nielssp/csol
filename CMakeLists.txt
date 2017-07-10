@@ -21,3 +21,5 @@ target_link_libraries(csol ${CURSES_LIBRARIES})
 
 install(TARGETS csol DESTINATION bin COMPONENT binaries)
 install(FILES "${CMAKE_BINARY_DIR}/csolrc" DESTINATION /etc/xdg/csol COMPONENT config)
+install(DIRECTORY "${CMAKE_BINARY_DIR}/themes" DESTINATION /etc/xdg/csol COMPONENT config)
+install(DIRECTORY "${CMAKE_BINARY_DIR}/games" DESTINATION /etc/xdg/csol COMPONENT config)

@@ -1,16 +1,27 @@
-/* yuk
+/* csol
  * Copyright (c) 2017 Niels Sonnich Poulsen (http://nielssp.dk)
  * Licensed under the MIT license.
  * See the LICENSE file or http://opensource.org/licenses/MIT for more information.
  */
 
+#define _GNU_SOURCE
 #include <stdlib.h>
 #include <string.h>
+#include <dirent.h>
 
 #include "theme.h"
+#include "util.h"
+#include "rc.h"
+
+struct dir_list {
+  char *dir;
+  struct dir_list *next;
+};
 
 ThemeList *first_theme = NULL;
 ThemeList *last_theme = NULL;
+
+struct dir_list *theme_dirs = NULL;
 
 Theme *new_theme() {
   Theme *theme = malloc(sizeof(Theme));
@@ -58,18 +69,64 @@ void register_theme(Theme *theme) {
   }
 }
 
-void register_theme_dir(const char *dir) {
+void register_theme_dir(const char *cwd, const char *dir) {
+  struct dir_list *theme_dir = malloc(sizeof(struct dir_list));
+  theme_dir->dir = combine_paths(cwd, dir);
+  theme_dir->next = theme_dirs;
+  theme_dirs = theme_dir;
+}
+
+void load_theme_dirs() {
+  struct dir_list *current = theme_dirs;
+  while (current) {
+    struct dirent **files;
+    int n = scandir(current->dir, &files, NULL, alphasort);
+    if (n >= 0) {
+      for (int i = 0; i < n; i++) {
+        char *theme_path = combine_paths(current->dir, files[i]->d_name);
+        execute_file(theme_path);
+        free(theme_path);
+        free(files[i]);
+      }
+      free(files);
+    }
+    struct dir_list *next = current->next;
+    free(current->dir);
+    free(current);
+    current = next;
+  }
+  theme_dirs = NULL;
 }
 
 ThemeList *list_themes() {
   return first_theme;
 }
 
-Theme *get_theme(const char *name) {
+Theme *get_theme_in_list(const char *name) {
   for (ThemeList *themes = list_themes(); themes; themes = themes->next) {
     if (strcmp(themes->theme->name, name) == 0) {
       return themes->theme;
     }
+  }
+  return NULL;
+}
+
+Theme *get_theme(const char *name) {
+  Theme *theme = get_theme_in_list(name);
+  if (theme) {
+    return theme;
+  }
+  for (struct dir_list* theme_dir = theme_dirs; theme_dir; theme_dir = theme_dir->next) {
+    char *theme_path = combine_paths(theme_dir->dir, name);
+    if (file_exists(theme_path)) {
+      execute_file(theme_path);
+      theme = get_theme_in_list(name);
+      if (theme) {
+        free(theme_path);
+        return theme;
+      }
+    }
+    free(theme_path);
   }
   return NULL;
 }

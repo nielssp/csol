@@ -1,4 +1,4 @@
-/* yuk
+/* csol
  * Copyright (c) 2017 Niels Sonnich Poulsen (http://nielssp.dk)
  * Licensed under the MIT license.
  * See the LICENSE file or http://opensource.org/licenses/MIT for more information.
@@ -16,6 +16,7 @@
 #include "theme.h"
 #include "game.h"
 #include "ui.h"
+#include "util.h"
 
 const char *short_options = "hvlt:Tms:";
 
@@ -34,20 +35,6 @@ enum action { PLAY, LIST_GAMES, LIST_THEMES };
 
 void describe_option(const char *short_option, const char *long_option, const char *description) {
   printf("  -%-14s --%-18s %s\n", short_option, long_option, description);
-}
-
-char *combine_paths(const char *path1, const char *path2) {
-  size_t length1 = strlen(path1);
-  size_t length2 = strlen(path2);
-  size_t combined_length = length1 + length2 + 2;
-  char *combined_path = malloc(combined_length);
-  strcpy(combined_path, path1);
-  if (path1[length1 - 1] != '/') {
-    strcat(combined_path, "/");
-  }
-  strcat(combined_path, path2);
-  return combined_path;
-
 }
 
 char *find_csolrc() {
@@ -110,8 +97,8 @@ int main(int argc, char *argv[]) {
   int colors = 1;
   unsigned int seed = time(NULL);
   enum action action = PLAY;
-  char *game_name = "yukon";
-  char *theme_name = "default";
+  char *game_name = NULL;
+  char *theme_name = NULL;
   while ((opt = getopt_long(argc, argv, short_options, long_options, &option_index)) != -1) {
     switch (opt) {
       case 'h':
@@ -154,34 +141,51 @@ int main(int argc, char *argv[]) {
     printf("csolrc: %s\n", strerror(errno));
     error = 1;
   } else {
+    printf("Using configuration file: %s\n", rc_file);
     error = !execute_file(rc_file);
   }
   if (error) {
-    printf("Errors encountered, press enter to continue\n");
+    printf("Configuration errors detected, press enter to continue\n");
     getchar();
   }
   Theme *theme;
   Game *game;
   switch (action) {
     case LIST_GAMES:
+      load_game_dirs();
       for (GameList *list = list_games(); list; list = list->next) {
         printf("%s - %s\n", list->game->name, list->game->title);
       }
       break;
     case LIST_THEMES:
+      load_theme_dirs();
       for (ThemeList *list = list_themes(); list; list = list->next) {
         printf("%s - %s\n", list->theme->name, list->theme->title);
       }
       break;
     case PLAY:
+      if (theme_name == NULL) {
+        theme_name = get_property("default_theme");
+        if (theme_name == NULL) {
+          printf("default_theme not set\n");
+          return 1;
+        }
+      }
       theme = get_theme(theme_name);
       if (!theme) {
-        printf("theme not found: %s\n", theme_name);
+        printf("theme not found: '%s'\n", theme_name);
         return 1;
+      }
+      if (game_name == NULL) {
+        game_name = get_property("default_game");
+        if (game_name == NULL) {
+          printf("default_game not set\n");
+          return 1;
+        }
       }
       game = get_game(game_name);
       if (!game) {
-        printf("game not found: %s\n", game_name);
+        printf("game not found: '%s'\n", game_name);
         return 1;
       }
       ui_main(game, theme, colors, seed);

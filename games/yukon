@@ -1,0 +1,35 @@
+game {
+  name yukon
+  title Yukon
+  repeat 4 {
+    foundation {
+      x 3+
+      first_rank a
+      next_suit same
+      next_rank up
+    }
+  }
+  tableau {
+    y 1
+    x 0
+    deal 1
+    first_rank k
+    next_suit diff_color
+    next_rank down
+    move_group any
+  }
+  repeat 6 {
+    tableau {
+      y 1
+      x 1+
+      deal 6+
+      hide -5
+      first_rank k
+      next_suit diff_color
+      next_rank down
+      move_group any
+    }
+  }
+}
+
+

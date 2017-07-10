@@ -1,0 +1,38 @@
+theme {
+  name default
+  title "Default theme"
+  heart   ♥
+  spade   ♠
+  diamond ♦
+  club    ♣
+  width 6
+  height 4
+  empty {
+    top    ┌────┐
+    middle │    │
+    bottom └────┘
+    fg 7
+    bg 0
+  }
+  back {
+    top    ┌────┐
+    middle │    │
+    bottom └────┘
+    fg 7
+    bg 4
+  }
+  red {
+    top    ┌────┐
+    middle │    │
+    bottom └────┘
+    fg 1
+    bg 7
+  }
+  black {
+    top    ┌────┐
+    middle │    │
+    bottom └────┘
+    fg 0
+    bg 7
+  }
+}

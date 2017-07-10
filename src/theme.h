@@ -1,4 +1,4 @@
-/* yuk
+/* csol
  * Copyright (c) 2017 Niels Sonnich Poulsen (http://nielssp.dk)
  * Licensed under the MIT license.
  * See the LICENSE file or http://opensource.org/licenses/MIT for more information.
@@ -81,6 +81,8 @@ Layout init_layout();
 
 void register_theme(Theme *theme);
 
+void register_theme_dir(const char *cwd, const char *dir);
+void load_theme_dirs();
 ThemeList *list_themes();
 
 Theme *get_theme(const char *name);

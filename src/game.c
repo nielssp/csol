@@ -1,17 +1,28 @@
-/* yuk
+/* csol
  * Copyright (c) 2017 Niels Sonnich Poulsen (http://nielssp.dk)
  * Licensed under the MIT license.
  * See the LICENSE file or http://opensource.org/licenses/MIT for more information.
  */
 
+#define _GNU_SOURCE
 #include <stdlib.h>
 #include <string.h>
+#include <dirent.h>
 
 #include "game.h"
 #include "card.h"
+#include "rc.h"
+#include "util.h"
+
+struct dir_list {
+  char *dir;
+  struct dir_list *next;
+};
 
 GameList *first_game = NULL;
 GameList *last_game = NULL;
+
+struct dir_list *game_dirs = NULL;
 
 struct move {
   struct move *prev;
@@ -92,15 +103,64 @@ void register_game(Game *game) {
   }
 }
 
+void register_game_dir(const char *cwd, const char *dir) {
+  struct dir_list *game_dir = malloc(sizeof(struct dir_list));
+  game_dir->dir = combine_paths(cwd, dir);
+  game_dir->next = game_dirs;
+  game_dirs = game_dir;
+}
+
+void load_game_dirs() {
+  struct dir_list *current = game_dirs;
+  while (current) {
+    struct dirent **files;
+    int n = scandir(current->dir, &files, NULL, alphasort);
+    if (n >= 0) {
+      for (int i = 0; i < n; i++) {
+        char *game_path = combine_paths(current->dir, files[i]->d_name);
+        execute_file(game_path);
+        free(game_path);
+        free(files[i]);
+      }
+      free(files);
+    }
+    struct dir_list *next = current->next;
+    free(current->dir);
+    free(current);
+    current = next;
+  }
+  game_dirs = NULL;
+}
+
 GameList *list_games() {
   return first_game;
 }
 
-Game *get_game(const char *name) {
+Game *get_game_in_list(const char *name) {
   for (GameList *games = list_games(); games; games = games->next) {
     if (strcmp(games->game->name, name) == 0) {
       return games->game;
     }
+  }
+  return NULL;
+}
+
+Game *get_game(const char *name) {
+  Game *game = get_game_in_list(name);
+  if (game) {
+    return game;
+  }
+  for (struct dir_list* game_dir = game_dirs; game_dir; game_dir = game_dir->next) {
+    char *game_path = combine_paths(game_dir->dir, name);
+    if (file_exists(game_path)) {
+      execute_file(game_path);
+      game = get_game_in_list(name);
+      if (game) {
+        free(game_path);
+        return game;
+      }
+    }
+    free(game_path);
   }
   return NULL;
 }
@@ -212,11 +272,11 @@ int check_next_suit(Card *card, Card *previous, GameRuleSuit suit) {
     case SUIT_SAME:
       return card->suit == previous->suit;
     case SUIT_SAME_COLOR:
-      return card->suit & RED == previous->suit & RED;
+      return (card->suit & RED) == (previous->suit & RED);
     case SUIT_DIFF:
       return card->suit != previous->suit;
     case SUIT_DIFF_COLOR:
-      return card->suit & RED != previous->suit & RED;
+      return (card->suit & RED) != (previous->suit & RED);
   }
   return 0;
 }
@@ -424,6 +484,7 @@ int move_to_foundation(Card *src, Pile *src_pile, Pile *piles) {
       }
     }
   }
+  return 0;
 }
 
 int move_to_free_cell(Card *src, Pile *src_pile, Pile *piles) {
@@ -434,6 +495,7 @@ int move_to_free_cell(Card *src, Pile *src_pile, Pile *piles) {
       }
     }
   }
+  return 0;
 }
 
 int auto_move_to_foundation(Pile *piles) {

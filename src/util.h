@@ -4,11 +4,10 @@
  * See the LICENSE file or http://opensource.org/licenses/MIT for more information.
  */
 
-#ifndef RC_H
-#define RC_H
+#ifndef UTIL_H
+#define UTIL_H
 
-int execute_file(const char *file);
-
-char *get_property(const char *name);
+int file_exists(const char *path);
+char *combine_paths(const char *path1, const char *path2);
 
 #endif

@@ -1,3 +1,9 @@
+/* csol
+ * Copyright (c) 2017 Niels Sonnich Poulsen (http://nielssp.dk)
+ * Licensed under the MIT license.
+ * See the LICENSE file or http://opensource.org/licenses/MIT for more information.
+ */
+
 #ifndef GAME_H
 #define GAME_H
 
@@ -98,6 +104,8 @@ extern int move_counter;
 Game *new_game();
 GameRule *new_game_rule(GameRuleType type);
 void register_game(Game *game);
+void register_game_dir(const char *cwd, const char *dir);
+void load_game_dirs();
 GameList *list_games();
 Game *get_game(const char *name);
 Pile *deal_cards(Game *game, Card *deck);

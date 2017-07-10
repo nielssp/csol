@@ -1,0 +1,33 @@
+game {
+  name eightoff
+  title Eight Off
+  repeat 4 {
+    foundation {
+      y 0+
+      first_rank a
+      next_suit same
+      next_rank up
+    }
+  }
+  repeat 4 {
+    cell {
+      x 1+
+      deal 1
+    }
+  }
+  repeat 4 {
+    cell {
+      x 5+
+    }
+  }
+  repeat 8 {
+    tableau {
+      y 1
+      x 1+
+      deal 6
+      first_rank any
+      next_suit same
+      next_rank down
+    }
+  }
+}

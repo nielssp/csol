@@ -1,4 +1,4 @@
-/* yuk
+/* csol
  * Copyright (c) 2017 Niels Sonnich Poulsen (http://nielssp.dk)
  * Licensed under the MIT license.
  * See the LICENSE file or http://opensource.org/licenses/MIT for more information.
@@ -10,6 +10,7 @@
 #include <ctype.h>
 #include <stdarg.h>
 #include <errno.h>
+#include <libgen.h>
 
 #include "theme.h"
 #include "game.h"
@@ -62,7 +63,9 @@ typedef enum {
   K_Y_MARGIN,
   K_INCLUDE,
   K_GAME_DIR,
-  K_THEME_DIR
+  K_THEME_DIR,
+  K_DEFAULT_GAME,
+  K_DEFAULT_THEME
 } Keyword;
 
 struct symbol {
@@ -76,6 +79,8 @@ struct symbol root_commands[] = {
   {"include", K_INCLUDE},
   {"theme_dir", K_THEME_DIR},
   {"game_dir", K_GAME_DIR},
+  {"default_game", K_DEFAULT_GAME},
+  {"default_theme", K_DEFAULT_THEME}
 };
 
 struct symbol theme_commands[] ={
@@ -136,15 +141,23 @@ struct symbol game_rule_commands[] ={
   {NULL, K_UNDEFINED}
 };
 
+struct property {
+  char *name;
+  char *value;
+  struct property *next;
+};
+
 struct position {
   long offset;
   int line;
   int column;
 };
 
-char *current_file = NULL;
+const char *current_file = NULL;
 int line = 0;
 int column = 0;
+
+struct property *properties = NULL;
 
 int previous_column = 0;
 
@@ -675,13 +688,37 @@ void define_game(FILE *file) {
   register_game(game);
 }
 
+void set_property(const char *name, const char *value) {
+  struct property *property = malloc(sizeof(struct property));
+  property->name = malloc(strlen(name));
+  strcpy(property->name, name);
+  property->value = malloc(strlen(value));
+  strcpy(property->value, value);
+  property->next = properties;
+  properties = property;
+}
+
+char *get_property(const char *name) {
+  for (struct property *property = properties; property; property = property->next) {
+    if (strcmp(property->name, name) == 0) {
+      char *value_copy = malloc(strlen(property->value));
+      strcpy(value_copy, property->value);
+      return value_copy;
+    }
+  }
+  return NULL;
+}
+
 int execute_file(const char *file_name) {
   FILE *file = fopen(file_name, "r");
   if (!file) {
     rc_error("%s: error: %s", file_name, strerror(errno));
     return 1;
   }
-  char *include_file = NULL;
+  char *file_name_copy = malloc(strlen(file_name) + 1);
+  strcpy(file_name_copy, file_name);
+  char *cwd = dirname(file_name_copy);
+  char *value = NULL;
   current_file = file_name;
   has_error = 0;
   line = 1;
@@ -696,22 +733,37 @@ int execute_file(const char *file_name) {
         define_game(file);
         break;
       case K_INCLUDE:
-        include_file = read_value(file);
+        value = read_value(file);
         int this_line = line;
         int this_column = column;
-        has_error |= !execute_file(include_file);
+        has_error |= !execute_file(value);
         line = this_line;
         column = this_column;
         current_file = file_name;
-        free(include_file);
+        free(value);
         break;
       case K_GAME_DIR:
-        // TODO
+        value = read_value(file);
+        register_game_dir(cwd, value);
+        free(value);
         break;
       case K_THEME_DIR:
-        // TODO
+        value = read_value(file);
+        register_theme_dir(cwd, value);
+        free(value);
+        break;
+      case K_DEFAULT_THEME:
+        value = read_value(file);
+        set_property("default_theme", value);
+        free(value);
+        break;
+      case K_DEFAULT_GAME:
+        value = read_value(file);
+        set_property("default_game", value);
+        free(value);
         break;
     }
   }
+  free(file_name_copy);
   return !has_error;
 }
