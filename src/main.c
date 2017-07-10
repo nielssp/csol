@@ -18,7 +18,7 @@
 #include "ui.h"
 #include "util.h"
 
-const char *short_options = "hvlt:Tms:";
+const char *short_options = "hvlt:Tms:c:";
 
 const struct option long_options[] = {
   {"help", no_argument, NULL, 'h'},
@@ -28,6 +28,7 @@ const struct option long_options[] = {
   {"themes", no_argument, NULL, 'T'},
   {"mono", no_argument, NULL, 'm'},
   {"seed", required_argument, NULL, 's'},
+  {"config", required_argument, NULL, 'c'},
   {0, 0, 0, 0}
 };
 
@@ -97,6 +98,7 @@ int main(int argc, char *argv[]) {
   int colors = 1;
   unsigned int seed = time(NULL);
   enum action action = PLAY;
+  char *rc_file = NULL;
   char *game_name = NULL;
   char *theme_name = NULL;
   while ((opt = getopt_long(argc, argv, short_options, long_options, &option_index)) != -1) {
@@ -111,6 +113,7 @@ int main(int argc, char *argv[]) {
         describe_option("T", "themes", "List available themes.");
         describe_option("m", "mono", "Disable colors.");
         describe_option("s <seed>", "seed <seed>", "Select seed.");
+        describe_option("c <file>", "config <file>", "Select configuration file.");
         return 0;
       case 'v':
         puts("csol " CSOL_VERSION);
@@ -130,17 +133,24 @@ int main(int argc, char *argv[]) {
       case 's':
         seed = atol(optarg);
         break;
+      case 'c':
+        rc_file = optarg;
+        break;
+
     }
   }
   if (optind < argc) {
     game_name = argv[optind];
   }
-  char *rc_file = find_csolrc();
   int error = 0;
   if (!rc_file) {
-    printf("csolrc: %s\n", strerror(errno));
-    error = 1;
-  } else {
+    rc_file = find_csolrc();
+    if (!rc_file) {
+      printf("csolrc: %s\n", strerror(errno));
+      error = 1;
+    }
+  }
+  if (!error) {
     printf("Using configuration file: %s\n", rc_file);
     error = !execute_file(rc_file);
   }

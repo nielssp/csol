@@ -1,12 +1,14 @@
 project(csol)
 set(CSOL_VERSION "0.1.0")
 
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 2.8)
 
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 configure_file(src/config.h.in src/config.h)
-configure_file(src/csolrc csolrc COPYONLY)
+configure_file(csolrc csolrc COPYONLY)
+file(COPY games DESTINATION .)
+file(COPY themes DESTINATION .)
 
 find_package(Curses REQUIRED)
 include_directories("$(CURSES_INCLUDE_DIR)")
