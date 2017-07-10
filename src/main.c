@@ -153,6 +153,7 @@ int main(int argc, char *argv[]) {
   if (!error) {
     printf("Using configuration file: %s\n", rc_file);
     error = !execute_file(rc_file);
+    free(rc_file);
   }
   if (error) {
     printf("Configuration errors detected, press enter to continue\n");

@@ -690,10 +690,12 @@ void define_game(FILE *file) {
 
 void set_property(const char *name, const char *value) {
   struct property *property = malloc(sizeof(struct property));
-  property->name = malloc(strlen(name));
-  strcpy(property->name, name);
-  property->value = malloc(strlen(value));
-  strcpy(property->value, value);
+  size_t n1 = strlen(name);
+  size_t n2 = strlen(value);
+  property->name = calloc(n1 + 1, 1);
+  memcpy(property->name, name, n1);
+  property->value = calloc(n2 + 1, 1);
+  memcpy(property->value, value, n2);
   property->next = properties;
   properties = property;
 }
@@ -701,9 +703,7 @@ void set_property(const char *name, const char *value) {
 char *get_property(const char *name) {
   for (struct property *property = properties; property; property = property->next) {
     if (strcmp(property->name, name) == 0) {
-      char *value_copy = malloc(strlen(property->value));
-      strcpy(value_copy, property->value);
-      return value_copy;
+      return property->value;
     }
   }
   return NULL;

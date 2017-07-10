@@ -19,6 +19,8 @@
 #define COLOR_PAIR_RED 4
 #define COLOR_PAIR_BLACK 5
 
+int deals = 0;
+
 int cur_x = 0;
 int cur_y = 0;
 
@@ -395,13 +397,14 @@ void ui_main(Game *game, Theme *theme, int enable_color, unsigned int seed) {
     move_stack(deck, shuffle_stack(take_stack(deck->next)));
 
     Pile *piles = deal_cards(game, deck);
+    deals++;
 
     int redeal = ui_loop(game, theme, piles);
     delete_piles(piles);
     delete_stack(deck);
 
     if (redeal) {
-      seed = time(NULL);
+      seed = time(NULL) + deals;
     } else {
       break;
     }

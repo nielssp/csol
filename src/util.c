@@ -24,10 +24,11 @@ char *combine_paths(const char *path1, const char *path2) {
   size_t length2 = strlen(path2);
   size_t combined_length = length1 + length2 + 2;
   char *combined_path = malloc(combined_length);
-  strcpy(combined_path, path1);
+  memcpy(combined_path, path1, length1);
   if (path1[length1 - 1] != '/') {
-    strcat(combined_path, "/");
+    combined_path[length1++] = '/';
   }
-  strcat(combined_path, path2);
+  memcpy(combined_path + length1, path2, length2);
+  combined_path[length1 + length2] = '\0';
   return combined_path;
 }
