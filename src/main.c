@@ -142,8 +142,10 @@ int main(int argc, char *argv[]) {
   if (optind < argc) {
     game_name = argv[optind];
   }
+  int rc_opt = 1;
   int error = 0;
   if (!rc_file) {
+    rc_opt = 0;
     rc_file = find_csolrc();
     if (!rc_file) {
       printf("csolrc: %s\n", strerror(errno));
@@ -153,7 +155,9 @@ int main(int argc, char *argv[]) {
   if (!error) {
     printf("Using configuration file: %s\n", rc_file);
     error = !execute_file(rc_file);
-    free(rc_file);
+    if (!rc_opt) {
+      free(rc_file);
+    }
   }
   if (error) {
     printf("Configuration errors detected, press enter to continue\n");
