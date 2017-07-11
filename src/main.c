@@ -83,11 +83,17 @@ char *find_csolrc() {
         i++;
       }
     }
+  } else {
+    f = fopen("/etc/xdg/csol/csolrc", "r");
+    if (f) {
+      fclose(f);
+      return strdup("/etc/xdg/csol/csolrc");
+    }
   }
   f = fopen("./csolrc", "r");
   if (f) {
     fclose(f);
-    return "./csolrc";
+    return strdup("./csolrc");
   }
   return NULL;
 }

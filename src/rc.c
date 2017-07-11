@@ -715,8 +715,7 @@ int execute_file(const char *file_name) {
     rc_error("%s: error: %s", file_name, strerror(errno));
     return 1;
   }
-  char *file_name_copy = malloc(strlen(file_name) + 1);
-  strcpy(file_name_copy, file_name);
+  char *file_name_copy = strdup(file_name);
   char *cwd = dirname(file_name_copy);
   char *value = NULL;
   current_file = file_name;
