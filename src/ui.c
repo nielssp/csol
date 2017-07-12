@@ -316,6 +316,7 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
         }
         break;
       case 'm':
+      case 10: // enter
         if (selection && cursor_pile) {
           if (legal_move_stack(cursor_pile, selection, selection_pile)) {
             clear();
@@ -338,13 +339,6 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
       case 25: // ^y
         redo_move();
         clear();
-        break;
-      case 10:
-        if (cursor_card && !(cursor_card->suit & BOTTOM)) {
-          if (move_to_foundation(cursor_card, cursor_pile, piles) || move_to_free_cell(cursor_card, cursor_pile, piles)) {
-            clear();
-          }
-        }
         break;
       case 27:
         clear();
