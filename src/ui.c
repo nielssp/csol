@@ -364,8 +364,6 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
           cur_x = (mouse.x - theme->x_margin) / (theme->width + theme->x_spacing);
           if (mouse.bstate & BUTTON3_PRESSED) {
             mouse_action = 'm';
-          } else if (mouse.bstate & BUTTON1_DOUBLE_CLICKED) {
-            mouse_action = 10;
           } else {
             mouse_action = ' ';
           }
@@ -384,7 +382,9 @@ void ui_main(Game *game, Theme *theme, int enable_color, unsigned int seed) {
   if (enable_color) {
     start_color();
     for (Color *color = theme->colors; color; color = color->next) {
-      init_color(color->index, color->red, color->green, color->blue);
+      if (init_color(color->index, color->red, color->green, color->blue) != 0) {
+        // TODO: inform user
+      }
     }
     init_pair(COLOR_PAIR_BACKGROUND, theme->background.fg, theme->background.bg);
     init_pair(COLOR_PAIR_EMPTY, theme->empty_layout.color.fg, theme->empty_layout.color.bg);
@@ -399,7 +399,7 @@ void ui_main(Game *game, Theme *theme, int enable_color, unsigned int seed) {
   noecho();
 
   mmask_t oldmask;
-  mousemask(BUTTON1_PRESSED | BUTTON1_DOUBLE_CLICKED | BUTTON3_PRESSED, &oldmask);
+  mousemask(BUTTON1_PRESSED | BUTTON3_PRESSED, &oldmask);
 
   while (1) {
     srand(seed);
