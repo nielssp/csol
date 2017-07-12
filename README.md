@@ -16,18 +16,23 @@ make
 ## Games
 
 Klondike (default): `csol klondike`
+
 ![Klondike](games/klondike.png)
 
 Yukon: `csol yukon`
+
 ![Yukon](games/yukon.png)
 
 Eight Off: `csol eightoff`
+
 ![Eight Off](games/eightoff.png)
 
 Freecell: `csol freecell`
+
 ![Freecell](games/freecell.png)
 
 Russian Solitaire: `csol russian`
+
 ![Russian Solitaire](games/russian.png)
 
 ## Themes
@@ -35,9 +40,11 @@ Russian Solitaire: `csol russian`
 `csol -t default`
 
 `csol -t default-xl`
+
 ![default-xl](themes/default-xl.png)
 
 `csol -t ascii`
+
 ![ascii](themes/ascii.png)
 
 ## Options
