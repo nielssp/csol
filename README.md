@@ -55,7 +55,7 @@ Russian Solitaire: `csol russian`
 * `--themes`/`-T`: List themes
 * `--theme <name>`/`-t <name>`: Use a theme
 * `--mono`/`-m`: Disable colors
-* `--seed <seed>`/`-s <seed>`: Seed the pnrg
+* `--seed <seed>`/`-s <seed>`: Seed the prng
 * `--config <file>`/`-c <file>`: Use a configuration file
 
 ## Configuration
