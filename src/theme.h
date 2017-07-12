@@ -17,10 +17,11 @@ typedef struct theme Theme;
 typedef struct theme_list ThemeList;
 
 struct color {
-  short color;
-  short r;
-  short g;
-  short b;
+  Color *next;
+  short index;
+  short red;
+  short green;
+  short blue;
 };
 
 struct color_pair {
@@ -78,6 +79,7 @@ struct theme_list {
 
 Theme *new_theme();
 Layout init_layout();
+void define_color(Theme *theme, short color, short red, short green, short blue);
 
 void register_theme(Theme *theme);
 

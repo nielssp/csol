@@ -289,8 +289,16 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
         if (cursor_card) {
           if (!(cursor_card->suit & BOTTOM)) {
             if (cursor_card->up) {
-              selection = cursor_card;
-              selection_pile = cursor_pile;
+              if (selection == cursor_card) {
+                if (move_to_foundation(cursor_card, cursor_pile, piles) || move_to_free_cell(cursor_card, cursor_pile, piles)) {
+                  clear();
+                  selection = NULL;
+                  selection_pile = NULL;
+                }
+              } else {
+                selection = cursor_card;
+                selection_pile = cursor_pile;
+              }
             } else if (cursor_pile->rule->type == RULE_STOCK) {
               if (move_to_waste(cursor_card, cursor_pile, piles)) {
                 clear();
@@ -375,6 +383,9 @@ void ui_main(Game *game, Theme *theme, int enable_color, unsigned int seed) {
   initscr();
   if (enable_color) {
     start_color();
+    for (Color *color = theme->colors; color; color = color->next) {
+      init_color(color->index, color->red, color->green, color->blue);
+    }
     init_pair(COLOR_PAIR_BACKGROUND, theme->background.fg, theme->background.bg);
     init_pair(COLOR_PAIR_EMPTY, theme->empty_layout.color.fg, theme->empty_layout.color.bg);
     init_pair(COLOR_PAIR_BACK, theme->back_layout.color.fg, theme->back_layout.color.bg);

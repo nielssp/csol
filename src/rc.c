@@ -4,6 +4,7 @@
  * See the LICENSE file or http://opensource.org/licenses/MIT for more information.
  */
 
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -38,6 +39,7 @@ typedef enum {
   K_BACK,
   K_RED,
   K_BLACK,
+  K_COLOR,
   K_FG,
   K_BG,
   K_REPEAT,
@@ -96,6 +98,7 @@ struct symbol theme_commands[] ={
   {"back", K_BACK},
   {"red", K_RED},
   {"black", K_BLACK},
+  {"color", K_COLOR},
   {"x_spacing", K_X_SPACING},
   {"y_spacing", K_Y_SPACING},
   {"x_margin", K_X_MARGIN},
@@ -397,12 +400,13 @@ Layout define_layout(FILE *file) {
       case K_BOTTOM:
         redefine_property(&layout.bottom, file);
         break;
-        break;
       case K_FG:
         layout.color.fg = read_int(file);
         break;
       case K_BG:
         layout.color.bg = read_int(file);
+        break;
+      default:
         break;
     }
   }
@@ -464,11 +468,21 @@ void define_theme(FILE *file) {
       case K_Y_MARGIN:
         theme->y_margin = read_int(file);
         break;
+      case K_COLOR: {
+        short index = read_int(file);
+        short red = read_int(file);
+        short green = read_int(file);
+        short blue = read_int(file);
+        define_color(theme, index, red, green, blue);
+        break;
+      }
       case K_FG:
         theme->background.fg = read_int(file);
         break;
       case K_BG:
         theme->background.bg = read_int(file);
+        break;
+      default:
         break;
     }
   }
@@ -623,6 +637,8 @@ GameRule *define_game_rule(FILE *file, GameRuleType type, int index) {
       case K_FROM:
         rule->from = read_from_rule(file);
         break;
+      default:
+        break;
     }
   }
   end_block(file);
@@ -666,6 +682,8 @@ void execute_rule_block(FILE *file, Game *game, int index) {
       case K_WASTE:
         rule = define_game_rule(file, RULE_WASTE, index);
         break;
+      default:
+        break;
     }
     if (rule) {
       if (game->last_rule) {
@@ -682,7 +700,6 @@ void execute_rule_block(FILE *file, Game *game, int index) {
 }
 
 void define_game(FILE *file) {
-  Keyword command;
   Game *game = new_game();
   execute_rule_block(file, game, 0);
   register_game(game);
@@ -760,6 +777,8 @@ int execute_file(const char *file_name) {
         value = read_value(file);
         set_property("default_game", value);
         free(value);
+        break;
+      default:
         break;
     }
   }

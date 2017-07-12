@@ -85,6 +85,8 @@ GameRule *new_game_rule(GameRuleType type) {
       rule->next_suit = SUIT_NONE;
       rule->next_rank = RANK_NONE;
       break;
+    default:
+      break;
   }
   return rule;
 }
@@ -150,7 +152,7 @@ Game *get_game(const char *name) {
   if (game) {
     return game;
   }
-  for (struct dir_list* game_dir = game_dirs; game_dir; game_dir = game_dir->next) {
+  for (struct dir_list *game_dir = game_dirs; game_dir; game_dir = game_dir->next) {
     char *game_path = combine_paths(game_dir->dir, name);
     if (file_exists(game_path)) {
       execute_file(game_path);
@@ -178,6 +180,9 @@ Card *new_pile(GameRule *rule) {
     case RULE_WASTE:
     case RULE_CELL:
       return new_card(FOUNDATION, rank);
+    default:
+      // TODO: error
+      return NULL;
   }
 }
 
@@ -253,8 +258,9 @@ int check_first_suit(Card *card, GameRuleSuit suit) {
       return card->suit & RED;
     case SUIT_BLACK:
       return card->suit & BLACK;
+    default:
+      return 0;
   }
-  return 0;
 }
 
 int check_first_rank(Card *card, GameRuleRank rank) {
@@ -277,8 +283,9 @@ int check_next_suit(Card *card, Card *previous, GameRuleSuit suit) {
       return card->suit != previous->suit;
     case SUIT_DIFF_COLOR:
       return (card->suit & RED) != (previous->suit & RED);
+    default:
+      return 0;
   }
-  return 0;
 }
 
 int check_next_rank(Card *card, Card *previous, GameRuleRank rank) {
@@ -298,8 +305,9 @@ int check_next_rank(Card *card, Card *previous, GameRuleRank rank) {
       return card->rank < previous->rank;
     case RANK_HIGHER:
       return card->rank > previous->rank;
+    default:
+      return 0;
   }
-  return 0;
 }
 
 int check_stack(Card *stack, GameRuleSuit suit, GameRuleRank rank) {

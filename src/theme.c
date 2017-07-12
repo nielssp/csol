@@ -37,6 +37,7 @@ Theme *new_theme() {
   theme->y_spacing = 1;
   theme->x_margin = 2;
   theme->y_margin = 1;
+  theme->colors = NULL;
   theme->background = (ColorPair){.fg = 7, .bg = 0};
   theme->empty_layout = init_layout();
   theme->back_layout = init_layout();
@@ -53,6 +54,16 @@ Layout init_layout() {
     .bottom = NULL,
     .text_fields = NULL
   };
+}
+
+void define_color(Theme *theme, short index, short red, short green, short blue) {
+  Color *color = malloc(sizeof(Color));
+  color->next = theme->colors;
+  color->index = index;
+  color->red = red;
+  color->green = green;
+  color->blue = blue;
+  theme->colors = color;
 }
 
 void register_theme(Theme *theme) {
@@ -116,7 +127,7 @@ Theme *get_theme(const char *name) {
   if (theme) {
     return theme;
   }
-  for (struct dir_list* theme_dir = theme_dirs; theme_dir; theme_dir = theme_dir->next) {
+  for (struct dir_list *theme_dir = theme_dirs; theme_dir; theme_dir = theme_dir->next) {
     char *theme_path = combine_paths(theme_dir->dir, name);
     if (file_exists(theme_path)) {
       execute_file(theme_path);
