@@ -23,7 +23,6 @@ game {
   }
   stock {
     deal 52
-    redeal 2
   }
   waste {
     x 1

@@ -54,7 +54,7 @@ GameRule *new_game_rule(GameRuleType type) {
   rule->x = 0;
   rule->y = 0;
   rule->deal = 0;
-  rule->redeals = 0;
+  rule->redeals = -1;
   rule->hide = 0;
   rule->first_suit = SUIT_ANY;
   rule->first_rank = RANK_ANY;
@@ -466,7 +466,7 @@ int move_to_waste(Card *card, Pile *stock, Pile *piles) {
 }
 
 int redeal(Pile *stock, Pile *piles) {
-  if (stock->redeals < stock->rule->redeals) {
+  if (stock->rule->redeals < 0 || stock->redeals < stock->rule->redeals) {
     stock->redeals++;
     for (Pile *src = piles; src; src = src->next) {
       if (src->rule->type == RULE_WASTE) {
