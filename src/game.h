@@ -90,6 +90,7 @@ struct game_rule {
   GameRuleRank next_rank;
   GameRuleMove move_group;
   GameRuleType from;
+  GameRuleRank win_rank;
 };
 
 struct pile {
@@ -117,6 +118,7 @@ int move_to_foundation(Card *src, Pile *src_pile, Pile *piles);
 int move_to_free_cell(Card *src, Pile *src_pile, Pile *piles);
 int auto_move_to_foundation(Pile *piles);
 int turn_card(Card *card);
+int check_win_condition(Pile *piles);
 
 void clear_undo_history();
 void undo_move();

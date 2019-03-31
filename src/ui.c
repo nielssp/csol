@@ -173,7 +173,6 @@ int print_tableau(int y, int x, Card *bottom, Theme *theme) {
   }
 }
 
-
 void print_pile(Pile *pile, Theme *theme) {
   int y = pile->rule->y * (theme->height + theme->y_spacing);
   if (pile->rule->type == RULE_STOCK) {
@@ -191,8 +190,27 @@ void print_pile(Pile *pile, Theme *theme) {
   }
 }
 
+int ui_victory(Pile *piles) {
+  getmaxyx(stdscr, win_h, win_w);
+  int start_y = win_h / 2 - 3;
+  int start_x = win_w >= 38 ? win_w / 2 - 19 : 0;
+  mvprintw(start_y    , start_x, "**************************************");
+  mvprintw(start_y + 1, start_x, "*              VICTORY!              *");
+  mvprintw(start_y + 2, start_x, "* Press 'r' to redeal or 'q' to quit *");
+  mvprintw(start_y + 3, start_x, "**************************************");
+  while (1) {
+    switch (getch()) {
+      case 'r':
+        return 1;
+      case 'q':
+        return 0;
+    }
+  }
+}
+
 int ui_loop(Game *game, Theme *theme, Pile *piles) {
   MEVENT mouse;
+  int move_made = 0;
   int mouse_action = 0;
   selection = NULL;
   selection_pile = NULL;
@@ -224,6 +242,14 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
     refresh();
 
     attron(COLOR_PAIR(COLOR_PAIR_BACKGROUND));
+
+    if (move_made) {
+      if (check_win_condition(piles)) {
+        return ui_victory(piles);
+      }
+      move_made = 0;
+    }
+
     int ch;
     if (mouse_action) {
       ch = mouse_action;
@@ -291,6 +317,7 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
             if (cursor_card->up) {
               if (selection == cursor_card) {
                 if (move_to_foundation(cursor_card, cursor_pile, piles) || move_to_free_cell(cursor_card, cursor_pile, piles)) {
+                  move_made = 1;
                   clear();
                   selection = NULL;
                   selection_pile = NULL;
@@ -301,6 +328,7 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
               }
             } else if (cursor_pile->rule->type == RULE_STOCK) {
               if (move_to_waste(cursor_card, cursor_pile, piles)) {
+                move_made = 1;
                 clear();
               }
             } else {
@@ -308,6 +336,7 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
             }
           } else if (cursor_pile->rule->type == RULE_STOCK) {
             if (redeal(cursor_pile, piles)) {
+              move_made = 1;
               clear();
             } else {
               mvprintw(0, 0, "no more redeals");
@@ -319,6 +348,7 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
       case 10: // enter
         if (selection && cursor_pile) {
           if (legal_move_stack(cursor_pile, selection, selection_pile)) {
+            move_made = 1;
             clear();
             selection = NULL;
             selection_pile = NULL;
@@ -327,6 +357,7 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
         break;
       case 'a':
         if (auto_move_to_foundation(piles)) {
+          move_made = 1;
           clear();
         }
         break;

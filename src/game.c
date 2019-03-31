@@ -62,11 +62,13 @@ GameRule *new_game_rule(GameRuleType type) {
   rule->next_rank = RANK_ANY;
   rule->move_group = MOVE_ONE;
   rule->from = RULE_ANY;
+  rule->win_rank = RANK_NONE;
   switch (type) {
     case RULE_FOUNDATION:
       rule->first_rank = RANK_ACE;
       rule->next_suit = SUIT_SAME;
       rule->next_rank = RANK_UP;
+      rule->win_rank = RANK_KING;
       break;
     case RULE_TABLEAU:
       rule->next_suit = SUIT_ANY;
@@ -535,4 +537,16 @@ int turn_card(Card *card) {
     return 1;
   }
   return 0;
+}
+
+int check_win_condition(Pile *piles) {
+  for (Pile *p = piles; p; p = p->next) {
+    if (p->rule->win_rank != RANK_NONE) {
+      Card *top = get_top(p->stack);
+      if (!check_first_rank(top, p->rule->win_rank)) {
+        return 0;
+      }
+    }
+  }
+  return 1;
 }

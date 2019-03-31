@@ -58,6 +58,7 @@ typedef enum {
   K_NEXT_SUIT,
   K_MOVE_GROUP,
   K_FROM,
+  K_WIN_RANK,
   K_REDEAL,
   K_X_SPACING,
   K_Y_SPACING,
@@ -141,6 +142,7 @@ struct symbol game_rule_commands[] ={
   {"next_suit", K_NEXT_SUIT},
   {"move_group", K_MOVE_GROUP},
   {"from", K_FROM},
+  {"win_rank", K_WIN_RANK},
   {NULL, K_UNDEFINED}
 };
 
@@ -636,6 +638,9 @@ GameRule *define_game_rule(FILE *file, GameRuleType type, int index) {
         break;
       case K_FROM:
         rule->from = read_from_rule(file);
+        break;
+      case K_WIN_RANK:
+        rule->win_rank = read_rank(file);
         break;
       default:
         break;
