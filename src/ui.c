@@ -102,18 +102,7 @@ void print_layout(int y, int x, Card *card, Layout layout, int full, Theme *them
   }
 }
 
-int print_card(int y, int x, Card *card, int full, Theme *theme) {
-  int y2 = y + full * (theme->height - 1);
-  if (y2 > max_y) max_y = y2;
-  if (x > max_x) max_x = x;
-  if (y <= cur_y && y2 >= cur_y && x == cur_x) cursor_card = card;
-  card->x = x;
-  card->y = y;
-  y = theme->y_margin + off_y + y;
-  x = theme->x_margin + x * (theme->width + theme->x_spacing);
-  if (win_h - 1 < y) {
-    return 0;
-  }
+void print_card(int y, int x, Card *card, int full, Theme *theme) {
   if (card == selection) {
     attron(A_REVERSE);
   }
@@ -140,15 +129,38 @@ int print_card(int y, int x, Card *card, int full, Theme *theme) {
     print_card_name_l(y, x + 1, card, theme);
   }
   attroff(A_REVERSE);
+}
+
+int theme_y(int y, Theme *theme) {
+  return theme->y_margin + off_y + y;
+}
+
+int theme_x(int x, Theme *theme) {
+  return theme->x_margin + x * (theme->width + theme->x_spacing);
+}
+
+int print_card_in_grid(int y, int x, Card *card, int full, Theme *theme) {
+  int y2 = y + full * (theme->height - 1);
+  if (y2 > max_y) max_y = y2;
+  if (x > max_x) max_x = x;
+  if (y <= cur_y && y2 >= cur_y && x == cur_x) cursor_card = card;
+  card->x = x;
+  card->y = y;
+  y = theme_y(y, theme);
+  x = theme_x(x, theme);
+  if (win_h - 1 < y) {
+    return 0;
+  }
+  print_card(y, x, card, full, theme);
   return cursor_card == card;
 }
 
 int print_card_top(int y, int x, Card *card, Theme *theme) {
-  return print_card(y, x, card, 0, theme);
+  return print_card_in_grid(y, x, card, 0, theme);
 }
 
 int print_card_full(int y, int x, Card *card, Theme *theme) {
-  return print_card(y, x, card, 1, theme);
+  return print_card_in_grid(y, x, card, 1, theme);
 }
 
 int print_stack(int y, int x, Card *bottom, Theme *theme) {
@@ -190,17 +202,56 @@ void print_pile(Pile *pile, Theme *theme) {
   }
 }
 
-int ui_victory(Pile *piles) {
+static void ui_victory_banner(int y, int x) {
+  attron(COLOR_PAIR(COLOR_PAIR_BACKGROUND));
+  mvprintw(y    , x, "**************************************");
+  mvprintw(y + 1, x, "*              VICTORY!              *");
+  mvprintw(y + 2, x, "* Press 'r' to redeal or 'q' to quit *");
+  mvprintw(y + 3, x, "**************************************");
+}
+
+int ui_victory(Pile *piles, Theme *theme) {
   getmaxyx(stdscr, win_h, win_w);
-  int start_y = win_h / 2 - 3;
-  int start_x = win_w >= 38 ? win_w / 2 - 19 : 0;
-  mvprintw(start_y    , start_x, "**************************************");
-  mvprintw(start_y + 1, start_x, "*              VICTORY!              *");
-  mvprintw(start_y + 2, start_x, "* Press 'r' to redeal or 'q' to quit *");
-  mvprintw(start_y + 3, start_x, "**************************************");
+  int banner_y = win_h / 2 - 3;
+  int banner_x = win_w >= 38 ? win_w / 2 - 19 : 0;
+  nodelay(stdscr, 1);
+  for (Pile *pile = piles; pile; pile = pile->next) {
+    int pile_y = pile->rule->y * (theme->height + theme->y_spacing);
+    for (Card *card = get_top(pile->stack); NOT_BOTTOM(card); card = card->prev) {
+      card->up = 1;
+      double y = theme_y(pile_y, theme);
+      double x = theme_x(pile->rule->x, theme);
+      double vy = (double)rand() / RAND_MAX * -4.0;
+      double vx = (double)rand() / RAND_MAX * 8.0 - 1.0;
+      while (y < win_h) {
+        switch (getch()) {
+          case 'r':
+            nodelay(stdscr, 0);
+            return 1;
+          case 'q':
+            return 0;
+        }
+        print_card(y, x, card, 1, theme);
+        ui_victory_banner(banner_y, banner_x);
+        refresh();
+        napms(70);
+        y += vy;
+        x += vx;
+        vy += 0.5;
+        if (x < 0) {
+          x = 0;
+          vx *= -1;
+        } else if (x > win_w - theme->width) {
+          x = win_w - theme->width;
+          vx *= -1;
+        }
+      }
+    }
+  }
   while (1) {
     switch (getch()) {
       case 'r':
+        nodelay(stdscr, 0);
         return 1;
       case 'q':
         return 0;
@@ -245,7 +296,7 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
 
     if (move_made) {
       if (check_win_condition(piles)) {
-        return ui_victory(piles);
+        return ui_victory(piles, theme);
       }
       move_made = 0;
     }
