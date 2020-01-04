@@ -78,7 +78,7 @@ Press <kbd>Q</kbd> to quit.
 
 ## Mouse
 
-
+In terminals with mouse support it's possible to select cards using the left mouse button (same as <kbd>SPACE</kbd>) and to move cards using the right mouse button (same as <kbd>M</kbd>).
 
 ## Configuration
 
