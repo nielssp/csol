@@ -8,6 +8,7 @@
 #include <ncurses.h>
 #include <locale.h>
 #include <time.h>
+#include <ctype.h>
 
 #include "ui.h"
 #include "card.h"
@@ -202,6 +203,26 @@ void print_pile(Pile *pile, Theme *theme) {
   }
 }
 
+static void ui_message(const char *format, ...) {
+  va_list va;
+  move(0, 0);
+  clrtoeol();
+  va_start(va, format);
+  move(0, 0);
+  vw_printw(stdscr, format, va);
+  va_end(va);
+}
+
+static int ui_confirm(const char *message) {
+  ui_message("%s (Y/N)", message);
+  switch (getch()) {
+    case 'y': case 'Y':
+      return 1;
+    default:
+      return 0;
+  }
+}
+
 static void ui_victory_banner(int y, int x) {
   attron(COLOR_PAIR(COLOR_PAIR_BACKGROUND));
   mvprintw(y    , x, "**************************************");
@@ -362,6 +383,14 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
         }
         if (cur_y > max_y) cur_y = max_y;
         break;
+      case 'H':
+      case 393: // shift-left
+        cur_x = 0;
+        break;
+      case 'L':
+      case 402: // shift-right
+        cur_x = max_x;
+        break;
       case ' ':
         if (cursor_card) {
           if (!(cursor_card->suit & BOTTOM)) {
@@ -372,6 +401,8 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
                   clear();
                   selection = NULL;
                   selection_pile = NULL;
+                } else {
+                  ui_message(get_move_error());
                 }
               } else {
                 selection = cursor_card;
@@ -381,6 +412,8 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
               if (move_to_waste(cursor_card, cursor_pile, piles)) {
                 move_made = 1;
                 clear();
+              } else {
+                ui_message(get_move_error());
               }
             } else {
               turn_card(cursor_card);
@@ -390,19 +423,42 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
               move_made = 1;
               clear();
             } else {
-              mvprintw(0, 0, "no more redeals");
+              ui_message(get_move_error());
             }
           }
         }
         break;
+      case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9': {
+        int cell_i = ch - '0';
+        for (Pile *pile = piles; pile; pile = pile->next) {
+          if (pile->rule->type == RULE_CELL) {
+            cell_i--;
+            if (!cell_i) {
+              Card *src = get_top(pile->stack);
+              if (cursor_pile && NOT_BOTTOM(src)) {
+                if (legal_move_stack(cursor_pile, src, pile, piles)) {
+                  move_made = 1;
+                  clear();
+                } else {
+                  ui_message(get_move_error());
+                }
+              }
+              break;
+            }
+          }
+        }
+        break;
+      }
       case 'm':
       case 10: // enter
         if (selection && cursor_pile) {
-          if (legal_move_stack(cursor_pile, selection, selection_pile)) {
+          if (legal_move_stack(cursor_pile, selection, selection_pile, piles)) {
             move_made = 1;
             clear();
             selection = NULL;
             selection_pile = NULL;
+          } else {
+            ui_message(get_move_error());
           }
         }
         break;
@@ -431,7 +487,11 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
         clear();
         break;
       case 'r':
-        return 1;
+        if (ui_confirm("Redeal?")) {
+          return 1;
+        }
+        clear();
+        break;
       case 'q':
         return 0;
       case KEY_MOUSE:
@@ -446,7 +506,14 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
         }
         break;
       default:
-        mvprintw(0, 0, "%d", ch);
+        if (isgraph(ch)) {
+          ui_message("Unbound key: %c", ch);
+        } else if (ch < ' ') {
+          ui_message("Unbound key: ^%c", '@' + ch);
+        } else {
+          ui_message("Unbound key: (%d)", ch);
+        }
+        break;
     }
   }
   return 0;

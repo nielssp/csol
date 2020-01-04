@@ -38,6 +38,8 @@ struct move *redo_moves = NULL;
 
 int move_counter = 0;
 
+char *move_error = NULL;
+
 Game *new_game() {
   Game *game = malloc(sizeof(Game));
   game->name = NULL;
@@ -320,6 +322,14 @@ int check_stack(Card *stack, GameRuleSuit suit, GameRuleRank rank) {
     check_next_rank(stack, stack->prev, rank) && check_stack(stack->next, suit, rank);
 }
 
+char *get_move_error() {
+  char *error = move_error;
+  if (!error) {
+    error = "";
+  }
+  move_error = NULL;
+  return error;
+}
 
 void clear_redo_history() {
   while (redo_moves) {
@@ -416,40 +426,74 @@ void redo_move() {
   do_move(&redo_moves, &undo_moves, 1);
 }
 
+int count_free_cells(Pile *piles) {
+  int n = 0;
+  for (Pile *dest = piles; dest; dest = dest->next) {
+    if (dest->rule->type == RULE_CELL && !dest->stack->next) {
+      n++;
+    }
+  }
+  return n;
+}
 
-int legal_move_stack(Pile *dest, Card *src, Pile *src_pile) {
+int legal_move_stack(Pile *dest, Card *src, Pile *src_pile, Pile *piles) {
   if (get_bottom(src) == get_bottom(dest->stack)) {
     return 0;
   }
   if (dest->rule->from != RULE_ANY && dest->rule->from != src_pile->rule->type) {
+    move_error = "Invalid destination";
     return 0;
   }
   if (dest->rule->move_group == MOVE_ONE && src->next) {
-    return 0;
+    int free_cells = count_free_cells(piles);
+    if (!free_cells) {
+      move_error = "Not allowed to move multiple cards";
+      return 0;
+    }
+    int required_cells = 0;
+    for (Card *c = src->next; c; c = c->next) {
+      required_cells++;
+    }
+    if (required_cells > free_cells) {
+      move_error = "Not enough free cells";
+      return 0;
+    }
+    if (!check_stack(src->next, dest->rule->next_suit, dest->rule->next_rank)) {
+      move_error = "Invalid sequence";
+      return 0;
+    }
   }
   if (dest->rule->move_group == MOVE_GROUP && src->next && !check_stack(src->next, dest->rule->next_suit, dest->rule->next_rank)) {
+    move_error = "Invalid sequence";
     return 0;
   }
   if (dest->stack->next) {
     Card *top = get_top(dest->stack);
     if (!top->up) {
+      move_error = "Invalid destination";
       return 0;
     }
     if (!check_next_suit(src, top, dest->rule->next_suit) || !check_next_rank(src, top, dest->rule->next_rank)) {
+      move_error = "Invalid sequence";
       return 0;
     }
     record_location(src);
     top->next = src;
-    if (src->prev) src->prev->next = NULL;
+    if (src->prev) {
+      src->prev->next = NULL;
+    }
     src->prev = top;
     return 1;
   } else {
     if (!check_first_suit(src, dest->rule->first_suit) || !check_first_rank(src, dest->rule->first_rank)) {
+      move_error = "Invalid destination";
       return 0;
     }
     record_location(src);
     dest->stack->next = src;
-    if (src->prev) src->prev->next = NULL;
+    if (src->prev){
+      src->prev->next = NULL;
+    }
     src->prev = dest->stack;
     return 1;
   }
@@ -458,7 +502,7 @@ int legal_move_stack(Pile *dest, Card *src, Pile *src_pile) {
 int move_to_waste(Card *card, Pile *stock, Pile *piles) {
   for (Pile *dest = piles; dest; dest = dest->next) {
     if (dest->rule->type == RULE_WASTE) {
-      if (legal_move_stack(dest, card, stock)) {
+      if (legal_move_stack(dest, card, stock, piles)) {
         card->up = 1;
         return 1;
       }
@@ -483,13 +527,14 @@ int redeal(Pile *stock, Pile *piles) {
       }
     }
   }
+  move_error = "No more redeals";
   return 0;
 }
 
 int move_to_foundation(Card *src, Pile *src_pile, Pile *piles) {
   for (Pile *dest = piles; dest; dest = dest->next) {
     if (dest->rule->type == RULE_FOUNDATION) {
-      if (legal_move_stack(dest, src, src_pile)) {
+      if (legal_move_stack(dest, src, src_pile, piles)) {
         return 1;
       }
     }
@@ -500,7 +545,7 @@ int move_to_foundation(Card *src, Pile *src_pile, Pile *piles) {
 int move_to_free_cell(Card *src, Pile *src_pile, Pile *piles) {
   for (Pile *dest = piles; dest; dest = dest->next) {
     if (dest->rule->type == RULE_CELL) {
-      if (legal_move_stack(dest, src, src_pile)) {
+      if (legal_move_stack(dest, src, src_pile, piles)) {
         return 1;
       }
     }
@@ -518,7 +563,7 @@ int auto_move_to_foundation(Pile *piles) {
         } else {
           for (Pile *dest = piles; dest; dest = dest->next) {
             if (dest->rule->type == RULE_FOUNDATION) {
-              if (legal_move_stack(dest, src_card, src)) {
+              if (legal_move_stack(dest, src_card, src, piles)) {
                 return 1;
               }
             }
