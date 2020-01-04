@@ -577,6 +577,8 @@ GameRuleMove read_move_rule(FILE *file) {
     move = MOVE_ANY;
   } else if (strcmp(symbol, "group") == 0) {
     move = MOVE_GROUP;
+  } else if (strcmp(symbol, "one") == 0) {
+    move = MOVE_ONE;
   }
   free(symbol);
   return move;
@@ -595,6 +597,8 @@ GameRuleType read_from_rule(FILE *file) {
     type = RULE_STOCK;
   } else if (strcmp(symbol, "waste") == 0) {
     type = RULE_WASTE;
+  } else if (strcmp(symbol, "any") == 0) {
+    type = RULE_ANY;
   }
   free(symbol);
   return type;
