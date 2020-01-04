@@ -1,5 +1,5 @@
 project(csol)
-set(CSOL_VERSION "1.1.0")
+set(CSOL_VERSION "1.2.0")
 
 cmake_minimum_required(VERSION 2.8)
 
