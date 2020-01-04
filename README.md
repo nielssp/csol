@@ -218,18 +218,18 @@ repeat 3 {
 
 The following command can be used in a rule block:
 
-* `x`: horizontal position of the pile.
-* `y`: vertical position of the pile.
-* `deal`: number of cards to initially deal to the pile.
-* `redeal`: maximum number of redeals (for `stock`-pile). 0 for unlimited.
-* `hide`: number of cards to initially deal face-down. If the number is negative, i.e. `hide -n`, then all cards are hidden except the top n cards.
-* `first_rank`: rank of first card in pile (see below for possible values).
-* `first_suit`: suit of first card in pile (see below for possible values).
-* `next_rank`: rank of next card in pile (see below for possible values).
-* `next_suit`: suit of next card in pile (see below for possible values).
-  `move_group`: whether it's possible to move a valid sequence (`group`), any sequence (`any`), or just single cards (`one`).
-  `from`: which pile to accept cards from: `foundation`, `cell`, `tableau`, `stock`, `waste`, or `any`.
-* `win_rank`: the game is won when the top card of all foundations is of this rank (see below for possible values).
+* `x`: horizontal position of the pile (default: 0).
+* `y`: vertical position of the pile (default: 0).
+* `deal`: number of cards to initially deal to the pile (default: 0).
+* `redeal`: maximum number of redeals (for `stock`-pile). -1 for unlimited (default -1).
+* `hide`: number of cards to initially deal face-down. If the number is negative, i.e. `hide -n`, then all cards are hidden except the top n cards (default 0).
+* `first_rank`: rank of first card in pile (see below for possible values) (default: `ace` if foundation, `none` if stock, `any` otherwise).
+* `first_suit`: suit of first card in pile (see below for possible values) (default: `same` if foundation, `none` if stock, `any` otherwise).
+* `next_rank`: rank of next card in pile (see below for possible values) (default: `up` if foundation, `down` if tableau, `none` if stock or cell, `any` otherwise).
+* `next_suit`: suit of next card in pile (see below for possible values) (default: `same` if foundation, `any` if tableau, `none` if stock or cell, `any` otherwise).
+  `move_group`: whether it's possible to move a valid sequence (`group`), any sequence (`any`), or just single cards (`one`, default).
+  `from`: which pile to accept cards from: `foundation`, `cell`, `tableau`, `stock`, `waste`, or `any` (default: `stock` if waste, `any` otherwise).
+* `win_rank`: the game is won when the top card of all foundations is of this rank (see below for possible values) (default: `king` if foundation, `none` otherwise).
 
 The following values can be used with commands that expect a rank:
 
