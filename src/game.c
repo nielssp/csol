@@ -429,7 +429,8 @@ void redo_move() {
 int count_free_cells(Pile *piles) {
   int n = 0;
   for (Pile *dest = piles; dest; dest = dest->next) {
-    if (dest->rule->type == RULE_CELL && !dest->stack->next) {
+    if (dest->rule->type == RULE_CELL && dest->rule->first_rank == RANK_ANY
+        && dest->rule->first_suit == SUIT_ANY && !dest->stack->next) {
       n++;
     }
   }
