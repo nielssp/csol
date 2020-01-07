@@ -52,6 +52,8 @@ Layout init_layout() {
     .top = NULL,
     .middle = NULL,
     .bottom = NULL,
+    .left_padding = 1,
+    .right_padding = 1,
     .text_fields = NULL
   };
 }

@@ -64,6 +64,8 @@ typedef enum {
   K_Y_SPACING,
   K_X_MARGIN,
   K_Y_MARGIN,
+  K_LEFT_PADDING,
+  K_RIGHT_PADDING,
   K_INCLUDE,
   K_GAME_DIR,
   K_THEME_DIR,
@@ -115,6 +117,8 @@ struct symbol layout_commands[] = {
   {"bottom", K_BOTTOM},
   {"fg", K_FG},
   {"bg", K_BG},
+  {"left_padding", K_LEFT_PADDING},
+  {"right_padding", K_RIGHT_PADDING},
   {NULL, K_UNDEFINED}
 };
 
@@ -407,6 +411,12 @@ Layout define_layout(FILE *file) {
         break;
       case K_BG:
         layout.color.bg = read_int(file);
+        break;
+      case K_LEFT_PADDING:
+        layout.left_padding = read_int(file);
+        break;
+      case K_RIGHT_PADDING:
+        layout.right_padding = read_int(file);
         break;
       default:
         break;

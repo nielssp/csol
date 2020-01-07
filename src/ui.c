@@ -111,23 +111,28 @@ void print_card(int y, int x, Card *card, int full, Theme *theme) {
     attron(COLOR_PAIR(COLOR_PAIR_EMPTY));
     print_layout(y, x, card, theme->empty_layout, full, theme);
     if (card->rank > 0) {
-      print_card_name_l(y, x + 1, card, theme);
+      print_card_name_l(y, x + theme->empty_layout.left_padding, card, theme);
     }
   } else if (!card->up) {
     attron(COLOR_PAIR(COLOR_PAIR_BACK));
     print_layout(y, x, card, theme->back_layout, full, theme);
   } else {
+    int left_padding, right_padding;
     if (card->suit & RED) {
       attron(COLOR_PAIR(COLOR_PAIR_RED));
       print_layout(y, x, card, theme->red_layout, full, theme);
+      left_padding = theme->red_layout.left_padding;
+      right_padding = theme->red_layout.right_padding;
     } else {
       attron(COLOR_PAIR(COLOR_PAIR_BLACK));
       print_layout(y, x, card, theme->black_layout, full, theme);
+      left_padding = theme->black_layout.left_padding;
+      right_padding = theme->black_layout.right_padding;
     }
     if (full && theme->height > 1) {
-      print_card_name_r(y + theme->height - 1, x + theme->width - 2, card, theme);
+      print_card_name_r(y + theme->height - 1, x + theme->width - (right_padding - 1), card, theme);
     }
-    print_card_name_l(y, x + 1, card, theme);
+    print_card_name_l(y, x + left_padding, card, theme);
   }
   attroff(A_REVERSE);
 }

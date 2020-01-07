@@ -48,6 +48,8 @@ struct layout {
   char *top;
   char *middle;
   char *bottom;
+  int left_padding;
+  int right_padding;
   Text *text_fields;
 };
 
