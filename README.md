@@ -47,6 +47,18 @@ Russian Solitaire: `csol russian`
 
 ![ascii](themes/ascii.png)
 
+`csol -t compact`
+
+![ascii](themes/compact.png)
+
+`csol -t compact-ascii`
+
+![ascii](themes/compact-ascii.png)
+
+`csol -t ultracompact`
+
+![ascii](themes/ultracompact.png)
+
 ## Options
 
 * `--version`/`-v`: Show version
