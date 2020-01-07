@@ -130,7 +130,7 @@ void print_card(int y, int x, Card *card, int full, Theme *theme) {
       right_padding = theme->black_layout.right_padding;
     }
     if (full && theme->height > 1) {
-      print_card_name_r(y + theme->height - 1, x + theme->width - (right_padding - 1), card, theme);
+      print_card_name_r(y + theme->height - 1, x + theme->width - (right_padding + 1), card, theme);
     }
     print_card_name_l(y, x + left_padding, card, theme);
   }
