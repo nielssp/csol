@@ -16,6 +16,7 @@
 #include <ctype.h>
 
 #include "ui.h"
+#include "rc.h"
 #include "card.h"
 #include "theme.h"
 
@@ -620,5 +621,23 @@ void ui_main(Game *game, Theme *theme, int enable_color, unsigned int seed) {
     }
   }
 
+  endwin();
+}
+
+void ui_list_colors() {
+  int i;
+  initscr();
+  start_color();
+  for (i = 0; i < 16; i++) {
+    init_pair(i * 2, i, 0);
+    init_pair(i * 2 + 1, 0, i);
+    attron(COLOR_PAIR(i * 2));
+    printw(" fg %2d ", i);
+    attron(COLOR_PAIR(i * 2 + 1));
+    printw(" bg %2d ", i);
+    attroff(COLOR_PAIR(i * 2 + 1));
+    printw(" %s \n", color_names[i].symbol);
+  }
+  getch();
   endwin();
 }

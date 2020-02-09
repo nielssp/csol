@@ -171,6 +171,8 @@ theme {
 `fg` and `bg` are used to set the foreground and background colors used to draw the background and cards.
 The two commands expect a color index. The colors assigned to each index depends on the terminal and color scheme of the terminal, but often the values 0&ndash;7 are assigned to black, red, green, yellow, blue, magenta, cyan and white and the values 8&ndash;15 are assigned to brighter versions of those colors.
 
+The following constants are also available: `black`, `blue`, `green`, `cyan`, `red`, `magenta`, `yellow`, `white`, `bright_black`, `bright_blue`, `bright_green`, `bright_cyan`, `bright_red`, `bright_magenta`, `bright_yellow`, `bright_white`.
+
 In some terminals it is also possible to redefine colors using the `color`-command. This command takes 4 arguments. The first arguments is the color index to redefine, the following three arguments are thre red/green/blue values for the color in the range 0&ndash;1000.
 
 

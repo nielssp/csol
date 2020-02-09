@@ -7,22 +7,36 @@
 #ifndef CARD_H
 #define CARD_H
 
-#define HEART 2
-#define DIAMOND 10
-#define SPADE 4
-#define CLUB 12
+/* Card suit bit masks:
+ *
+ * BOTTOM:     00000001
+ * TABLEAU:    00001001
+ * FOUNDATION: 00010001
+ *
+ * RED:        00000010
+ * HEART:      00000010
+ * DIAMOND:    00001010
+ *
+ * BLACK:      00000100
+ * SPADE:      00000100
+ * CLUB:       00001100
+ */
+#define BOTTOM     0x01
+#define TABLEAU    0x09
+#define FOUNDATION 0x11
 
-#define TABLEAU 9
-#define FOUNDATION 17
+#define RED        0x02
+#define HEART      0x02
+#define DIAMOND    0x0A
 
-#define BOTTOM 1
-#define RED 2
-#define BLACK 4
+#define BLACK      0x04
+#define SPADE      0x04
+#define CLUB       0x0C
 
-#define ACE 1
-#define JACK 11
+#define ACE    1
+#define JACK  11
 #define QUEEN 12
-#define KING 13
+#define KING  13
 
 #define IS_BOTTOM(card) ((card)->suit & BOTTOM)
 #define NOT_BOTTOM(card) (!((card)->suit & BOTTOM))

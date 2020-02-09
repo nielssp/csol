@@ -23,7 +23,7 @@
 #include "ui.h"
 #include "util.h"
 
-const char *short_options = "hvlt:Tms:c:";
+const char *short_options = "hvlt:Tms:c:C";
 
 #ifdef POSIX
 const struct option long_options[] = {
@@ -35,11 +35,12 @@ const struct option long_options[] = {
   {"mono", no_argument, NULL, 'm'},
   {"seed", required_argument, NULL, 's'},
   {"config", required_argument, NULL, 'c'},
+  {"colors", no_argument, NULL, 'C'},
   {0, 0, 0, 0}
 };
 #endif
 
-enum action { PLAY, LIST_GAMES, LIST_THEMES };
+enum action { PLAY, LIST_GAMES, LIST_THEMES, LIST_COLORS };
 
 void describe_option(const char *short_option, const char *long_option, const char *description) {
 #ifdef POSIX
@@ -143,6 +144,7 @@ int main(int argc, char *argv[]) {
         describe_option("m", "mono", "Disable colors.");
         describe_option("s <seed>", "seed <seed>", "Select seed.");
         describe_option("c <file>", "config <file>", "Select configuration file.");
+        describe_option("C", "colors", "List colors");
         return 0;
       case 'v':
         puts("csol " CSOL_VERSION);
@@ -164,6 +166,9 @@ int main(int argc, char *argv[]) {
         break;
       case 'c':
         rc_file = optarg;
+        break;
+      case 'C':
+        action = LIST_COLORS;
         break;
 
     }
@@ -209,6 +214,9 @@ int main(int argc, char *argv[]) {
       }
       break;
     }
+    case LIST_COLORS:
+      ui_list_colors();
+      break;
     case PLAY:
       if (theme_name == NULL) {
         theme_name = get_property("default_theme");

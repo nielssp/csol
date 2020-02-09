@@ -85,7 +85,8 @@ struct symbol root_commands[] = {
   {"theme_dir", K_THEME_DIR},
   {"game_dir", K_GAME_DIR},
   {"default_game", K_DEFAULT_GAME},
-  {"default_theme", K_DEFAULT_THEME}
+  {"default_theme", K_DEFAULT_THEME},
+  {NULL, K_UNDEFINED}
 };
 
 struct symbol theme_commands[] ={
@@ -148,6 +149,45 @@ struct symbol game_rule_commands[] ={
   {"from", K_FROM},
   {"win_rank", K_WIN_RANK},
   {NULL, K_UNDEFINED}
+};
+
+struct color_name color_names[] = {
+#if defined(MSDOS) || defined(_WIN32)
+  {"black", 0},
+  {"blue", 1},
+  {"green", 2},
+  {"cyan", 3},
+  {"red", 4},
+  {"magenta", 5},
+  {"yellow", 6},
+  {"white", 7},
+  {"bright_black", 8},
+  {"bright_blue", 9},
+  {"bright_green", 10},
+  {"bright_cyan", 11},
+  {"bright_red", 12},
+  {"bright_magenta", 13},
+  {"bright_yellow", 14},
+  {"bright_white", 15},
+#else
+  {"black", 0},
+  {"red", 1},
+  {"green", 2},
+  {"yellow", 3},
+  {"blue", 4},
+  {"magenta", 5},
+  {"cyan", 6},
+  {"white", 7},
+  {"bright_black", 8},
+  {"bright_red", 9},
+  {"bright_green", 10},
+  {"bright_yellow", 11},
+  {"bright_blue", 12},
+  {"bright_magenta", 13},
+  {"bright_cyan", 14},
+  {"bright_white", 15},
+#endif
+  {NULL, -1}
 };
 
 struct property {
@@ -325,7 +365,7 @@ void redefine_property(char **property, FILE *file) {
 }
 
 int read_int(FILE *file) {
-  char c;
+  int c;
   int sign, value;
   skip_whitespace(file);
   c = read_char(file);
@@ -360,6 +400,31 @@ int read_expr(FILE *file, int index) {
     increment = 1;
   }
   return value + increment * index;
+}
+
+int read_color(FILE *file) {
+  int c;
+  struct color_name *color;
+  char *keyword;
+  skip_whitespace(file);
+  c = read_char(file);
+  unread_char(c, file);
+  if (isdigit(c)) {
+    return read_int(file);
+  }
+  keyword = read_symbol(file);
+  if (!keyword) {
+    return -1;
+  }
+  for (color = color_names; color_names->symbol; color++) {
+    if (strcmp(color->symbol, keyword) == 0) {
+      free(keyword);
+      return color->color;
+    }
+  }
+  rc_error("undefined keyword: %s", keyword);
+  free(keyword);
+  return -1;
 }
 
 Keyword read_command(FILE *file, struct symbol *commands) {
@@ -416,10 +481,10 @@ Layout define_layout(FILE *file) {
         redefine_property(&layout.bottom, file);
         break;
       case K_FG:
-        layout.color.fg = read_int(file);
+        layout.color.fg = read_color(file);
         break;
       case K_BG:
-        layout.color.bg = read_int(file);
+        layout.color.bg = read_color(file);
         break;
       case K_LEFT_PADDING:
         layout.left_padding = read_int(file);

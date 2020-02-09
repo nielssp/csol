@@ -9,22 +9,22 @@ theme {
   height 1
   empty {
     top    -----
-    fg 2
-    bg 0
+    fg green
+    bg black
   }
   back {
     top    [===]
-    fg 4
-    bg 0
+    fg blue
+    bg black
   }
   red {
     top    [   ]
-    fg 1
-    bg 0
+    fg red
+    bg black
   }
   black {
     top    [   ]
-    fg 7
-    bg 0
+    fg white
+    bg black
   }
 }

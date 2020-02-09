@@ -11,5 +11,6 @@
 #include "theme.h"
 
 void ui_main(Game *game, Theme *theme, int enable_color, unsigned int seed);
+void ui_list_colors();
 
 #endif

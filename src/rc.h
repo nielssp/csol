@@ -7,6 +7,13 @@
 #ifndef RC_H
 #define RC_H
 
+struct color_name {
+  char *symbol;
+  int color;
+};
+
+extern struct color_name color_names[];
+
 int execute_file(const char *file);
 
 char *get_property(const char *name);

@@ -11,25 +11,25 @@ theme {
   y_spacing 0
   empty {
     top    --
-    fg 2
-    bg 0
+    fg green
+    bg black
     left_padding 0
   }
   back {
     top    []
-    fg 4
-    bg 0
+    fg blue
+    bg black
   }
   red {
     top   "   "
-    fg 1
-    bg 0
+    fg red
+    bg black
     left_padding 0
   }
   black {
     top   "   "
-    fg 7
-    bg 0
+    fg white
+    bg black
     left_padding 0
   }
 }

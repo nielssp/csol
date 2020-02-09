@@ -11,28 +11,28 @@ theme {
     top    ┌──────┐
     middle │      │
     bottom └──────┘
-    fg 7
-    bg 0
+    fg white
+    bg black
   }
   back {
     top    ┌──────┐
     middle │      │
     bottom └──────┘
-    fg 7
-    bg 4
+    fg white
+    bg blue
   }
   red {
     top    ┌──────┐
     middle │      │
     bottom └──────┘
-    fg 1
-    bg 7
+    fg red
+    bg white
   }
   black {
     top    ┌──────┐
     middle │      │
     bottom └──────┘
-    fg 0
-    bg 7
+    fg black
+    bg white
   }
 }
