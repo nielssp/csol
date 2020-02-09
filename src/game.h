@@ -91,6 +91,8 @@ struct game_rule {
   GameRuleMove move_group;
   GameRuleType from;
   GameRuleRank win_rank;
+  short class;
+  GameRule *same_class;
 };
 
 struct pile {

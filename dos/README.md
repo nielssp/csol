@@ -27,5 +27,6 @@ Can be compiled using:
 - Run it: `..\AUTOEXEC.BAT`
 - Then go to the directory containing the DOS makefiles for PDCurses: `CD PDCURSES\DOS`
 - Compile PDCurses: `wmake -f Makefile.wcc`
+- Return to the dos directory: `cd \dos`
 - Compile csol: `wmake`
 - You can now run csol from the current directory: `csol`

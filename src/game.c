@@ -69,6 +69,8 @@ GameRule *new_game_rule(GameRuleType type) {
   rule->move_group = MOVE_ONE;
   rule->from = RULE_ANY;
   rule->win_rank = RANK_NONE;
+  rule->class = 0;
+  rule->same_class = NULL;
   switch (type) {
     case RULE_FOUNDATION:
       rule->first_rank = RANK_ACE;
@@ -464,14 +466,18 @@ int count_free_cells(Pile *piles) {
 }
 
 int legal_move_stack(Pile *dest, Card *src, Pile *src_pile, Pile *piles) {
+  GameRule *rule = dest->rule;
   if (get_bottom(src) == get_bottom(dest->stack)) {
     return 0;
   }
-  if (dest->rule->from != RULE_ANY && dest->rule->from != src_pile->rule->type) {
+  if (rule->class == src_pile->rule->class && rule->same_class) {
+    rule = rule->same_class;
+  }
+  if (rule->from != RULE_ANY && rule->from != src_pile->rule->type) {
     move_error = "Invalid destination";
     return 0;
   }
-  if (dest->rule->move_group == MOVE_ONE && src->next) {
+  if (rule->move_group == MOVE_ONE && src->next) {
     int free_cells = count_free_cells(piles);
     int required_cells;
     Card *c;
@@ -487,12 +493,12 @@ int legal_move_stack(Pile *dest, Card *src, Pile *src_pile, Pile *piles) {
       move_error = "Not enough free cells";
       return 0;
     }
-    if (!check_stack(src->next, dest->rule->next_suit, dest->rule->next_rank)) {
+    if (!check_stack(src->next, rule->next_suit, rule->next_rank)) {
       move_error = "Invalid sequence";
       return 0;
     }
   }
-  if (dest->rule->move_group == MOVE_GROUP && src->next && !check_stack(src->next, dest->rule->next_suit, dest->rule->next_rank)) {
+  if (rule->move_group == MOVE_GROUP && src->next && !check_stack(src->next, rule->next_suit, rule->next_rank)) {
     move_error = "Invalid sequence";
     return 0;
   }
@@ -502,7 +508,7 @@ int legal_move_stack(Pile *dest, Card *src, Pile *src_pile, Pile *piles) {
       move_error = "Invalid destination";
       return 0;
     }
-    if (!check_next_suit(src, top, dest->rule->next_suit) || !check_next_rank(src, top, dest->rule->next_rank)) {
+    if (!check_next_suit(src, top, rule->next_suit) || !check_next_rank(src, top, rule->next_rank)) {
       move_error = "Invalid sequence";
       return 0;
     }
@@ -514,7 +520,7 @@ int legal_move_stack(Pile *dest, Card *src, Pile *src_pile, Pile *piles) {
     src->prev = top;
     return 1;
   } else {
-    if (!check_first_suit(src, dest->rule->first_suit) || !check_first_rank(src, dest->rule->first_rank)) {
+    if (!check_first_suit(src, rule->first_suit) || !check_first_rank(src, rule->first_rank)) {
       move_error = "Invalid destination";
       return 0;
     }

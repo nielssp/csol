@@ -35,6 +35,10 @@ Russian Solitaire: `csol russian`
 
 ![Russian Solitaire](games/russian.png)
 
+Yukon Freecell: `csol yukonfc`
+
+![Yukon Freecell](games/yukonfc.png)
+
 ## Themes
 
 `csol -t default`
@@ -171,9 +175,9 @@ theme {
 `fg` and `bg` are used to set the foreground and background colors used to draw the background and cards.
 The two commands expect a color index. The colors assigned to each index depends on the terminal and color scheme of the terminal, but often the values 0&ndash;7 are assigned to black, red, green, yellow, blue, magenta, cyan and white and the values 8&ndash;15 are assigned to brighter versions of those colors.
 
-The following constants are also available: `black`, `blue`, `green`, `cyan`, `red`, `magenta`, `yellow`, `white`, `bright_black`, `bright_blue`, `bright_green`, `bright_cyan`, `bright_red`, `bright_magenta`, `bright_yellow`, `bright_white`.
+The following constants are also available: `black`, `blue`, `green`, `cyan`, `red`, `magenta`, `yellow`, `white`, `bright_black`, `bright_blue`, `bright_green`, `bright_cyan`, `bright_red`, `bright_magenta`, `bright_yellow`, and `bright_white`.
 
-In some terminals it is also possible to redefine colors using the `color`-command. This command takes 4 arguments. The first arguments is the color index to redefine, the following three arguments are thre red/green/blue values for the color in the range 0&ndash;1000.
+In some terminals it is also possible to redefine colors using the `color`-command. This command takes 4 arguments. The first arguments is the color index to redefine, the following three arguments are the red/green/blue values for the color in the range 0&ndash;1000.
 
 
 ### Games
@@ -241,13 +245,16 @@ The following command can be used in a rule block:
 * `first_suit`: suit of first card in pile (see below for possible values) (default: `same` if foundation, `none` if stock, `any` otherwise).
 * `next_rank`: rank of next card in pile (see below for possible values) (default: `up` if foundation, `down` if tableau, `none` if stock or cell, `any` otherwise).
 * `next_suit`: suit of next card in pile (see below for possible values) (default: `same` if foundation, `any` if tableau, `none` if stock or cell, `any` otherwise).
-  `move_group`: whether it's possible to move a valid sequence (`group`), any sequence (`any`), or just single cards (`one`, default).
-  `from`: which pile to accept cards from: `foundation`, `cell`, `tableau`, `stock`, `waste`, or `any` (default: `stock` if waste, `any` otherwise).
+* `move_group`: whether it's possible to move a valid sequence (`group`), any sequence (`any`), or just single cards (`one`, default).
+* `from`: which pile to accept cards from: `foundation`, `cell`, `tableau`, `stock`, `waste`, or `any` (default: `stock` if waste, `any` otherwise).
 * `win_rank`: the game is won when the top card of all foundations is of this rank (see below for possible values) (default: `king` if foundation, `none` otherwise).
+* `class`: an integer. Can be used to group together several game rules (default: 0).
+* `same_class`: a rule block that applies only when the class of the source and destination is the same.
 
 The following values can be used with commands that expect a rank:
 
 * `any`: any rank
+* `none`: no cards allowed
 * `a`/`2`/`3`/`4`/`5`/`6`/`7`/`8`/`9`/`10`/`j`/`q`/`k`: exact rank
 * `same`: must be the same rank as the card below
 * `down`: must be exactly one rank lower than the card below
@@ -259,6 +266,7 @@ The following values can be used with commands that expect a rank:
 The follwing values can be used with commands that expect a suit:
 
 * `any`: any suit
+* `none`: no cards allowed
 * `heart`/`diamond`/`spade`/`club`: exact suit
 * `red`/`black`: exact color
 * `same`: must be the same suit as the card below

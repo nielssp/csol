@@ -70,7 +70,9 @@ typedef enum {
   K_GAME_DIR,
   K_THEME_DIR,
   K_DEFAULT_GAME,
-  K_DEFAULT_THEME
+  K_DEFAULT_THEME,
+  K_CLASS,
+  K_SAME_CLASS
 } Keyword;
 
 struct symbol {
@@ -148,6 +150,8 @@ struct symbol game_rule_commands[] ={
   {"move_group", K_MOVE_GROUP},
   {"from", K_FROM},
   {"win_rank", K_WIN_RANK},
+  {"class", K_CLASS},
+  {"same_class", K_SAME_CLASS},
   {NULL, K_UNDEFINED}
 };
 
@@ -730,6 +734,11 @@ GameRule *define_game_rule(FILE *file, GameRuleType type, int index) {
       case K_WIN_RANK:
         rule->win_rank = read_rank(file);
         break;
+      case K_CLASS:
+        rule->class = read_expr(file, index);
+        break;
+      case K_SAME_CLASS:
+        rule->same_class = define_game_rule(file, type, index);
       default:
         break;
     }

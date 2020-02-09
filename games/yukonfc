@@ -1,0 +1,42 @@
+game {
+  name yukonfc
+  title Yukon Freecell
+  repeat 4 {
+    foundation {
+      x 4+
+      first_rank a
+      next_suit same
+      next_rank up
+    }
+  }
+  repeat 4 {
+    tableau {
+      y 1
+      x 0+
+      deal 6
+      first_rank k
+      next_suit same
+      next_rank down
+      move_group any
+    }
+  }
+  repeat 4 {
+    tableau {
+      class 1
+      y 1
+      x 4+
+      deal 7
+      first_rank any
+      next_suit diff_color
+      next_rank down
+      move_group any
+      same_class {
+        first_rank any
+        next_suit diff_color
+        next_rank down
+        move_group none
+      }
+    }
+  }
+}
+
