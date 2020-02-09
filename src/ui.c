@@ -5,7 +5,8 @@
  */
 
 #include <stdlib.h>
-#ifdef MSDOS
+#if defined(MSDOS) || defined(_WIN32)
+#define MSDOS
 #include <curses.h>
 #else
 #include <ncurses.h>
@@ -378,7 +379,7 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
         if (cur_x > max_x) cur_x = max_x;
         break;
       case 'K':
-#ifdef DOS
+#ifdef MSDOS
       case 547: /* shift-up */
 #else
       case 337: /* shift-up */
@@ -402,7 +403,7 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
         if (cur_y < 0) cur_y = 0;
         break;
       case 'J':
-#ifdef DOS
+#ifdef MSDOS
       case 548: /* shift-down */
 #else
       case 336: /* shift-down */
@@ -419,7 +420,7 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
         if (cur_y > max_y) cur_y = max_y;
         break;
       case 'H':
-#ifdef DOS
+#ifdef MSDOS
       case 391: /* shift-left */
 #else
       case 393: /* shift-left */
@@ -427,7 +428,7 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
         cur_x = 0;
         break;
       case 'L':
-#ifdef DOS
+#ifdef MSDOS
       case 400: /* shift-right */
 #else
       case 402: /* shift-right */
@@ -551,7 +552,7 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
           cur_x = (mouse.x - theme->x_margin) / (theme->width + theme->x_spacing);
           if (mouse.bstate & BUTTON3_PRESSED) {
             mouse_action = 'm';
-          } else {
+          } else if (mouse.bstate & BUTTON1_PRESSED) {
             mouse_action = ' ';
           }
         }

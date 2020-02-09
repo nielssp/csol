@@ -29,4 +29,3 @@ Can be compiled using:
 - Compile PDCurses: `wmake -f Makefile.wcc`
 - Compile csol: `wmake`
 - You can now run csol from the current directory: `csol`
-- 
