@@ -18,6 +18,7 @@ typedef struct theme_list ThemeList;
 
 struct color {
   Color *next;
+  char *name;
   short index;
   short red;
   short green;
@@ -26,7 +27,9 @@ struct color {
 
 struct color_pair {
   short fg;
+  char *fg_name;
   short bg;
+  char *bg_name;
 };
 
 enum text_format {
@@ -81,7 +84,7 @@ struct theme_list {
 
 Theme *new_theme();
 Layout init_layout();
-void define_color(Theme *theme, short color, short red, short green, short blue);
+void define_color(Theme *theme, char *name, short index, short red, short green, short blue);
 
 void register_theme(Theme *theme);
 

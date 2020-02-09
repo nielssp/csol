@@ -155,45 +155,6 @@ struct symbol game_rule_commands[] ={
   {NULL, K_UNDEFINED}
 };
 
-struct color_name color_names[] = {
-#if defined(MSDOS) || defined(_WIN32)
-  {"black", 0},
-  {"blue", 1},
-  {"green", 2},
-  {"cyan", 3},
-  {"red", 4},
-  {"magenta", 5},
-  {"yellow", 6},
-  {"white", 7},
-  {"bright_black", 8},
-  {"bright_blue", 9},
-  {"bright_green", 10},
-  {"bright_cyan", 11},
-  {"bright_red", 12},
-  {"bright_magenta", 13},
-  {"bright_yellow", 14},
-  {"bright_white", 15},
-#else
-  {"black", 0},
-  {"red", 1},
-  {"green", 2},
-  {"yellow", 3},
-  {"blue", 4},
-  {"magenta", 5},
-  {"cyan", 6},
-  {"white", 7},
-  {"bright_black", 8},
-  {"bright_red", 9},
-  {"bright_green", 10},
-  {"bright_yellow", 11},
-  {"bright_blue", 12},
-  {"bright_magenta", 13},
-  {"bright_cyan", 14},
-  {"bright_white", 15},
-#endif
-  {NULL, -1}
-};
-
 struct property {
   char *name;
   char *value;
@@ -406,28 +367,15 @@ int read_expr(FILE *file, int index) {
   return value + increment * index;
 }
 
-int read_color(FILE *file) {
+int read_color(FILE *file, char **name) {
   int c;
-  struct color_name *color;
-  char *keyword;
   skip_whitespace(file);
   c = read_char(file);
   unread_char(c, file);
-  if (isdigit(c)) {
+  if (isdigit(c) || c == '-') {
     return read_int(file);
   }
-  keyword = read_symbol(file);
-  if (!keyword) {
-    return -1;
-  }
-  for (color = color_names; color_names->symbol; color++) {
-    if (strcmp(color->symbol, keyword) == 0) {
-      free(keyword);
-      return color->color;
-    }
-  }
-  rc_error("undefined keyword: %s", keyword);
-  free(keyword);
+  *name = read_symbol(file);
   return -1;
 }
 
@@ -485,10 +433,10 @@ Layout define_layout(FILE *file) {
         redefine_property(&layout.bottom, file);
         break;
       case K_FG:
-        layout.color.fg = read_color(file);
+        layout.color.fg = read_color(file, &layout.color.fg_name);
         break;
       case K_BG:
-        layout.color.bg = read_color(file);
+        layout.color.bg = read_color(file, &layout.color.bg_name);
         break;
       case K_LEFT_PADDING:
         layout.left_padding = read_int(file);
@@ -559,18 +507,32 @@ void define_theme(FILE *file) {
         theme->y_margin = read_int(file);
         break;
       case K_COLOR: {
-        short index = read_int(file);
-        short red = read_int(file);
-        short green = read_int(file);
-        short blue = read_int(file);
-        define_color(theme, index, red, green, blue);
+        char *name = NULL;
+        short index = 0;
+        short red, green, blue;
+        int c;
+        skip_whitespace(file);
+        c = read_char(file);
+        unread_char(c, file);
+        if (isdigit(c)) {
+          index = read_int(file);
+        } else {
+          name = read_symbol(file);
+          if (!name) {
+            break;
+          }
+        }
+        red = read_int(file);
+        green = read_int(file);
+        blue = read_int(file);
+        define_color(theme, name, index, red, green, blue);
         break;
       }
       case K_FG:
-        theme->background.fg = read_int(file);
+        theme->background.fg = read_color(file, &theme->background.fg_name);
         break;
       case K_BG:
-        theme->background.bg = read_int(file);
+        theme->background.bg = read_color(file, &theme->background.bg_name);
         break;
       default:
         break;

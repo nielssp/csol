@@ -43,7 +43,9 @@ Theme *new_theme() {
   theme->y_margin = 1;
   theme->colors = NULL;
   theme->background.fg = 7;
+  theme->background.fg_name = NULL;
   theme->background.bg = 0;
+  theme->background.bg_name = NULL;
   theme->empty_layout = init_layout();
   theme->back_layout = init_layout();
   theme->red_layout = init_layout();
@@ -54,7 +56,9 @@ Theme *new_theme() {
 Layout init_layout() {
   Layout l;
   l.color.fg = 7;
+  l.color.fg_name = NULL;
   l.color.bg = 0;
+  l.color.bg_name = NULL;
   l.top = NULL;
   l.middle = NULL;
   l.bottom = NULL;
@@ -64,9 +68,10 @@ Layout init_layout() {
   return l;
 }
 
-void define_color(Theme *theme, short index, short red, short green, short blue) {
+void define_color(Theme *theme, char *name, short index, short red, short green, short blue) {
   Color *color = malloc(sizeof(Color));
   color->next = theme->colors;
+  color->name = name;
   color->index = index;
   color->red = red;
   color->green = green;

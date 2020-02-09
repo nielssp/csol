@@ -77,6 +77,7 @@ Klondike Freecell: `csol klondikefc`
 * `--mono`/`-m`: Disable colors
 * `--seed <seed>`/`-s <seed>`: Seed the prng
 * `--config <file>`/`-c <file>`: Use a configuration file
+* `--colors`/`-C`: List colors available in the current terminal
 
 ## Keys
 
@@ -136,36 +137,36 @@ theme {
   y_spacing 1
   x_margin 2
   y_margin 1
-  color 20 0 500 0
-  bg 20
-  fg 0
+  color my_green 0 500 0
+  bg my_green
+  fg black
   empty {
     top    ┌────┐
     middle │    │
     bottom └────┘
-    fg 7
-    bg 20
+    fg white
+    bg my_green
   }
   back {
     top    ┌────┐
     middle │    │
     bottom └────┘
-    fg 7
-    bg 4
+    fg white
+    bg blue
   }
   red {
     top    ┌────┐
     middle │    │
     bottom └────┘
-    fg 1
-    bg 7
+    fg red
+    bg white
   }
   black {
     top    ┌────┐
     middle │    │
     bottom └────┘
-    fg 0
-    bg 7
+    fg black
+    bg white
   }
 }
 ```
@@ -181,12 +182,11 @@ theme {
 #### Colors
 
 `fg` and `bg` are used to set the foreground and background colors used to draw the background and cards.
-The two commands expect a color index. The colors assigned to each index depends on the terminal and color scheme of the terminal, but often the values 0&ndash;7 are assigned to black, red, green, yellow, blue, magenta, cyan and white and the values 8&ndash;15 are assigned to brighter versions of those colors.
+The two commands expect a color index or a color name. The colors assigned to each index depends on the terminal and color scheme of the terminal, but often the values 0&ndash;7 are assigned to black, red, green, yellow, blue, magenta, cyan and white and the values 8&ndash;15 are assigned to brighter versions of those colors.
 
-The following constants are also available: `black`, `blue`, `green`, `cyan`, `red`, `magenta`, `yellow`, `white`, `bright_black`, `bright_blue`, `bright_green`, `bright_cyan`, `bright_red`, `bright_magenta`, `bright_yellow`, and `bright_white`.
+The following named default colors are available: `default`, `black`, `blue`, `green`, `cyan`, `red`, `magenta`, `yellow`, `white`, `bright_black`, `bright_blue`, `bright_green`, `bright_cyan`, `bright_red`, `bright_magenta`, `bright_yellow`, and `bright_white`.
 
-In some terminals it is also possible to redefine colors using the `color`-command. This command takes 4 arguments. The first arguments is the color index to redefine, the following three arguments are the red/green/blue values for the color in the range 0&ndash;1000.
-
+In some terminals it is also possible to redefine colors using the `color`-command. This command takes 4 arguments. The first arguments is either the index of a color to redefine or a name, the following three arguments are the red/green/blue values for the color in the range 0&ndash;1000.
 
 ### Games
 
