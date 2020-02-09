@@ -1,0 +1,37 @@
+game {
+  name klondikefc
+  title Klondike Freecell
+  repeat 2 {
+    cell {
+      x 1+
+    }
+  }
+  repeat 4 {
+    foundation {
+      x 5+
+      first_rank a
+      next_suit same
+      next_rank up
+    }
+  }
+  repeat 8 {
+    tableau {
+      y 1
+      x 1+
+      deal 1+
+      first_rank any
+      next_suit diff_color
+      next_rank down
+    }
+  }
+  stock {
+    deal 52
+    y 1
+    redeal 0
+  }
+  waste {
+    y 2
+    from stock
+  }
+}
+

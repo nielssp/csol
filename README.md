@@ -39,6 +39,10 @@ Yukon Freecell: `csol yukonfc`
 
 ![Yukon Freecell](games/yukonfc.png)
 
+Klondike Freecell: `csol klondikefc`
+
+![Klondike Freecell](games/klondikefc.png)
+
 ## Themes
 
 `csol -t default`
@@ -85,6 +89,10 @@ Move the selected card to the tableau or foundaton under the cursor using <kbd>M
 If the card under the cursor is already selected, pressing <kbd>SPACE</kbd> again will move the card to a foundation or a free cell if possible.
 
 Press <kbd>A</kbd> to automatically move a card (from any tableau or cell) to a foundation if possible.
+
+Press <kbd>S</kbd> to move a card from the stock to the waste or redeal if stock is empty.
+
+Press <kbd>W</kbd> to move a card from the waste to the pile under the cursor.
 
 Press <kbd>1</kbd> &ndash; <kbd>9</kbd> to move a card from a cell to the tableau or foundation under cursor.
 

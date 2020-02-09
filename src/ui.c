@@ -495,6 +495,47 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
         }
         break;
       }
+      case 's': {
+        Pile *pile;
+        for (pile = piles; pile; pile = pile->next) {
+          if (pile->rule->type == RULE_STOCK) {
+            Card *src = get_top(pile->stack);
+            if (IS_BOTTOM(src)) {
+              if (redeal(pile, piles)) {
+                move_made = 1;
+                clear();
+              } else {
+                ui_message(get_move_error());
+              }
+            } else if (move_to_waste(src, pile, piles)) {
+              move_made = 1;
+              clear();
+            } else {
+              ui_message(get_move_error());
+            }
+            break;
+          }
+        }
+        break;
+      }
+      case 'w': {
+        Pile *pile;
+        for (pile = piles; pile; pile = pile->next) {
+          if (pile->rule->type == RULE_WASTE) {
+            Card *src = get_top(pile->stack);
+            if (cursor_pile && NOT_BOTTOM(src)) {
+              if (legal_move_stack(cursor_pile, src, pile, piles)) {
+                move_made = 1;
+                clear();
+              } else {
+                ui_message(get_move_error());
+              }
+            }
+            break;
+          }
+        }
+        break;
+      }
       case 'm':
       case 10: /* enter */
       case 13: /* enter */
