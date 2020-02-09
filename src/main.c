@@ -4,10 +4,14 @@
  * See the LICENSE file or http://opensource.org/licenses/MIT for more information.
  */
 
-#define _GNU_SOURCE
+#define _XOPEN_SOURCE 500
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef POSIX
 #include <getopt.h>
+#else
+#include <unistd.h>
+#endif
 #include <string.h>
 #include <errno.h>
 #include <time.h>
@@ -21,6 +25,7 @@
 
 const char *short_options = "hvlt:Tms:c:";
 
+#ifdef POSIX
 const struct option long_options[] = {
   {"help", no_argument, NULL, 'h'},
   {"version", no_argument, NULL, 'v'},
@@ -32,15 +37,21 @@ const struct option long_options[] = {
   {"config", required_argument, NULL, 'c'},
   {0, 0, 0, 0}
 };
+#endif
 
 enum action { PLAY, LIST_GAMES, LIST_THEMES };
 
 void describe_option(const char *short_option, const char *long_option, const char *description) {
+#ifdef POSIX
   printf("  -%-14s --%-18s %s\n", short_option, long_option, description);
+#else
+  printf("  -%-14s %s\n", short_option, description);
+#endif
 }
 
 char *find_csolrc() {
   FILE *f;
+#ifdef POSIX
   char *config_dir = getenv("XDG_CONFIG_HOME");
   char *config_file = NULL;
   if (config_dir) {
@@ -91,24 +102,35 @@ char *find_csolrc() {
       return strdup("/etc/xdg/csol/csolrc");
     }
   }
-  f = fopen("./csolrc", "r");
+#endif
+  f = fopen("csolrc", "r");
   if (f) {
     fclose(f);
-    return strdup("./csolrc");
+    return strdup("csolrc");
   }
   return NULL;
 }
 
 int main(int argc, char *argv[]) {
-  int opt;
+  int opt, rc_opt, error;
+#ifdef POSIX
   int option_index = 0;
+#endif
   int colors = 1;
   unsigned int seed = time(NULL);
   enum action action = PLAY;
   char *rc_file = NULL;
   char *game_name = NULL;
   char *theme_name = NULL;
-  while ((opt = getopt_long(argc, argv, short_options, long_options, &option_index)) != -1) {
+  Theme *theme;
+  Game *game;
+  while ((opt = 
+#ifdef POSIX
+        getopt_long(argc, argv, short_options, long_options, &option_index)
+#else
+        getopt(argc, argv, short_options)
+#endif
+        ) != -1) {
     switch (opt) {
       case 'h':
         printf("usage: %s [options] [game]\n", argv[0]);
@@ -149,8 +171,8 @@ int main(int argc, char *argv[]) {
   if (optind < argc) {
     game_name = argv[optind];
   }
-  int rc_opt = 1;
-  int error = 0;
+  rc_opt = 1;
+  error = 0;
   if (!rc_file) {
     rc_opt = 0;
     rc_file = find_csolrc();
@@ -170,21 +192,23 @@ int main(int argc, char *argv[]) {
     printf("Configuration errors detected, press enter to continue\n");
     getchar();
   }
-  Theme *theme;
-  Game *game;
   switch (action) {
-    case LIST_GAMES:
+    case LIST_GAMES: {
+      GameList *list;
       load_game_dirs();
-      for (GameList *list = list_games(); list; list = list->next) {
+      for (list = list_games(); list; list = list->next) {
         printf("%s - %s\n", list->game->name, list->game->title);
       }
       break;
-    case LIST_THEMES:
+    }
+    case LIST_THEMES: {
+      ThemeList *list;
       load_theme_dirs();
-      for (ThemeList *list = list_themes(); list; list = list->next) {
+      for (list = list_themes(); list; list = list->next) {
         printf("%s - %s\n", list->theme->name, list->theme->title);
       }
       break;
+    }
     case PLAY:
       if (theme_name == NULL) {
         theme_name = get_property("default_theme");

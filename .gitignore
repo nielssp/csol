@@ -1,0 +1,14 @@
+*.o
+csol
+CMakeCache.txt
+CMakeFiles
+
+*.OBJ
+CSOL.EXE
+AUTOEXEC.BAT
+CONFIG.SYS
+*.000
+/dos/pdcurses
+/dos/watcom
+/dos/PDCURSES
+/dos/WATCOM

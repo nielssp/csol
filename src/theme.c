@@ -4,10 +4,14 @@
  * See the LICENSE file or http://opensource.org/licenses/MIT for more information.
  */
 
-#define _GNU_SOURCE
 #include <stdlib.h>
 #include <string.h>
+#ifdef POSIX
 #include <dirent.h>
+#endif
+#ifdef MSDOS
+#include <dos.h>
+#endif
 
 #include "theme.h"
 #include "util.h"
@@ -38,7 +42,8 @@ Theme *new_theme() {
   theme->x_margin = 2;
   theme->y_margin = 1;
   theme->colors = NULL;
-  theme->background = (ColorPair){.fg = 7, .bg = 0};
+  theme->background.fg = 7;
+  theme->background.bg = 0;
   theme->empty_layout = init_layout();
   theme->back_layout = init_layout();
   theme->red_layout = init_layout();
@@ -47,15 +52,16 @@ Theme *new_theme() {
 }
 
 Layout init_layout() {
-  return (Layout){
-    .color = (ColorPair){.fg = 7, .bg = 0},
-    .top = NULL,
-    .middle = NULL,
-    .bottom = NULL,
-    .left_padding = 1,
-    .right_padding = 1,
-    .text_fields = NULL
-  };
+  Layout l;
+  l.color.fg = 7;
+  l.color.bg = 0;
+  l.top = NULL;
+  l.middle = NULL;
+  l.bottom = NULL;
+  l.left_padding = 1;
+  l.right_padding = 1;
+  l.text_fields = NULL;
+  return l;
 }
 
 void define_color(Theme *theme, short index, short red, short green, short blue) {
@@ -92,18 +98,32 @@ void register_theme_dir(const char *cwd, const char *dir) {
 void load_theme_dirs() {
   struct dir_list *current = theme_dirs;
   while (current) {
-    struct dirent **files;
-    int n = scandir(current->dir, &files, NULL, alphasort);
-    if (n >= 0) {
-      for (int i = 0; i < n; i++) {
-        char *theme_path = combine_paths(current->dir, files[i]->d_name);
+    struct dir_list *next;
+#ifdef MSDOS
+    struct find_t file;
+    char *path = combine_paths(current->dir, "*");
+    if (_dos_findfirst(path, _A_ARCH, &file) == 0) {
+      do {
+        char *theme_path = combine_paths(current->dir, file.name);
         execute_file(theme_path);
         free(theme_path);
-        free(files[i]);
-      }
-      free(files);
+      } while (_dos_findnext(&file) == 0);
     }
-    struct dir_list *next = current->next;
+    free(path);
+#endif
+#if POSIX
+    DIR *dir = opendir(current->dir);
+    if (dir) {
+      struct dirent *file;
+      while ((file = readdir(dir))) {
+        char *theme_path = combine_paths(current->dir, file->d_name);
+        execute_file(theme_path);
+        free(theme_path);
+      }
+      closedir(dir);
+    }
+#endif
+    next = current->next;
     free(current->dir);
     free(current);
     current = next;
@@ -116,7 +136,8 @@ ThemeList *list_themes() {
 }
 
 Theme *get_theme_in_list(const char *name) {
-  for (ThemeList *themes = list_themes(); themes; themes = themes->next) {
+  ThemeList *themes;
+  for (themes = list_themes(); themes; themes = themes->next) {
     if (strcmp(themes->theme->name, name) == 0) {
       return themes->theme;
     }
@@ -125,11 +146,12 @@ Theme *get_theme_in_list(const char *name) {
 }
 
 Theme *get_theme(const char *name) {
+  struct dir_list *theme_dir;
   Theme *theme = get_theme_in_list(name);
   if (theme) {
     return theme;
   }
-  for (struct dir_list *theme_dir = theme_dirs; theme_dir; theme_dir = theme_dir->next) {
+  for (theme_dir = theme_dirs; theme_dir; theme_dir = theme_dir->next) {
     char *theme_path = combine_paths(theme_dir->dir, name);
     if (file_exists(theme_path)) {
       execute_file(theme_path);

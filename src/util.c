@@ -10,6 +10,12 @@
 
 #include "util.h"
 
+#if defined(MSDOS) || defined(_WIN32)
+#define PATH_SEP '\\'
+#else
+#define PATH_SEP '/'
+#endif
+
 int file_exists(const char *path) {
   FILE *f = fopen(path, "r");
   if (f) {
@@ -25,8 +31,8 @@ char *combine_paths(const char *path1, const char *path2) {
   size_t combined_length = length1 + length2 + 2;
   char *combined_path = malloc(combined_length);
   memcpy(combined_path, path1, length1);
-  if (path1[length1 - 1] != '/') {
-    combined_path[length1++] = '/';
+  if (path1[length1 - 1] != PATH_SEP) {
+    combined_path[length1++] = PATH_SEP;
   }
   memcpy(combined_path + length1, path2, length2);
   combined_path[length1 + length2] = '\0';

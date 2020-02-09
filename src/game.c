@@ -4,10 +4,14 @@
  * See the LICENSE file or http://opensource.org/licenses/MIT for more information.
  */
 
-#define _GNU_SOURCE
 #include <stdlib.h>
 #include <string.h>
+#ifdef POSIX
 #include <dirent.h>
+#endif
+#ifdef MSDOS
+#include <dos.h>
+#endif
 
 #include "game.h"
 #include "card.h"
@@ -119,18 +123,32 @@ void register_game_dir(const char *cwd, const char *dir) {
 void load_game_dirs() {
   struct dir_list *current = game_dirs;
   while (current) {
-    struct dirent **files;
-    int n = scandir(current->dir, &files, NULL, alphasort);
-    if (n >= 0) {
-      for (int i = 0; i < n; i++) {
-        char *game_path = combine_paths(current->dir, files[i]->d_name);
+    struct dir_list *next;
+#ifdef MSDOS
+    struct find_t file;
+    char *path = combine_paths(current->dir, "*");
+    if (_dos_findfirst(path, _A_ARCH, &file) == 0) {
+      do {
+        char *game_path = combine_paths(current->dir, file.name);
         execute_file(game_path);
         free(game_path);
-        free(files[i]);
-      }
-      free(files);
+      } while (_dos_findnext(&file) == 0);
     }
-    struct dir_list *next = current->next;
+    free(path);
+#endif
+#ifdef POSIX
+    DIR *dir = opendir(current->dir);
+    if (dir) {
+      struct dirent *file;
+      while ((file = readdir(dir))) {
+        char *game_path = combine_paths(current->dir, file->d_name);
+        execute_file(game_path);
+        free(game_path);
+      }
+      closedir(dir);
+    }
+#endif
+    next = current->next;
     free(current->dir);
     free(current);
     current = next;
@@ -143,7 +161,8 @@ GameList *list_games() {
 }
 
 Game *get_game_in_list(const char *name) {
-  for (GameList *games = list_games(); games; games = games->next) {
+  GameList *games;
+  for (games = list_games(); games; games = games->next) {
     if (strcmp(games->game->name, name) == 0) {
       return games->game;
     }
@@ -152,11 +171,12 @@ Game *get_game_in_list(const char *name) {
 }
 
 Game *get_game(const char *name) {
+  struct dir_list *game_dir;
   Game *game = get_game_in_list(name);
   if (game) {
     return game;
   }
-  for (struct dir_list *game_dir = game_dirs; game_dir; game_dir = game_dir->next) {
+  for (game_dir = game_dirs; game_dir; game_dir = game_dir->next) {
     char *game_path = combine_paths(game_dir->dir, name);
     if (file_exists(game_path)) {
       execute_file(game_path);
@@ -185,19 +205,21 @@ Card *new_pile(GameRule *rule) {
     case RULE_CELL:
       return new_card(FOUNDATION, rank);
     default:
-      // TODO: error
+      /* TODO: error */
       return NULL;
   }
 }
 
 void deal_pile(Card *stack, GameRule *rule, Card *deck) {
   if (rule->deal > 0) {
-    for (int i = 0; i < rule->deal && deck->next; i++) {
+    int i;
+    for (i = 0; i < rule->deal && deck->next; i++) {
       move_stack(stack, take_card(deck->next));
     }
     if (rule->hide > 0) {
       Card *card = stack->next;
-      for (int i = 0; i < rule->hide && card; i++, card = card->next) {
+      int i;
+      for (i = 0; i < rule->hide && card; i++, card = card->next) {
         card->up = 0;
       }
       for (; card; card = card->next) {
@@ -205,8 +227,8 @@ void deal_pile(Card *stack, GameRule *rule, Card *deck) {
       }
     } else if (rule->hide < 0) {
       Card *card = get_top(stack);
-      int hide = -rule->hide;
-      for (int i = 0; i < hide && !(card->suit & BOTTOM); i++, card = card->prev) {
+      int i, hide = -rule->hide;
+      for (i = 0; i < hide && !(card->suit & BOTTOM); i++, card = card->prev) {
         card->up = 1;
       }
       for (; !(card->suit & BOTTOM); card = card->prev) {
@@ -227,7 +249,8 @@ void delete_piles(Pile *piles) {
 Pile *deal_cards(Game *game, Card *deck) {
   Pile *first = NULL;
   Pile *last = NULL;
-  for (GameRule *rule = game->first_rule; rule; rule = rule->next) {
+  GameRule *rule;
+  for (rule = game->first_rule; rule; rule = rule->next) {
     Pile *pile = malloc(sizeof(Pile));
     pile->next = NULL;
     pile->rule = rule;
@@ -383,15 +406,17 @@ void do_move(struct move **history1, struct move **history2, int inc) {
     struct move *m = *history1;
     *history1 = m->prev;
     if (m->stock) {
-      move_counter += inc;
+      int from_stock;
+      Card *src_card;
       Pile *stock = m->stock;
-      int from_stock = stock->rule->type == RULE_STOCK;
+      move_counter += inc;
+      from_stock = stock->rule->type == RULE_STOCK;
       if (from_stock) {
         stock->redeals--;
       } else {
         m->waste->redeals++;
       }
-      Card *src_card = get_top(stock->stack);
+      src_card = get_top(stock->stack);
       while (!(src_card->suit & BOTTOM)) {
         Card *prev = src_card->prev;
         if (from_stock) {
@@ -427,8 +452,9 @@ void redo_move() {
 }
 
 int count_free_cells(Pile *piles) {
+  Pile *dest;
   int n = 0;
-  for (Pile *dest = piles; dest; dest = dest->next) {
+  for (dest = piles; dest; dest = dest->next) {
     if (dest->rule->type == RULE_CELL && dest->rule->first_rank == RANK_ANY
         && dest->rule->first_suit == SUIT_ANY && !dest->stack->next) {
       n++;
@@ -447,12 +473,14 @@ int legal_move_stack(Pile *dest, Card *src, Pile *src_pile, Pile *piles) {
   }
   if (dest->rule->move_group == MOVE_ONE && src->next) {
     int free_cells = count_free_cells(piles);
+    int required_cells;
+    Card *c;
     if (!free_cells) {
       move_error = "Not allowed to move multiple cards";
       return 0;
     }
-    int required_cells = 0;
-    for (Card *c = src->next; c; c = c->next) {
+    required_cells = 0;
+    for (c = src->next; c; c = c->next) {
       required_cells++;
     }
     if (required_cells > free_cells) {
@@ -501,7 +529,8 @@ int legal_move_stack(Pile *dest, Card *src, Pile *src_pile, Pile *piles) {
 }
 
 int move_to_waste(Card *card, Pile *stock, Pile *piles) {
-  for (Pile *dest = piles; dest; dest = dest->next) {
+  Pile *dest;
+  for (dest = piles; dest; dest = dest->next) {
     if (dest->rule->type == RULE_WASTE) {
       if (legal_move_stack(dest, card, stock, piles)) {
         card->up = 1;
@@ -514,11 +543,13 @@ int move_to_waste(Card *card, Pile *stock, Pile *piles) {
 
 int redeal(Pile *stock, Pile *piles) {
   if (stock->rule->redeals < 0 || stock->redeals < stock->rule->redeals) {
+    Pile *src;
     stock->redeals++;
-    for (Pile *src = piles; src; src = src->next) {
+    for (src = piles; src; src = src->next) {
       if (src->rule->type == RULE_WASTE) {
+        Card *src_card;
         record_redeal(stock, src);
-        Card *src_card = get_top(src->stack);
+        src_card = get_top(src->stack);
         while (!(src_card->suit & BOTTOM)) {
           Card *prev = src_card->prev;
           move_stack(stock->stack, src_card);
@@ -533,7 +564,8 @@ int redeal(Pile *stock, Pile *piles) {
 }
 
 int move_to_foundation(Card *src, Pile *src_pile, Pile *piles) {
-  for (Pile *dest = piles; dest; dest = dest->next) {
+  Pile *dest;
+  for (dest = piles; dest; dest = dest->next) {
     if (dest->rule->type == RULE_FOUNDATION) {
       if (legal_move_stack(dest, src, src_pile, piles)) {
         return 1;
@@ -544,7 +576,8 @@ int move_to_foundation(Card *src, Pile *src_pile, Pile *piles) {
 }
 
 int move_to_free_cell(Card *src, Pile *src_pile, Pile *piles) {
-  for (Pile *dest = piles; dest; dest = dest->next) {
+  Pile *dest;
+  for (dest = piles; dest; dest = dest->next) {
     if (dest->rule->type == RULE_CELL) {
       if (legal_move_stack(dest, src, src_pile, piles)) {
         return 1;
@@ -555,14 +588,16 @@ int move_to_free_cell(Card *src, Pile *src_pile, Pile *piles) {
 }
 
 int auto_move_to_foundation(Pile *piles) {
-  for (Pile *src = piles; src; src = src->next) {
+  Pile *src;
+  for (src = piles; src; src = src->next) {
     if (src->rule->type != RULE_FOUNDATION && src->rule->type != RULE_STOCK) {
       Card *src_card = get_top(src->stack);
       if (!(src_card->suit & BOTTOM)) {
         if (turn_card(src_card)) {
           return 1;
         } else {
-          for (Pile *dest = piles; dest; dest = dest->next) {
+          Pile *dest;
+          for (dest = piles; dest; dest = dest->next) {
             if (dest->rule->type == RULE_FOUNDATION) {
               if (legal_move_stack(dest, src_card, src, piles)) {
                 return 1;
@@ -586,7 +621,8 @@ int turn_card(Card *card) {
 }
 
 int check_win_condition(Pile *piles) {
-  for (Pile *p = piles; p; p = p->next) {
+  Pile *p;
+  for (p = piles; p; p = p->next) {
     if (p->rule->win_rank != RANK_NONE) {
       Card *top = get_top(p->stack);
       if (!check_first_rank(top, p->rule->win_rank)) {

@@ -4,7 +4,7 @@
  * See the LICENSE file or http://opensource.org/licenses/MIT for more information.
  */
 
-#define _GNU_SOURCE
+#define _XOPEN_SOURCE 500
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -194,7 +194,11 @@ void unread_char(int c, FILE *file) {
 }
 
 struct position get_position(FILE *file) {
-  return (struct position){ .offset = ftell(file), .line = line, .column = column };
+  struct position p;
+  p.offset = ftell(file);
+  p.line = line;
+  p.column = column;
+  return p;
 }
 
 void set_position(struct position pos, FILE *file) {
@@ -302,8 +306,9 @@ char *read_line(FILE *file) {
 }
 
 char *read_value(FILE *file) {
+  int c;
   skip_whitespace(file);
-  int c = read_char(file);
+  c = read_char(file);
   if (c == '"') {
     return read_quoted(file);
   }
@@ -320,10 +325,12 @@ void redefine_property(char **property, FILE *file) {
 }
 
 int read_int(FILE *file) {
+  char c;
+  int sign, value;
   skip_whitespace(file);
-  char c = read_char(file);
-  int sign = 1;
-  int value = 0;
+  c = read_char(file);
+  sign = 1;
+  value = 0;
   if (c == '-') {
     sign = -1;
     c = read_char(file);
@@ -341,13 +348,14 @@ int read_int(FILE *file) {
 }
 
 int read_expr(FILE *file, int index) {
+  int increment;
   int value = read_int(file);
   int c = read_char(file);
   if (c != '+') {
     unread_char(c, file);
     return value;
   }
-  int increment = read_int(file);
+  increment = read_int(file);
   if (increment == 0) {
     increment = 1;
   }
@@ -355,8 +363,9 @@ int read_expr(FILE *file, int index) {
 }
 
 Keyword read_command(FILE *file, struct symbol *commands) {
+  char *keyword;
   skip_whitespace(file);
-  char *keyword = read_symbol(file);
+  keyword = read_symbol(file);
   if (!keyword) {
     return K_END_OF_BLOCK;
   }
@@ -395,7 +404,7 @@ Layout define_layout(FILE *file) {
   Keyword command;
   Layout layout = init_layout();
   begin_block(file);
-  while (command = read_command(file, layout_commands)) {
+  while ((command = read_command(file, layout_commands))) {
     switch (command) {
       case K_TOP:
         redefine_property(&layout.top, file);
@@ -430,7 +439,7 @@ void define_theme(FILE *file) {
   Keyword command;
   Theme *theme = new_theme();
   begin_block(file);
-  while (command = read_command(file, theme_commands)) {
+  while ((command = read_command(file, theme_commands))) {
     switch (command) {
       case K_NAME:
         redefine_property(&theme->name, file);
@@ -618,7 +627,7 @@ GameRule *define_game_rule(FILE *file, GameRuleType type, int index) {
   Keyword command;
   GameRule *rule = new_game_rule(type);
   begin_block(file);
-  while (command = read_command(file, game_rule_commands)) {
+  while ((command = read_command(file, game_rule_commands))) {
     switch (command) {
       case K_X:
         rule->x = read_expr(file, index);
@@ -666,11 +675,11 @@ GameRule *define_game_rule(FILE *file, GameRuleType type, int index) {
 
 void execute_rule_block(FILE *file, Game *game, int index) {
   Keyword command;
-  int rep;
+  int i, rep;
   struct position pos;
   GameRule *rule = NULL;
   begin_block(file);
-  while (command = read_command(file, game_commands)) {
+  while ((command = read_command(file, game_commands))) {
     switch (command) {
       case K_NAME:
         redefine_property(&game->name, file);
@@ -681,7 +690,7 @@ void execute_rule_block(FILE *file, Game *game, int index) {
       case K_REPEAT:
         rep = read_int(file);
         pos = get_position(file);
-        for (int i = 0; i < rep; i++) {
+        for (i = 0; i < rep; i++) {
           set_position(pos, file);
           execute_rule_block(file, game, i);
         }
@@ -737,7 +746,8 @@ void set_property(const char *name, const char *value) {
 }
 
 char *get_property(const char *name) {
-  for (struct property *property = properties; property; property = property->next) {
+  struct property *property;
+  for (property = properties; property; property = property->next) {
     if (strcmp(property->name, name) == 0) {
       return property->value;
     }
@@ -746,20 +756,22 @@ char *get_property(const char *name) {
 }
 
 int execute_file(const char *file_name) {
-  FILE *file = fopen(file_name, "r");
+  Keyword command;
+  int this_line, this_column;
+  char *file_name_copy, *cwd, *value;
+  FILE *file = fopen(file_name, "rb");
   if (!file) {
     rc_error("%s: error: %s", file_name, strerror(errno));
     return 1;
   }
-  char *file_name_copy = strdup(file_name);
-  char *cwd = dirname(file_name_copy);
-  char *value = NULL;
+  file_name_copy = strdup(file_name);
+  cwd = dirname(file_name_copy);
+  value = NULL;
   current_file = file_name;
   has_error = 0;
   line = 1;
   column = 1;
-  Keyword command;
-  while (command = read_command(file, root_commands)) {
+  while ((command = read_command(file, root_commands))) {
     switch (command) {
       case K_THEME:
         define_theme(file);
@@ -769,8 +781,8 @@ int execute_file(const char *file_name) {
         break;
       case K_INCLUDE:
         value = read_value(file);
-        int this_line = line;
-        int this_column = column;
+        this_line = line;
+        this_column = column;
         has_error |= !execute_file(value);
         line = this_line;
         column = this_column;

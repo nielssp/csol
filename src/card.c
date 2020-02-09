@@ -30,10 +30,11 @@ void delete_stack(Card *stack) {
 }
 
 Card *new_deck() {
+  char suit, rank;
   Card *deck = new_card(BOTTOM, 0);
   Card *prev = deck;
-  for (char suit = 0; suit < 4; suit++) {
-    for (char rank = 1; rank <= 13; rank++) {
+  for (suit = 0; suit < 4; suit++) {
+    for (rank = 1; rank <= 13; rank++) {
       Card *card = new_card(suits[(int)suit], rank);
       prev->next = card;
       card->prev = prev;
@@ -44,12 +45,13 @@ Card *new_deck() {
 }
 
 Card *shuffle_stack(Card *stack) {
+  Card *new, *next;
   int n = 2;
   if (!stack->next) {
     return stack;
   }
-  Card *new = stack;
-  Card *next = stack->next;
+  new = stack;
+  next = stack->next;
   new->next = NULL;
   new->prev = NULL;
   while (next) {
@@ -61,8 +63,9 @@ Card *shuffle_stack(Card *stack) {
       next->next = new;
       new = next;
     } else {
+      int j;
       Card *c = new;
-      for (int j = 1; j < i; j++) {
+      for (j = 1; j < i; j++) {
         c = c->next;
       }
       if (c->next) {
