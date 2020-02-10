@@ -273,12 +273,49 @@ static int ui_confirm(const char *message) {
   }
 }
 
+static void ui_box(int y, int x, int height, int width, int fill) {
+  int i;
+  move(y, x);
+  for (i = 0; i < width; i++) {
+    if (height && i == 0) {
+      addch(ACS_ULCORNER);
+    } else if (height && i + 1 >= width) {
+      addch(ACS_URCORNER);
+    } else {
+      addch(ACS_HLINE);
+    }
+  }
+  if (height > 1) {
+    while (--height > 1) {
+      move(++y, x);
+      addch(ACS_VLINE);
+      if (fill) {
+        for (i = 2; i < width; i++) {
+          addch(' ');
+        }
+      } else {
+        move(y, x + width - 1);
+      }
+      addch(ACS_VLINE);
+    }
+    move(++y, x);
+    for (i = 0; i < width; i++) {
+      if (i == 0) {
+        addch(ACS_LLCORNER);
+      } else if (i + 1 >= width) {
+        addch(ACS_LRCORNER);
+      } else {
+        addch(ACS_HLINE);
+      }
+    }
+  }
+}
+
 static void ui_victory_banner(int y, int x) {
   attron(COLOR_PAIR(COLOR_PAIR_BACKGROUND));
-  mvprintw(y    , x, "**************************************");
-  mvprintw(y + 1, x, "*              VICTORY!              *");
-  mvprintw(y + 2, x, "* Press 'r' to redeal or 'q' to quit *");
-  mvprintw(y + 3, x, "**************************************");
+  ui_box(y, x, 4, 38, 1);
+  mvprintw(y + 1, x + 15, "VICTORY!");
+  mvprintw(y + 2, x + 2, "Press 'r' to redeal or 'q' to quit");
 }
 
 int ui_victory(Pile *piles, Theme *theme) {
@@ -289,6 +326,7 @@ int ui_victory(Pile *piles, Theme *theme) {
   banner_y = win_h / 2 - 3;
   banner_x = win_w >= 38 ? win_w / 2 - 19 : 0;
   nodelay(stdscr, 1);
+  curs_set(0);
   for (pile = piles; pile; pile = pile->next) {
     int pile_y = pile->rule->y * (theme->height + theme->y_spacing);
     for (card = get_top(pile->stack); NOT_BOTTOM(card); card = card->prev) {
@@ -302,6 +340,7 @@ int ui_victory(Pile *piles, Theme *theme) {
         switch (getch()) {
           case 'r':
             nodelay(stdscr, 0);
+            curs_set(1);
             return 1;
           case 'q':
             return 0;
@@ -327,6 +366,7 @@ int ui_victory(Pile *piles, Theme *theme) {
     switch (getch()) {
       case 'r':
         nodelay(stdscr, 0);
+        curs_set(1);
         return 1;
       case 'q':
         return 0;
