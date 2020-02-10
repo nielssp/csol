@@ -3,6 +3,7 @@ csol
 CMakeCache.txt
 CMakeFiles
 cmake_install.cmake
+/build
 
 *.OBJ
 CSOL.EXE
