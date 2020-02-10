@@ -602,9 +602,9 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
             == OK) {
           cur_y = mouse.y - theme->y_margin - off_y;
           cur_x = (mouse.x - theme->x_margin) / (theme->width + theme->x_spacing);
-          if (mouse.bstate & BUTTON3_PRESSED) {
+          if (mouse.bstate & BUTTON3_CLICKED) {
             mouse_action = 'm';
-          } else if (mouse.bstate & BUTTON1_PRESSED) {
+          } else if (mouse.bstate & BUTTON1_CLICKED) {
             mouse_action = ' ';
           }
         }
@@ -674,7 +674,7 @@ void ui_main(Game *game, Theme *theme, int enable_color, unsigned int seed) {
   keypad(stdscr, 1);
   noecho();
 
-  mousemask(BUTTON1_PRESSED | BUTTON3_PRESSED, &oldmask);
+  mousemask(BUTTON1_CLICKED | BUTTON3_CLICKED, &oldmask);
 
   while (1) {
     Card *deck;
