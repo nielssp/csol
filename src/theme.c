@@ -6,12 +6,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#ifdef POSIX
-#include <dirent.h>
-#endif
-#ifdef MSDOS
-#include <dos.h>
-#endif
 
 #include "theme.h"
 #include "util.h"
@@ -104,30 +98,7 @@ void load_theme_dirs() {
   struct dir_list *current = theme_dirs;
   while (current) {
     struct dir_list *next;
-#ifdef MSDOS
-    struct find_t file;
-    char *path = combine_paths(current->dir, "*");
-    if (_dos_findfirst(path, _A_ARCH, &file) == 0) {
-      do {
-        char *theme_path = combine_paths(current->dir, file.name);
-        execute_file(theme_path);
-        free(theme_path);
-      } while (_dos_findnext(&file) == 0);
-    }
-    free(path);
-#endif
-#if POSIX
-    DIR *dir = opendir(current->dir);
-    if (dir) {
-      struct dirent *file;
-      while ((file = readdir(dir))) {
-        char *theme_path = combine_paths(current->dir, file->d_name);
-        execute_file(theme_path);
-        free(theme_path);
-      }
-      closedir(dir);
-    }
-#endif
+    execute_dir(current->dir);
     next = current->next;
     free(current->dir);
     free(current);

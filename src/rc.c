@@ -12,9 +12,15 @@
 #include <stdarg.h>
 #include <errno.h>
 #include <libgen.h>
+#ifdef USE_DIRENT
+#include <dirent.h>
+#elif defined(MSDOS)
+#include <dos.h>
+#endif
 
 #include "theme.h"
 #include "game.h"
+#include "util.h"
 #include "rc.h"
 
 #define BUFFER_INC 32
@@ -851,4 +857,34 @@ int execute_file(const char *file_name) {
   }
   free(file_name_copy);
   return !has_error;
+}
+
+void execute_dir(const char *dir_path) {
+#ifdef USE_DIRENT
+  DIR *dir = opendir(dir_path);
+  if (dir) {
+    struct dirent *file;
+    while ((file = readdir(dir))) {
+      if (file->d_name[0] != '.') {
+        char *path = combine_paths(dir_path, file->d_name);
+        execute_file(path);
+        free(path);
+      }
+    }
+    closedir(dir);
+  }
+#elif defined(MSDOS)
+  struct find_t file;
+  char *path = combine_paths(dir_path, "*");
+  if (_dos_findfirst(path, _A_ARCH, &file) == 0) {
+    do {
+      char *path = combine_paths(dir_path, file.name);
+      execute_file(path);
+      free(path);
+    } while (_dos_findnext(&file) == 0);
+  }
+  free(path);
+#else
+  printf("csol has been compiled without directory support\n");
+#endif
 }

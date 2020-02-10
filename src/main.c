@@ -7,7 +7,7 @@
 #define _XOPEN_SOURCE 500
 #include <stdio.h>
 #include <stdlib.h>
-#ifdef POSIX
+#ifdef USE_GETOPT
 #include <getopt.h>
 #else
 #include <unistd.h>
@@ -25,7 +25,7 @@
 
 const char *short_options = "hvlt:Tms:c:C";
 
-#ifdef POSIX
+#ifdef USE_GETOPT
 const struct option long_options[] = {
   {"help", no_argument, NULL, 'h'},
   {"version", no_argument, NULL, 'v'},
@@ -43,7 +43,7 @@ const struct option long_options[] = {
 enum action { PLAY, LIST_GAMES, LIST_THEMES, LIST_COLORS };
 
 void describe_option(const char *short_option, const char *long_option, const char *description) {
-#ifdef POSIX
+#ifdef USE_GETOPT
   printf("  -%-14s --%-18s %s\n", short_option, long_option, description);
 #else
   printf("  -%-14s %s\n", short_option, description);
@@ -52,7 +52,7 @@ void describe_option(const char *short_option, const char *long_option, const ch
 
 char *find_csolrc() {
   FILE *f;
-#ifdef POSIX
+#if defined(__unix__) || defined(__UNIX__) || defined(__linux__) || defined(__LINUX__)
   char *config_dir = getenv("XDG_CONFIG_HOME");
   char *config_file = NULL;
   if (config_dir) {
@@ -114,7 +114,7 @@ char *find_csolrc() {
 
 int main(int argc, char *argv[]) {
   int opt, rc_opt, error;
-#ifdef POSIX
+#ifdef USE_GETOPT
   int option_index = 0;
 #endif
   int colors = 1;
@@ -126,7 +126,7 @@ int main(int argc, char *argv[]) {
   Theme *theme;
   Game *game;
   while ((opt = 
-#ifdef POSIX
+#ifdef USE_GETOPT
         getopt_long(argc, argv, short_options, long_options, &option_index)
 #else
         getopt(argc, argv, short_options)

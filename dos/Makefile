@@ -1,5 +1,5 @@
 CC = wcc
-CCFLAGS = -bt=dos -zq -wx -ml -i=pdcurses -oneatx
+CCFLAGS = -bt=dos -zq -wx -ml -i=pdcurses -oneatx -DUSE_PDCURSES
 LINK = wlink
 LDFLAGS = op q sys dos
 LIBCURSES = pdcurses\dos\pdcurses.lib

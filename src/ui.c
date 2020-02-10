@@ -5,8 +5,7 @@
  */
 
 #include <stdlib.h>
-#if defined(MSDOS) || defined(_WIN32)
-#define MSDOS
+#ifdef USE_PDCURSES
 #include <curses.h>
 #else
 #include <ncurses.h>
@@ -20,6 +19,14 @@
 #include "rc.h"
 #include "card.h"
 #include "theme.h"
+
+#ifdef PDCURSES
+#define RAW_OUTPUT(n) raw_output(1)
+#else
+#define RAW_OUTPUT(n)
+#define KEY_SUP    337
+#define KEY_SDOWN  336
+#endif
 
 #define COLOR_PAIR_BACKGROUND 1
 #define COLOR_PAIR_EMPTY 2
@@ -91,26 +98,18 @@ void print_card_name_l(int y, int x, Card *card, Theme *theme) {
     default:
       mvprintw(y, x, "%d", card->rank);
   }
-#ifdef MSDOS
-  raw_output(1);
-#endif
+  RAW_OUTPUT(1);
   printw(card_suit(card, theme));
-#ifdef MSDOS
-  raw_output(0);
-#endif
+  RAW_OUTPUT(0);
 }
 
 void print_card_name_r(int y, int x, Card *card, Theme *theme) {
   if (y < 0 || y >= win_h) {
     return;
   }
-#ifdef MSDOS
-  raw_output(1);
-#endif
+  RAW_OUTPUT(1);
   mvprintw(y, x - 1 - (card->rank == 10), card_suit(card, theme));
-#ifdef MSDOS
-  raw_output(0);
-#endif
+  RAW_OUTPUT(0);
   switch (card->rank) {
     case ACE:
       printw("A");
@@ -407,11 +406,7 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
         if (cur_x > max_x) cur_x = max_x;
         break;
       case 'K':
-#ifdef MSDOS
-      case 547: /* shift-up */
-#else
-      case 337: /* shift-up */
-#endif
+      case KEY_SUP:
         if (cursor_card) {
           if (cursor_card->prev && NOT_BOTTOM(cursor_card->prev)) {
             Card *card = cursor_card->prev;
@@ -431,11 +426,7 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
         if (cur_y < 0) cur_y = 0;
         break;
       case 'J':
-#ifdef MSDOS
-      case 548: /* shift-down */
-#else
-      case 336: /* shift-down */
-#endif
+      case KEY_SDOWN:
         if (cursor_card && cursor_card->next) {
           Card *card = cursor_card->next;
           while (card->next && card->next->up == card->up) {
@@ -448,19 +439,11 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
         if (cur_y > max_y) cur_y = max_y;
         break;
       case 'H':
-#ifdef MSDOS
-      case 391: /* shift-left */
-#else
-      case 393: /* shift-left */
-#endif
+      case KEY_SLEFT:
         cur_x = 0;
         break;
       case 'L':
-#ifdef MSDOS
-      case 400: /* shift-right */
-#else
-      case 402: /* shift-right */
-#endif
+      case KEY_SRIGHT:
         cur_x = max_x;
         break;
       case ' ':
@@ -611,7 +594,7 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
         return 0;
       case KEY_MOUSE:
         if (
-#ifdef MSDOS
+#ifdef PDCURSES
             nc_getmouse(&mouse)
 #else
             getmouse(&mouse)

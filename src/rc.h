@@ -8,6 +8,7 @@
 #define RC_H
 
 int execute_file(const char *file);
+void execute_dir(const char *dir);
 
 char *get_property(const char *name);
 
