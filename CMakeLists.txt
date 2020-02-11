@@ -3,7 +3,7 @@ project(csol C)
 cmake_minimum_required(VERSION 2.8)
 
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
-set(CMAKE_C_FLAGS "--std=c89 -Wall -pedantic -DUSE_GETOPT -DUSE_DIRENT")
+set(CMAKE_C_FLAGS "--std=c89 -Wall -pedantic -DUSE_GETOPT")
 
 configure_file(csolrc csolrc COPYONLY)
 file(COPY games DESTINATION .)

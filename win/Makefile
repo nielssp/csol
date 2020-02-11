@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -pedantic -DUSE_PDCURSES -DUSE_GETOPT -DUSE_DIRENT
+CFLAGS = -Wall -pedantic -DUSE_PDCURSES -DUSE_GETOPT
 LDFLAGS = -l:libpdcurses.a
 CSOL_SRCDIR = ../src
 

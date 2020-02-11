@@ -1,5 +1,5 @@
 CC = wcc
-CCFLAGS = -bt=dos -zq -wx -ml -i=pdcurses -oneatx -DUSE_PDCURSES
+CFLAGS = -bt=dos -zq -wx -ml -i=pdcurses -oneatx -DUSE_PDCURSES
 LINK = wlink
 LDFLAGS = op q sys dos
 LIBCURSES = pdcurses\dos\pdcurses.lib
@@ -15,7 +15,7 @@ clean
 .c: $(CSOL_SRCDIR)
 
 .c.obj: .autodepend
-	$(CC) $(CCFLAGS) $<
+	$(CC) $(CFLAGS) $<
 
 csol.exe: card.obj game.obj main.obj rc.obj theme.obj ui.obj util.obj
 	$(LINK) $(LDFLAGS) n $@ f *.obj l $(LIBCURSES)

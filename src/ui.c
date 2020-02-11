@@ -686,8 +686,15 @@ short find_color(Theme *theme, short index, char *name) {
 }
 
 void find_and_init_color_pair(Theme *theme, short index, ColorPair color_pair) {
-  init_pair(index, find_color(theme, color_pair.fg, color_pair.fg_name),
-      find_color(theme, color_pair.bg, color_pair.bg_name));
+  short fg = find_color(theme, color_pair.fg, color_pair.fg_name);
+  short bg = find_color(theme, color_pair.bg, color_pair.bg_name);
+  if (fg >= COLORS) {
+    printf("Unsupported color index: %d\n", fg);
+  }
+  if (bg >= COLORS) {
+    printf("Unsupported color index: %d\n", bg);
+  }
+  init_pair(index, fg, bg);
 }
 
 void ui_main(Game *game, Theme *theme, int enable_color, unsigned int seed) {
