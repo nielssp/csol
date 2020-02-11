@@ -625,13 +625,17 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
         clear();
         break;
       case 'r':
-        if (ui_confirm("Redeal?")) {
+        if (!move_counter || ui_confirm("Redeal?")) {
           return 1;
         }
         clear();
         break;
       case 'q':
-        return 0;
+        if (!move_counter || ui_confirm("Quit?")) {
+          return 0;
+        }
+        clear();
+        break;
       case KEY_MOUSE:
         if (
 #ifdef PDCURSES
