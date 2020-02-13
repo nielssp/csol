@@ -10,6 +10,7 @@
 #include "rc.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 struct dir_list {
