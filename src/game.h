@@ -103,6 +103,7 @@ struct pile {
 };
 
 extern int move_counter;
+extern int game_score;
 
 Game *new_game();
 GameRule *new_game_rule(GameRuleType type);
@@ -124,7 +125,7 @@ int check_win_condition(Pile *piles);
 
 char *get_move_error();
 void clear_undo_history();
-void undo_move();
-void redo_move();
+int undo_move();
+int redo_move();
 
 #endif

@@ -4,6 +4,13 @@
  * See the LICENSE file or http://opensource.org/licenses/MIT for more information.
  */
 
+#include "ui.h"
+
+#include "rc.h"
+#include "card.h"
+#include "theme.h"
+#include "scores.h"
+
 #include <stdlib.h>
 #ifdef USE_PDCURSES
 #include <curses.h>
@@ -14,11 +21,7 @@
 #include <time.h>
 #include <ctype.h>
 #include <string.h>
-
-#include "ui.h"
-#include "rc.h"
-#include "card.h"
-#include "theme.h"
+#include <time.h>
 
 #ifdef PDCURSES
 #define RAW_OUTPUT(n) raw_output(1)
@@ -378,11 +381,14 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
   MEVENT mouse;
   int move_made = 0;
   int mouse_action = 0;
+  int game_started = 0;
+  time_t start_time;
   selection = NULL;
   selection_pile = NULL;
   clear();
   clear_undo_history();
   move_counter = 0;
+  game_score = 0;
   off_y = 0;
   wbkgd(stdscr, COLOR_PAIR(COLOR_PAIR_BACKGROUND));
   while (1) {
@@ -412,7 +418,12 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
     attron(COLOR_PAIR(COLOR_PAIR_BACKGROUND));
 
     if (move_made) {
+      if (!game_started) {
+        game_started = 1;
+        start_time = time(NULL);
+      }
       if (check_win_condition(piles)) {
+        append_score(game->name, 1, game_score, start_time);
         return ui_victory(piles, theme);
       }
       move_made = 0;
@@ -625,13 +636,19 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
         clear();
         break;
       case 'r':
-        if (!move_counter || ui_confirm("Redeal?")) {
+        if (!game_started || ui_confirm("Redeal?")) {
+          if (game_started) {
+            append_score(game->name, 0, game_score, start_time);
+          }
           return 1;
         }
         clear();
         break;
       case 'q':
-        if (!move_counter || ui_confirm("Quit?")) {
+        if (!game_started || ui_confirm("Quit?")) {
+          if (game_started) {
+            append_score(game->name, 0, game_score, start_time);
+          }
           return 0;
         }
         clear();
@@ -698,7 +715,6 @@ void find_and_init_color_pair(Theme *theme, short index, ColorPair color_pair) {
 }
 
 void ui_main(Game *game, Theme *theme, int enable_color, unsigned int seed) {
-  mmask_t oldmask;
   setlocale(LC_ALL, "");
   initscr();
   if (enable_color) {
@@ -725,7 +741,7 @@ void ui_main(Game *game, Theme *theme, int enable_color, unsigned int seed) {
   keypad(stdscr, 1);
   noecho();
 
-  mousemask(BUTTON1_CLICKED | BUTTON3_CLICKED, &oldmask);
+  mousemask(BUTTON1_CLICKED | BUTTON3_CLICKED, NULL);
 
   while (1) {
     Card *deck;

@@ -5,6 +5,15 @@
  */
 
 #define _XOPEN_SOURCE 500
+
+#include "config.h"
+#include "rc.h"
+#include "theme.h"
+#include "game.h"
+#include "ui.h"
+#include "util.h"
+#include "scores.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #ifdef USE_GETOPT
@@ -15,13 +24,6 @@
 #include <string.h>
 #include <errno.h>
 #include <time.h>
-
-#include "config.h"
-#include "rc.h"
-#include "theme.h"
-#include "game.h"
-#include "ui.h"
-#include "util.h"
 
 const char *short_options = "hvlt:Tms:c:C";
 
@@ -52,7 +54,7 @@ void describe_option(const char *short_option, const char *long_option, const ch
 
 char *find_csolrc() {
   FILE *f;
-#if defined(__unix__) || defined(__UNIX__) || defined(__linux__) || defined(__LINUX__)
+#ifdef USE_XDG_PATHS
   char *config_dir = getenv("XDG_CONFIG_HOME");
   char *config_file = NULL;
   if (config_dir) {
@@ -192,6 +194,10 @@ int main(int argc, char *argv[]) {
     if (!rc_opt) {
       free(rc_file);
     }
+  }
+  if (!touch_scores_file(argv[0])) {
+    printf("%s: %s\n", scores_file_path, strerror(errno));
+    error = 1;
   }
   if (error) {
     printf("Configuration errors detected, press enter to continue\n");

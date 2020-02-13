@@ -4,12 +4,13 @@
  * See the LICENSE file or http://opensource.org/licenses/MIT for more information.
  */
 
-#include <stdlib.h>
-#include <string.h>
-
 #include "theme.h"
+
 #include "util.h"
 #include "rc.h"
+
+#include <stdlib.h>
+#include <string.h>
 
 struct dir_list {
   char *dir;

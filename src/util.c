@@ -4,17 +4,12 @@
  * See the LICENSE file or http://opensource.org/licenses/MIT for more information.
  */
 
+#include "util.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "util.h"
-
-#if defined(MSDOS) || defined(_WIN32)
-#define PATH_SEP '\\'
-#else
-#define PATH_SEP '/'
-#endif
+#include <sys/stat.h>
 
 int file_exists(const char *path) {
   FILE *f = fopen(path, "r");
@@ -37,4 +32,32 @@ char *combine_paths(const char *path1, const char *path2) {
   memcpy(combined_path + length1, path2, length2);
   combined_path[length1 + length2] = '\0';
   return combined_path;
+}
+
+int mkdir_rec(const char *path) {
+  size_t length = strlen(path);
+  char *buffer = malloc(length + 1);
+  char *p;
+  struct stat stat_buffer;
+  memcpy(buffer, path, length + 1);
+  if (buffer[length - 1] == PATH_SEP) {
+    buffer[length - 1] = 0;
+  }
+  for (p = buffer + 1; *p; p++) {
+    if (*p == PATH_SEP) {
+      *p = 0;
+      if (stat(buffer, &stat_buffer) || !S_ISDIR(stat_buffer.st_mode)) {
+        if (mkdir(buffer, S_IRWXU) != 0) {
+          return 0;
+        }
+      }
+      *p = PATH_SEP;
+    }
+  }
+  if (stat(buffer, &stat_buffer) || !S_ISDIR(stat_buffer.st_mode)) {
+    if (mkdir(buffer, S_IRWXU) != 0) {
+      return 0;
+    }
+  }
+  return 1;
 }

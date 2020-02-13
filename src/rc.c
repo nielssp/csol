@@ -5,6 +5,14 @@
  */
 
 #define _XOPEN_SOURCE 500
+
+#include "rc.h"
+
+#include "theme.h"
+#include "game.h"
+#include "util.h"
+#include "scores.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,11 +25,6 @@
 #else
 #include <dirent.h>
 #endif
-
-#include "theme.h"
-#include "game.h"
-#include "util.h"
-#include "rc.h"
 
 #define BUFFER_INC 32
 
@@ -78,7 +81,9 @@ typedef enum {
   K_DEFAULT_GAME,
   K_DEFAULT_THEME,
   K_CLASS,
-  K_SAME_CLASS
+  K_SAME_CLASS,
+  K_SCORES,
+  K_SCORES_FILE
 } Keyword;
 
 struct symbol {
@@ -94,6 +99,8 @@ struct symbol root_commands[] = {
   {"game_dir", K_GAME_DIR},
   {"default_game", K_DEFAULT_GAME},
   {"default_theme", K_DEFAULT_THEME},
+  {"scores", K_SCORES},
+  {"scores_file", K_SCORES_FILE},
   {NULL, K_UNDEFINED}
 };
 
@@ -849,6 +856,14 @@ int execute_file(const char *file_name) {
       case K_DEFAULT_GAME:
         value = read_value(file);
         set_property("default_game", value);
+        free(value);
+        break;
+      case K_SCORES:
+        scores_enabled = read_int(file);
+        break;
+      case K_SCORES_FILE:
+        value = read_value(file);
+        scores_file_path = combine_paths(cwd, value);
         free(value);
         break;
       default:

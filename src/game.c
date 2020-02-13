@@ -4,13 +4,14 @@
  * See the LICENSE file or http://opensource.org/licenses/MIT for more information.
  */
 
-#include <stdlib.h>
-#include <string.h>
-
 #include "game.h"
+
 #include "card.h"
 #include "rc.h"
 #include "util.h"
+
+#include <stdlib.h>
+#include <string.h>
 
 struct dir_list {
   char *dir;
@@ -35,6 +36,7 @@ struct move *undo_moves = NULL;
 struct move *redo_moves = NULL;
 
 int move_counter = 0;
+int game_score = 0;
 
 char *move_error = NULL;
 
@@ -344,7 +346,7 @@ void clear_undo_history() {
   }
 }
 
-void record_move() {
+static void record_move() {
   struct move *m = malloc(sizeof(struct move));
   clear_redo_history();
   m->prev = undo_moves;
@@ -356,25 +358,25 @@ void record_move() {
   undo_moves = m;
 }
 
-void record_turn(Card *card) {
+static void record_turn(Card *card) {
   record_move();
   undo_moves->stack = card;
   undo_moves->up = card->up;
 }
 
-void record_location(Card *stack) {
+static void record_location(Card *stack) {
   record_turn(stack);
   move_counter++;
   undo_moves->src = stack->prev;
 }
 
-void record_redeal(Pile *stock, Pile *waste) {
+static void record_redeal(Pile *stock, Pile *waste) {
   record_move();
   undo_moves->stock = stock;
   undo_moves->waste = waste;
 }
 
-void do_move(struct move **history1, struct move **history2, int inc) {
+static int do_move(struct move **history1, struct move **history2, int inc) {
   if (*history1) {
     struct move *m = *history1;
     *history1 = m->prev;
@@ -413,15 +415,25 @@ void do_move(struct move **history1, struct move **history2, int inc) {
     }
     m->prev = *history2;
     *history2 = m;
+    return 1;
   }
+  return 0;
 }
 
-void undo_move() {
-  do_move(&undo_moves, &redo_moves, -1);
+int undo_move() {
+  if (do_move(&undo_moves, &redo_moves, -1)) {
+    game_score -= 20;
+    return 1;
+  }
+  return 0;
 }
 
-void redo_move() {
-  do_move(&redo_moves, &undo_moves, 1);
+int redo_move() {
+  if (do_move(&redo_moves, &undo_moves, 1)) {
+    game_score += 20;
+    return 1;
+  }
+  return 0;
 }
 
 int count_free_cells(Pile *piles) {
@@ -489,7 +501,6 @@ int legal_move_stack(Pile *dest, Card *src, Pile *src_pile, Pile *piles) {
       src->prev->next = NULL;
     }
     src->prev = top;
-    return 1;
   } else {
     if (!check_first_suit(src, rule->first_suit) || !check_first_rank(src, rule->first_rank)) {
       move_error = "Invalid destination";
@@ -501,8 +512,14 @@ int legal_move_stack(Pile *dest, Card *src, Pile *src_pile, Pile *piles) {
       src->prev->next = NULL;
     }
     src->prev = dest->stack;
-    return 1;
   }
+  if (rule->win_rank != RANK_NONE) {
+    game_score += 10;
+  }
+  if (src_pile->rule->win_rank != RANK_NONE) {
+    game_score -= 10;
+  }
+  return 1;
 }
 
 int move_to_waste(Card *card, Pile *stock, Pile *piles) {
@@ -532,6 +549,7 @@ int redeal(Pile *stock, Pile *piles) {
           move_stack(stock->stack, src_card);
           src_card = prev;
         }
+        game_score -= 50;
         return 1;
       }
     }
@@ -590,6 +608,7 @@ int auto_move_to_foundation(Pile *piles) {
 
 int turn_card(Card *card) {
   if (!card->next && !card->up) {
+    game_score += 5;
     record_turn(card);
     card->up = 1;
     return 1;
