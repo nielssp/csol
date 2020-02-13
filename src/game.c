@@ -163,7 +163,9 @@ Game *get_game(const char *name) {
     }
     free(game_path);
   }
-  return NULL;
+  printf("Warning: file \"%s\" not found, searching all game files\n", name);
+  load_game_dirs();
+  return get_game_in_list(name);
 }
 
 Card *new_pile(GameRule *rule) {

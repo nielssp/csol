@@ -140,7 +140,9 @@ Theme *get_theme(const char *name) {
     }
     free(theme_path);
   }
-  return NULL;
+  printf("Warning: file \"%s\" not found, searching all theme files\n", name);
+  load_theme_dirs();
+  return get_theme_in_list(name);
 }
 
 char *card_suit(Card *card, Theme *theme) {
