@@ -4,12 +4,16 @@
  * See the LICENSE file or http://opensource.org/licenses/MIT for more information.
  */
 
+#define _XOPEN_SOURCE 500
+
 #include "util.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <libgen.h>
+#include <errno.h>
 
 int file_exists(const char *path) {
   FILE *f = fopen(path, "r");
@@ -34,6 +38,34 @@ char *combine_paths(const char *path1, const char *path2) {
   return combined_path;
 }
 
+char *find_data_file(const char *name, const char *arg0) {
+  char *path = NULL;
+#ifdef USE_XDG_PATHS
+    char *data_dir = getenv("XDG_DATA_HOME");
+    if (data_dir) {
+      char *combined_data_dir = combine_paths(data_dir, "csol");
+      if (mkdir_rec(combined_data_dir)) {
+        path = combine_paths(combined_data_dir, name);
+      }
+      free(combined_data_dir);
+    } else {
+      data_dir = getenv("HOME");
+      if (data_dir) {
+        char *combined_data_dir = combine_paths(data_dir, ".local/share/csol");
+        if (mkdir_rec(combined_data_dir)) {
+          path = combine_paths(combined_data_dir, name);
+        }
+        free(combined_data_dir);
+      }
+    }
+#else
+  char *copy = strdup(arg0);
+  path = combine_paths(dirname(copy), name);
+  free(copy);
+#endif
+  return path;
+}
+
 int mkdir_rec(const char *path) {
   size_t length = strlen(path);
   char *buffer = malloc(length + 1);
@@ -48,6 +80,8 @@ int mkdir_rec(const char *path) {
       *p = 0;
       if (stat(buffer, &stat_buffer) || !S_ISDIR(stat_buffer.st_mode)) {
         if (mkdir(buffer, S_IRWXU) != 0) {
+          printf("%s: Creating directory failed: %s\n", buffer, strerror(errno));
+          free(buffer);
           return 0;
         }
       }
@@ -56,8 +90,11 @@ int mkdir_rec(const char *path) {
   }
   if (stat(buffer, &stat_buffer) || !S_ISDIR(stat_buffer.st_mode)) {
     if (mkdir(buffer, S_IRWXU) != 0) {
+      printf("%s: Creating directory failed: %s\n", buffer, strerror(errno));
+      free(buffer);
       return 0;
     }
   }
+  free(buffer);
   return 1;
 }

@@ -388,8 +388,10 @@ static int do_move(struct move **history1, struct move **history2, int inc) {
       from_stock = stock->rule->type == RULE_STOCK;
       if (from_stock) {
         stock->redeals--;
+        game_score += 50;
       } else {
         m->waste->redeals++;
+        game_score -= 50;
       }
       src_card = get_top(stock->stack);
       while (!(src_card->suit & BOTTOM)) {

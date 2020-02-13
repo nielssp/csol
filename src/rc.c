@@ -83,7 +83,9 @@ typedef enum {
   K_CLASS,
   K_SAME_CLASS,
   K_SCORES,
-  K_SCORES_FILE
+  K_SCORES_FILE,
+  K_STATS,
+  K_STATS_FILE
 } Keyword;
 
 struct symbol {
@@ -101,6 +103,8 @@ struct symbol root_commands[] = {
   {"default_theme", K_DEFAULT_THEME},
   {"scores", K_SCORES},
   {"scores_file", K_SCORES_FILE},
+  {"stats", K_STATS},
+  {"stats_file", K_STATS_FILE},
   {NULL, K_UNDEFINED}
 };
 
@@ -864,6 +868,14 @@ int execute_file(const char *file_name) {
       case K_SCORES_FILE:
         value = read_value(file);
         scores_file_path = combine_paths(cwd, value);
+        free(value);
+        break;
+      case K_STATS:
+        stats_enabled = read_int(file);
+        break;
+      case K_STATS_FILE:
+        value = read_value(file);
+        stats_file_path = combine_paths(cwd, value);
         free(value);
         break;
       default:

@@ -21,6 +21,7 @@
 
 int file_exists(const char *path);
 char *combine_paths(const char *path1, const char *path2);
+char *find_data_file(const char *name, const char *arg0);
 int mkdir_rec(const char *path);
 
 #endif

@@ -196,7 +196,9 @@ int main(int argc, char *argv[]) {
     }
   }
   if (!touch_scores_file(argv[0])) {
-    printf("%s: %s\n", scores_file_path, strerror(errno));
+    error = 1;
+  }
+  if (!touch_stats_file(argv[0])) {
     error = 1;
   }
   if (error) {

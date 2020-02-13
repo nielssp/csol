@@ -3,3 +3,4 @@ game_dir ..\games
 default_theme cp437
 default_game klondike
 scores 1
+stats 1
