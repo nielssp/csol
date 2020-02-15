@@ -327,14 +327,14 @@ static void format_time(char *out, int time) {
 static void ui_victory_banner(int y, int x, int score, int time, Stats stats) {
   char time_buffer[18];
   int height = 4;
-  if (stats.times_played > 1) {
+  if (stats.times_played > 1 && stats.best_time >= 0) {
     height += 1;
   }
   attron(COLOR_PAIR(COLOR_PAIR_BACKGROUND));
   ui_box(y, x, height, 38, 1);
   format_time(time_buffer, time);
   mvprintw(y + 1, x + 2, "VICTORY!  Score: %d / %s", score, time_buffer);
-  if (stats.times_played > 1) {
+  if (stats.times_played > 1 && stats.best_time >= 0) {
     format_time(time_buffer, stats.best_time);
     mvprintw(y + 2, x + 12, "Best:  %d / %s", stats.best_score,
         time_buffer);
