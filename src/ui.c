@@ -314,14 +314,35 @@ static void ui_box(int y, int x, int height, int width, int fill) {
   }
 }
 
-static void ui_victory_banner(int y, int x) {
-  attron(COLOR_PAIR(COLOR_PAIR_BACKGROUND));
-  ui_box(y, x, 4, 38, 1);
-  mvprintw(y + 1, x + 15, "VICTORY!");
-  mvprintw(y + 2, x + 2, "Press 'r' to redeal or 'q' to quit");
+static void format_time(char *out, int time) {
+  if (time > 3600) {
+    sprintf(out, "%d:%02d:%02d", time / 3600, (time / 60) % 60, time % 60);
+  } else if (time >= 0) {
+    sprintf(out, "%d:%02d", time / 60, time % 60);
+  } else {
+    sprintf(out, "n/a");
+  }
 }
 
-int ui_victory(Pile *piles, Theme *theme) {
+static void ui_victory_banner(int y, int x, int score, int time, Stats stats) {
+  char time_buffer[18];
+  int height = 4;
+  if (stats.times_played > 1) {
+    height += 1;
+  }
+  attron(COLOR_PAIR(COLOR_PAIR_BACKGROUND));
+  ui_box(y, x, height, 38, 1);
+  format_time(time_buffer, time);
+  mvprintw(y + 1, x + 2, "VICTORY!  Score: %d / %s", score, time_buffer);
+  if (stats.times_played > 1) {
+    format_time(time_buffer, stats.best_time);
+    mvprintw(y + 2, x + 12, "Best:  %d / %s", stats.best_score,
+        time_buffer);
+  }
+  mvprintw(y + height - 2, x + 2, "Press 'r' to redeal or 'q' to quit");
+}
+
+static int ui_victory(Pile *piles, Theme *theme, int score, int time, Stats stats) {
   int banner_y, banner_x;
   Pile *pile;
   Card *card;
@@ -338,7 +359,7 @@ int ui_victory(Pile *piles, Theme *theme) {
       y = (double)theme_y(pile_y, theme);
       x = (double)theme_x(pile->rule->x, theme);
       vy = (double)rand() / RAND_MAX * -4.0;
-      vx = (double)rand() / RAND_MAX * 8.0 - 1.0;
+      vx = (double)rand() / RAND_MAX * 8.0 - 4.0;
       while (y < win_h) {
         switch (getch()) {
           case 'r':
@@ -349,7 +370,7 @@ int ui_victory(Pile *piles, Theme *theme) {
             return 0;
         }
         print_card(y, x, card, 1, theme);
-        ui_victory_banner(banner_y, banner_x);
+        ui_victory_banner(banner_y, banner_x, score, time, stats);
         refresh();
         napms(70);
         y += vy;
@@ -412,10 +433,12 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
     for (pile = piles; pile; pile = pile->next) {
       print_pile(pile, theme);
     }
+    attron(COLOR_PAIR(COLOR_PAIR_BACKGROUND));
+    if (show_score) {
+      mvprintw(win_h - 1, 0, "Score: %d", game_score);
+    }
     move(theme->y_margin + off_y + cur_y, theme->x_margin + cur_x * (theme->width + theme->x_spacing));
     refresh();
-
-    attron(COLOR_PAIR(COLOR_PAIR_BACKGROUND));
 
     if (move_made) {
       if (!game_started) {
@@ -423,8 +446,10 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
         start_time = time(NULL);
       }
       if (check_win_condition(piles)) {
-        append_score(game->name, 1, game_score, start_time);
-        return ui_victory(piles, theme);
+        Stats stats;
+        int duration = time(NULL) - start_time;
+        append_score(game->name, 1, game_score, duration, &stats);
+        return ui_victory(piles, theme, game_score, duration, stats);
       }
       move_made = 0;
     }
@@ -635,10 +660,15 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
       case KEY_RESIZE:
         clear();
         break;
+      case 'v': {
+        Stats stats = { .times_played = -1 };
+        int duration = time(NULL) - start_time;
+        return ui_victory(piles, theme, game_score, duration, stats);
+      }
       case 'r':
         if (!game_started || ui_confirm("Redeal?")) {
           if (game_started) {
-            append_score(game->name, 0, game_score, start_time);
+            append_score(game->name, 0, game_score, start_time, NULL);
           }
           return 1;
         }
@@ -647,7 +677,7 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
       case 'q':
         if (!game_started || ui_confirm("Quit?")) {
           if (game_started) {
-            append_score(game->name, 0, game_score, start_time);
+            append_score(game->name, 0, game_score, start_time, NULL);
           }
           return 0;
         }
@@ -702,7 +732,7 @@ short find_color(Theme *theme, short index, char *name) {
   return index;
 }
 
-void find_and_init_color_pair(Theme *theme, short index, ColorPair color_pair) {
+static void find_and_init_color_pair(Theme *theme, short index, ColorPair color_pair) {
   short fg = find_color(theme, color_pair.fg, color_pair.fg_name);
   short bg = find_color(theme, color_pair.bg, color_pair.bg_name);
   if (fg >= COLORS) {

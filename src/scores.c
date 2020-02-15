@@ -13,23 +13,13 @@
 #include <string.h>
 #include <errno.h>
 
-struct stats {
-  struct stats *next;
-  char *game;
-  int times_played;
-  int times_won;
-  int total_time_played;
-  int best_time;
-  int best_score;
-  time_t first_played;
-  time_t last_played;
-};
-
 int scores_enabled = 0;
 char *scores_file_path = NULL;
 
 int stats_enabled = 0;
 char *stats_file_path = NULL;
+
+int show_score = 0;
 
 int touch_scores_file(const char *arg0) {
   FILE *f;
@@ -79,7 +69,8 @@ int touch_stats_file(const char *arg0) {
   return 1;
 }
 
-void update_stats(const char *game_name, int victory, int score, int duration, char *date) {
+static void update_stats(const char *game_name, int victory, int score,
+    int duration, char *date, Stats *stats_out) {
   FILE *f;
   int found = 0;
   if (!stats_file_path) {
@@ -94,19 +85,28 @@ void update_stats(const char *game_name, int victory, int score, int duration, c
     char game_name_buffer[100];
     if (fscanf(f, "%99[^,],", game_name_buffer)) {
       if (strcmp(game_name_buffer, game_name) == 0) {
-        int times_played, times_won, total_time_played, best_time, best_score;
+        Stats stats;
         char first_played[26];
         long offset = ftell(f);
-        if (fscanf(f, "%d,%d,%d,%d,%d,%25s", &times_played, &times_won, &total_time_played,
-              &best_time, &best_score, first_played)) {
-          times_played++;
-          times_won += victory;
-          total_time_played += duration;
-          if (victory && (best_time < 0 || duration < best_time)) best_time = duration;
-          if (victory && (best_score < 0 || score < best_score)) best_score = score;
+        if (fscanf(f, "%d,%d,%d,%d,%d,%25s", &stats.times_played,
+              &stats.times_won, &stats.total_time_played, &stats.best_time,
+              &stats.best_score, first_played)) {
+          stats.times_played++;
+          stats.times_won += victory;
+          stats.total_time_played += duration;
+          if (victory && (stats.best_time < 0 || duration < stats.best_time)) {
+            stats.best_time = duration;
+          }
+          if (victory && score > stats.best_score) {
+            stats.best_score = score;
+          }
           fseek(f, offset, SEEK_SET);
-          fprintf(f, "%11d,%11d,%11d,%11d,%11d,%s,%s\n", times_played, times_won, total_time_played,
-              best_time, best_score, first_played, date);
+          fprintf(f, "%11d,%11d,%11d,%11d,%11d,%s,%s\n", stats.times_played,
+              stats.times_won, stats.total_time_played, stats.best_time,
+              stats.best_score, first_played, date);
+          if (stats_out) {
+            *stats_out = stats;
+          }
           found = 1;
           break;
         }
@@ -116,18 +116,29 @@ void update_stats(const char *game_name, int victory, int score, int duration, c
   }
   if (!found) {
     fseek(f, 0, SEEK_END);
-    fprintf(f, "%s,%11d,%11d,%11d,%11d,%11d,%s,%s\n", game_name, 1, victory, duration,
-        victory ? duration : -1, victory ? score : -1, date, date);
+    fprintf(f, "%s,%11d,%11d,%11d,%11d,%11d,%s,%s\n", game_name, 1, victory,
+        duration, victory ? duration : -1, victory ? score : -1, date, date);
+    if (stats_out) {
+      stats_out->times_played = 1;
+      stats_out->times_won = victory;
+      stats_out->total_time_played = duration;
+      stats_out->best_time = victory ? duration : -1;
+      stats_out->best_score = victory ? score : -1;
+    }
   }
   fclose(f);
 }
 
-int append_score(const char *game_name, int victory, int score, time_t start_time) {
+int append_score(const char *game_name, int victory, int score,
+    int duration, Stats *stats_out) {
   FILE *f;
   struct tm *utc;
   time_t now;
   char date[26];
-  int duration;
+  if (stats_out) {
+    stats_out->best_time = -1;
+    stats_out->best_score = -1;
+  }
   if (!scores_file_path) {
     return 1;
   }
@@ -138,11 +149,10 @@ int append_score(const char *game_name, int victory, int score, time_t start_tim
   }
   now = time(NULL);
   utc = gmtime(&now);
-  duration = now - start_time;
   if (utc) {
     if (strftime(date, sizeof(date), "%Y-%m-%dT%H:%M:%SZ", utc)) {
       fprintf(f, "%s,%s,%d,%d,%d\n", date, game_name, victory, score, duration);
-      update_stats(game_name, victory, score, duration, date);
+      update_stats(game_name, victory, score, duration, date, stats_out);
     } else {
       printf("Saving score failed: %s\n", strerror(errno));
     }

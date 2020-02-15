@@ -14,6 +14,9 @@
 #include <sys/stat.h>
 #include <libgen.h>
 #include <errno.h>
+#if defined(MSDOS) || defined(USE_DIRECT)
+#include <direct.h>
+#endif
 
 int file_exists(const char *path) {
   FILE *f = fopen(path, "r");
@@ -66,11 +69,28 @@ char *find_data_file(const char *name, const char *arg0) {
   return path;
 }
 
+static int check_dir(const char *path) {
+  struct stat stat_buffer;
+  if (stat(path, &stat_buffer) == 0 && S_ISDIR(stat_buffer.st_mode)) {
+    return 1;
+  }
+#if defined(MSDOS) || defined(USE_DIRECT)
+  if (_mkdir(path) == 0) {
+    return 1;
+  }
+#else
+  if (mkdir(path, S_IRWXU) == 0) {
+    return 1;
+  }
+#endif
+  printf("%s: Creating directory failed: %s\n", path, strerror(errno));
+  return 0;
+}
+
 int mkdir_rec(const char *path) {
   size_t length = strlen(path);
   char *buffer = malloc(length + 1);
   char *p;
-  struct stat stat_buffer;
   memcpy(buffer, path, length + 1);
   if (buffer[length - 1] == PATH_SEP) {
     buffer[length - 1] = 0;
@@ -78,22 +98,16 @@ int mkdir_rec(const char *path) {
   for (p = buffer + 1; *p; p++) {
     if (*p == PATH_SEP) {
       *p = 0;
-      if (stat(buffer, &stat_buffer) || !S_ISDIR(stat_buffer.st_mode)) {
-        if (mkdir(buffer, S_IRWXU) != 0) {
-          printf("%s: Creating directory failed: %s\n", buffer, strerror(errno));
-          free(buffer);
-          return 0;
-        }
+      if (!check_dir(buffer)) {
+        free(buffer);
+        return 0;
       }
       *p = PATH_SEP;
     }
   }
-  if (stat(buffer, &stat_buffer) || !S_ISDIR(stat_buffer.st_mode)) {
-    if (mkdir(buffer, S_IRWXU) != 0) {
-      printf("%s: Creating directory failed: %s\n", buffer, strerror(errno));
-      free(buffer);
-      return 0;
-    }
+  if (!check_dir(buffer)) {
+    free(buffer);
+    return 0;
   }
   free(buffer);
   return 1;

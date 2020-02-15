@@ -85,7 +85,8 @@ typedef enum {
   K_SCORES,
   K_SCORES_FILE,
   K_STATS,
-  K_STATS_FILE
+  K_STATS_FILE,
+  K_SHOW_SCORE
 } Keyword;
 
 struct symbol {
@@ -105,6 +106,7 @@ struct symbol root_commands[] = {
   {"scores_file", K_SCORES_FILE},
   {"stats", K_STATS},
   {"stats_file", K_STATS_FILE},
+  {"show_score", K_SHOW_SCORE},
   {NULL, K_UNDEFINED}
 };
 
@@ -877,6 +879,9 @@ int execute_file(const char *file_name) {
         value = read_value(file);
         stats_file_path = combine_paths(cwd, value);
         free(value);
+        break;
+      case K_SHOW_SCORE:
+        show_score = read_int(file);
         break;
       default:
         break;
