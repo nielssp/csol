@@ -660,11 +660,6 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
       case KEY_RESIZE:
         clear();
         break;
-      case 'v': {
-        Stats stats = { .times_played = -1 };
-        int duration = time(NULL) - start_time;
-        return ui_victory(piles, theme, game_score, duration, stats);
-      }
       case 'r':
         if (!game_started || ui_confirm("Redeal?")) {
           if (game_started) {
