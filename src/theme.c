@@ -4,6 +4,8 @@
  * See the LICENSE file or http://opensource.org/licenses/MIT for more information.
  */
 
+#define _XOPEN_SOURCE 500
+
 #include "theme.h"
 
 #include "util.h"
@@ -23,6 +25,22 @@ ThemeList *last_theme = NULL;
 
 struct dir_list *theme_dirs = NULL;
 
+static void init_default_ranks(char **ranks) {
+  ranks[0] = strdup("A");
+  ranks[1] = strdup("2");
+  ranks[2] = strdup("3");
+  ranks[3] = strdup("4");
+  ranks[4] = strdup("5");
+  ranks[5] = strdup("6");
+  ranks[6] = strdup("7");
+  ranks[7] = strdup("8");
+  ranks[8] = strdup("9");
+  ranks[9] = strdup("10");
+  ranks[10] = strdup("J");
+  ranks[11] = strdup("Q");
+  ranks[12] = strdup("K");
+}
+
 Theme *new_theme() {
   Theme *theme = malloc(sizeof(Theme));
   theme->name = NULL;
@@ -31,6 +49,8 @@ Theme *new_theme() {
   theme->spade = NULL;
   theme->diamond = NULL;
   theme->club = NULL;
+  theme->ranks = malloc(13 * sizeof(char *));
+  init_default_ranks(theme->ranks);
   theme->width = 6;
   theme->height = 4;
   theme->x_spacing = 2;

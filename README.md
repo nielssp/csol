@@ -17,31 +17,31 @@ make
 
 Klondike (default): `csol klondike`
 
-![Klondike](games/klondike.png)
+![Klondike](images/klondike.png)
 
 Yukon: `csol yukon`
 
-![Yukon](games/yukon.png)
+![Yukon](images/yukon.png)
 
 Eight Off: `csol eightoff`
 
-![Eight Off](games/eightoff.png)
+![Eight Off](images/eightoff.png)
 
 Freecell: `csol freecell`
 
-![Freecell](games/freecell.png)
+![Freecell](images/freecell.png)
 
 Russian Solitaire: `csol russian`
 
-![Russian Solitaire](games/russian.png)
+![Russian Solitaire](images/russian.png)
 
 Yukon Freecell: `csol yukonfc`
 
-![Yukon Freecell](games/yukonfc.png)
+![Yukon Freecell](images/yukonfc.png)
 
 Klondike Freecell: `csol klondikefc`
 
-![Klondike Freecell](games/klondikefc.png)
+![Klondike Freecell](images/klondikefc.png)
 
 ## Themes
 
@@ -49,23 +49,23 @@ Klondike Freecell: `csol klondikefc`
 
 `csol -t default-xl`
 
-![default-xl](themes/default-xl.png)
+![default-xl](images/default-xl.png)
 
 `csol -t ascii`
 
-![ascii](themes/ascii.png)
+![ascii](images/ascii.png)
 
 `csol -t compact`
 
-![ascii](themes/compact.png)
+![ascii](images/compact.png)
 
 `csol -t compact-ascii`
 
-![ascii](themes/compact-ascii.png)
+![ascii](images/compact-ascii.png)
 
 `csol -t ultracompact`
 
-![ascii](themes/ultracompact.png)
+![ascii](images/ultracompact.png)
 
 ## Options
 
@@ -176,6 +176,7 @@ theme {
 `x_spacing`/`y_spacing` are used to set the horizontal/vertical spacing between cards.
 `x_margin` sets the distance between the left side of the terminal and the first card.
 `y_margin` sets the distance between the top of the terminal and the first card.
+`rank` followed by a number between 1 and 13 and a symbol redefines the symbol used for a rank.
 
 `empty`/`back`/`red`/`black` are used to set the characters used to draw cells and the back and front of cards.
 

@@ -63,6 +63,7 @@ struct theme {
   char *spade;
   char *diamond;
   char *club;
+  char **ranks;
   int width;
   int height;
   int x_spacing;

@@ -16,6 +16,7 @@
 #include <curses.h>
 #else
 #include <ncurses.h>
+#include <wchar.h>
 #endif
 #include <locale.h>
 #include <time.h>
@@ -85,50 +86,37 @@ void print_card_name_l(int y, int x, Card *card, Theme *theme) {
   if (y < 0 || y >= win_h) {
     return;
   }
-  switch (card->rank) {
-    case ACE:
-      mvprintw(y, x, "A");
-      break;
-    case KING:
-      mvprintw(y, x, "K");
-      break;
-    case QUEEN:
-      mvprintw(y, x, "Q");
-      break;
-    case JACK:
-      mvprintw(y, x, "J");
-      break;
-    default:
-      mvprintw(y, x, "%d", card->rank);
-  }
   RAW_OUTPUT(1);
-  printw(card_suit(card, theme));
+  mvprintw(y, x, "%s", theme->ranks[card->rank - 1]);
+  printw("%s", card_suit(card, theme));
   RAW_OUTPUT(0);
 }
 
+static int utf8strlen(char *s) {
+#if USE_PDCURSES
+  return strlen(s);
+#else
+  int length = 0;
+  while (*s) {
+    length += ((*s >> 6) & 3) != 2;
+    s++;
+  }
+  return length;
+#endif
+}
+
 void print_card_name_r(int y, int x, Card *card, Theme *theme) {
+  char *suit_symbol, *rank_symbol;
+  int width;
   if (y < 0 || y >= win_h) {
     return;
   }
+  suit_symbol = card_suit(card, theme);
+  rank_symbol = theme->ranks[card->rank - 1];
+  width = utf8strlen(suit_symbol) + utf8strlen(rank_symbol);
   RAW_OUTPUT(1);
-  mvprintw(y, x - 1 - (card->rank == 10), card_suit(card, theme));
+  mvprintw(y, x - width, "%s%s", suit_symbol, rank_symbol);
   RAW_OUTPUT(0);
-  switch (card->rank) {
-    case ACE:
-      printw("A");
-      break;
-    case KING:
-      printw("K");
-      break;
-    case QUEEN:
-      printw("Q");
-      break;
-    case JACK:
-      printw("J");
-      break;
-    default:
-      printw("%d", card->rank);
-  }
 }
 
 void print_layout(int y, int x, Card *card, Layout layout, int full, Theme *theme) {
@@ -178,7 +166,7 @@ void print_card(int y, int x, Card *card, int full, Theme *theme) {
       right_padding = theme->black_layout.right_padding;
     }
     if (full && theme->height > 1) {
-      print_card_name_r(y + theme->height - 1, x + theme->width - (right_padding + 1), card, theme);
+      print_card_name_r(y + theme->height - 1, x + theme->width - right_padding, card, theme);
     }
     print_card_name_l(y, x + left_padding, card, theme);
   }

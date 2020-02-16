@@ -25,7 +25,7 @@
 #include <errno.h>
 #include <time.h>
 
-const char *short_options = "hvlt:Tms:c:C";
+const char *short_options = "?hvlt:Tms:c:C";
 
 #ifdef USE_GETOPT
 const struct option long_options[] = {
@@ -135,6 +135,7 @@ int main(int argc, char *argv[]) {
 #endif
         ) != -1) {
     switch (opt) {
+      case '?':
       case 'h':
         printf("usage: %s [options] [game]\n", argv[0]);
         puts("options:");

@@ -86,7 +86,8 @@ typedef enum {
   K_SCORES_FILE,
   K_STATS,
   K_STATS_FILE,
-  K_SHOW_SCORE
+  K_SHOW_SCORE,
+  K_RANK
 } Keyword;
 
 struct symbol {
@@ -130,6 +131,7 @@ struct symbol theme_commands[] ={
   {"y_margin", K_Y_MARGIN},
   {"fg", K_FG},
   {"bg", K_BG},
+  {"rank", K_RANK},
   {NULL, K_UNDEFINED}
 };
 
@@ -553,6 +555,17 @@ void define_theme(FILE *file) {
       case K_BG:
         theme->background.bg = read_color(file, &theme->background.bg_name);
         break;
+      case K_RANK: {
+        int rank = read_int(file);
+        char *symbol = read_value(file);
+        if (rank >= 1 && rank <= 13) {
+          free(theme->ranks[rank - 1]);
+          theme->ranks[rank - 1] = symbol;
+        } else {
+          free(symbol);
+        }
+        break;
+      }
       default:
         break;
     }
