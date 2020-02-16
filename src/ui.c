@@ -695,7 +695,7 @@ static int ui_loop(Game *game, Theme *theme, Pile *piles) {
       case 'r':
         if (!game_started || ui_confirm("Redeal?")) {
           if (game_started) {
-            append_score(game->name, 0, game_score, start_time, NULL);
+            append_score(game->name, 0, game_score, time(NULL) - start_time, NULL);
           }
           return 1;
         }
@@ -704,7 +704,7 @@ static int ui_loop(Game *game, Theme *theme, Pile *piles) {
       case 'q':
         if (!game_started || ui_confirm("Quit?")) {
           if (game_started) {
-            append_score(game->name, 0, game_score, start_time, NULL);
+            append_score(game->name, 0, game_score, time(NULL) - start_time, NULL);
           }
           return 0;
         }
