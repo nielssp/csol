@@ -773,7 +773,7 @@ static void find_and_init_color_pair(Theme *theme, short index, ColorPair color_
 
 #ifdef USE_PDCURSES
 
-static char convert_code_point(int code_point) {
+static unsigned char convert_code_point(int code_point) {
   switch (code_point) {
     case 0x263A: return 1;
     case 0x263B: return 2;
