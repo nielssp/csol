@@ -36,7 +36,6 @@ Russian Solitaire: `csol russian`
 ![Russian Solitaire](images/russian.png)
 
 Yukon Freecell: `csol yukonfc`
-
 ![Yukon Freecell](images/yukonfc.png)
 
 Klondike Freecell: `csol klondikefc`
@@ -57,15 +56,19 @@ Klondike Freecell: `csol klondikefc`
 
 `csol -t compact`
 
-![ascii](images/compact.png)
+![compact](images/compact.png)
 
 `csol -t compact-ascii`
 
-![ascii](images/compact-ascii.png)
+![compact-ascii](images/compact-ascii.png)
 
 `csol -t ultracompact`
 
-![ascii](images/ultracompact.png)
+![ultracompact](images/ultracompact.png)
+
+`csol -t corners`
+
+![corners](images/corners.png)
 
 ## Options
 
@@ -177,8 +180,25 @@ theme {
 `x_margin` sets the distance between the left side of the terminal and the first card.
 `y_margin` sets the distance between the top of the terminal and the first card.
 `rank` followed by a number between 1 and 13 and a symbol redefines the symbol used for a rank.
+`utf8` can be set to 0 if the theme doesn't use UTF8 encoding.
 
 `empty`/`back`/`red`/`black` are used to set the characters used to draw cells and the back and front of cards.
+
+`text`-blocks can be placed inside layout-blocks (`empty`, `back` etc.) to add text:
+
+```
+text {
+  format suit_rank
+  x -1
+  y -1
+  align left
+}
+```
+
+`format` is one of `suit_rank`, `rank_suit`, `rank`, `suit`, or `none` (default).
+If `x` is negative, the x-position will be calculated as `width + x`.
+If `y` is negative, the y-position will be calculated as `height + x`.
+`align right` can be used to right align the printed text such that the right-most character is printed on `x`.
 
 #### Colors
 
