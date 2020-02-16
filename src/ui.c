@@ -686,6 +686,9 @@ static int ui_loop(Game *game, Theme *theme, Pile *piles) {
         selection = NULL;
         selection_pile = NULL;
         break;
+      case 12: /* ^l */
+        clear();
+        break;
       case KEY_RESIZE:
         clear();
         break;
