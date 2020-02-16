@@ -36,6 +36,7 @@ Russian Solitaire: `csol russian`
 ![Russian Solitaire](images/russian.png)
 
 Yukon Freecell: `csol yukonfc`
+
 ![Yukon Freecell](images/yukonfc.png)
 
 Klondike Freecell: `csol klondikefc`
