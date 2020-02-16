@@ -16,6 +16,8 @@
 #include <errno.h>
 #if defined(MSDOS) || defined(USE_DIRECT)
 #include <direct.h>
+#elif defined(_WIN32)
+#include <io.h>
 #endif
 
 int file_exists(const char *path) {
@@ -74,7 +76,7 @@ static int check_dir(const char *path) {
   if (stat(path, &stat_buffer) == 0 && S_ISDIR(stat_buffer.st_mode)) {
     return 1;
   }
-#if defined(MSDOS) || defined(USE_DIRECT)
+#if defined(MSDOS) || defined(USE_DIRECT) || defined(_WIN32)
   if (_mkdir(path) == 0) {
     return 1;
   }
