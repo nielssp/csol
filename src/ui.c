@@ -16,7 +16,6 @@
 #include <curses.h>
 #else
 #include <ncurses.h>
-#include <wchar.h>
 #endif
 #include <locale.h>
 #include <time.h>
@@ -82,7 +81,7 @@ struct color_name default_colors[] = {
   {NULL, -1}
 };
 
-void print_card_name_l(int y, int x, Card *card, Theme *theme) {
+static void print_card_name_l(int y, int x, Card *card, Theme *theme) {
   if (y < 0 || y >= win_h) {
     return;
   }
@@ -105,7 +104,7 @@ static int utf8strlen(char *s) {
 #endif
 }
 
-void print_card_name_r(int y, int x, Card *card, Theme *theme) {
+static void print_card_name_r(int y, int x, Card *card, Theme *theme) {
   char *suit_symbol, *rank_symbol;
   int width;
   if (y < 0 || y >= win_h) {
@@ -119,7 +118,42 @@ void print_card_name_r(int y, int x, Card *card, Theme *theme) {
   RAW_OUTPUT(0);
 }
 
-void print_layout(int y, int x, Card *card, Layout layout, int full, Theme *theme) {
+static void print_text(int y, int x, Card *card, Text text, int fill, Theme *theme) {
+  char *suit_symbol = "", *rank_symbol = "";
+  if ((!fill && text.y != 0) || !text.format) {
+    return;
+  }
+  if (text.y < 0) {
+    y += theme->height + text.y;
+  }
+  if (text.x < 0) {
+    x += theme->width + text.x;
+  }
+  if (y < 0 || y >= win_h) {
+    return;
+  }
+  if (text.format == TEXT_RANK_SUIT || text.format == TEXT_SUIT_RANK
+      || text.format == TEXT_SUIT) {
+    suit_symbol = card_suit(card, theme);
+  }
+  if (text.format == TEXT_RANK_SUIT || text.format == TEXT_SUIT_RANK
+      || text.format == TEXT_RANK) {
+    rank_symbol = theme->ranks[card->rank - 1];
+  }
+  if (text.align_right) {
+    x -= utf8strlen(suit_symbol) + utf8strlen(rank_symbol) - 1;
+  }
+  RAW_OUTPUT(1);
+  if (text.format == TEXT_RANK_SUIT) {
+    mvprintw(y, x, "%s%s", rank_symbol, suit_symbol);
+  } else {
+    mvprintw(y, x, "%s%s", suit_symbol, rank_symbol);
+  }
+  RAW_OUTPUT(0);
+}
+
+static void print_layout(int y, int x, Card *card, Layout layout, int full, Theme *theme) {
+  Text *field;
   if (y >= win_h) {
     return;
   }
@@ -137,51 +171,58 @@ void print_layout(int y, int x, Card *card, Layout layout, int full, Theme *them
       mvprintw(y + theme->height - 1, x, layout.bottom);
     }
   }
+  for (field = layout.text_fields; field; field = field->next) {
+    print_text(y, x, card, *field, full, theme);
+  }
 }
 
-void print_card(int y, int x, Card *card, int full, Theme *theme) {
+static void print_card(int y, int x, Card *card, int full, Theme *theme) {
   if (card == selection) {
     attron(A_REVERSE);
   }
   if (card->suit & BOTTOM) {
     attron(COLOR_PAIR(COLOR_PAIR_EMPTY));
     print_layout(y, x, card, theme->empty_layout, full, theme);
-    if (card->rank > 0) {
+    if (!theme->empty_layout.text_fields && card->rank > 0) {
       print_card_name_l(y, x + theme->empty_layout.left_padding, card, theme);
     }
   } else if (!card->up) {
     attron(COLOR_PAIR(COLOR_PAIR_BACK));
     print_layout(y, x, card, theme->back_layout, full, theme);
   } else {
-    int left_padding, right_padding;
+    int left_padding, right_padding, has_text;
     if (card->suit & RED) {
       attron(COLOR_PAIR(COLOR_PAIR_RED));
       print_layout(y, x, card, theme->red_layout, full, theme);
       left_padding = theme->red_layout.left_padding;
       right_padding = theme->red_layout.right_padding;
+      has_text = !!theme->red_layout.text_fields;
     } else {
       attron(COLOR_PAIR(COLOR_PAIR_BLACK));
       print_layout(y, x, card, theme->black_layout, full, theme);
       left_padding = theme->black_layout.left_padding;
       right_padding = theme->black_layout.right_padding;
+      has_text = !!theme->black_layout.text_fields;
     }
-    if (full && theme->height > 1) {
-      print_card_name_r(y + theme->height - 1, x + theme->width - right_padding, card, theme);
+    if (!has_text) {
+      if (full && theme->height > 1) {
+        print_card_name_r(y + theme->height - 1, x + theme->width - right_padding, card, theme);
+      }
+      print_card_name_l(y, x + left_padding, card, theme);
     }
-    print_card_name_l(y, x + left_padding, card, theme);
   }
   attroff(A_REVERSE);
 }
 
-int theme_y(int y, Theme *theme) {
+static int theme_y(int y, Theme *theme) {
   return theme->y_margin + off_y + y;
 }
 
-int theme_x(int x, Theme *theme) {
+static int theme_x(int x, Theme *theme) {
   return theme->x_margin + x * (theme->width + theme->x_spacing);
 }
 
-int print_card_in_grid(int y, int x, Card *card, int full, Theme *theme) {
+static int print_card_in_grid(int y, int x, Card *card, int full, Theme *theme) {
   int y2 = y + full * (theme->height - 1);
   if (y2 > max_y) max_y = y2;
   if (x > max_x) max_x = x;
@@ -197,15 +238,15 @@ int print_card_in_grid(int y, int x, Card *card, int full, Theme *theme) {
   return cursor_card == card;
 }
 
-int print_card_top(int y, int x, Card *card, Theme *theme) {
+static int print_card_top(int y, int x, Card *card, Theme *theme) {
   return print_card_in_grid(y, x, card, 0, theme);
 }
 
-int print_card_full(int y, int x, Card *card, Theme *theme) {
+static int print_card_full(int y, int x, Card *card, Theme *theme) {
   return print_card_in_grid(y, x, card, 1, theme);
 }
 
-int print_stack(int y, int x, Card *bottom, Theme *theme) {
+static int print_stack(int y, int x, Card *bottom, Theme *theme) {
   if (bottom->next) {
     return print_stack(y, x, bottom->next, theme);
   } else {
@@ -213,7 +254,7 @@ int print_stack(int y, int x, Card *bottom, Theme *theme) {
   }
 }
 
-int print_tableau(int y, int x, Card *bottom, Theme *theme) {
+static int print_tableau(int y, int x, Card *bottom, Theme *theme) {
   if (bottom->next && bottom->suit & BOTTOM) {
     return print_tableau(y, x, bottom->next, theme);
   } else {
@@ -227,7 +268,7 @@ int print_tableau(int y, int x, Card *bottom, Theme *theme) {
   }
 }
 
-void print_pile(Pile *pile, Theme *theme) {
+static void print_pile(Pile *pile, Theme *theme) {
   int y = pile->rule->y * (theme->height + theme->y_spacing);
   if (pile->rule->type == RULE_STOCK) {
     Card *top = get_top(pile->stack);
@@ -386,7 +427,7 @@ static int ui_victory(Pile *piles, Theme *theme, int score, int time, Stats stat
   }
 }
 
-int ui_loop(Game *game, Theme *theme, Pile *piles) {
+static int ui_loop(Game *game, Theme *theme, Pile *piles) {
   MEVENT mouse;
   int move_made = 0;
   int mouse_action = 0;
@@ -697,7 +738,7 @@ int ui_loop(Game *game, Theme *theme, Pile *piles) {
   return 0;
 }
 
-short find_color(Theme *theme, short index, char *name) {
+static short find_color(Theme *theme, short index, char *name) {
   if (name) {
     struct color_name *default_color;
     Color *color;
@@ -727,7 +768,163 @@ static void find_and_init_color_pair(Theme *theme, short index, ColorPair color_
   init_pair(index, fg, bg);
 }
 
+#ifdef USE_PDCURSES
+
+static char convert_code_point(int code_point) {
+  switch (code_point) {
+    case 0x263A: return 1;
+    case 0x263B: return 2;
+    case 0x2665: return 3;
+    case 0x2666: return 4;
+    case 0x2663: return 5;
+    case 0x2660: return 6;
+    case 0x2022: return 7;
+    case 0x25D8: return 8;
+    case 0x25CB: return 9;
+    case 0x25D9: return 10;
+    case 0x2642: return 11;
+    case 0x2640: return 12;
+    case 0x266A: return 13;
+    case 0x266B: return 14;
+    case 0x263C: return 15;
+    case 0x25BA: return 16;
+    case 0x25C4: return 17;
+    case 0x2195: return 18;
+    case 0x203C: return 19;
+    case 0x00B6: return 20;
+    case 0x00A7: return 21;
+    case 0x25AC: return 22;
+    case 0x21A8: return 23;
+    case 0x2191: return 24;
+    case 0x2193: return 25;
+    case 0x2192: return 26;
+    case 0x2190: return 27;
+    case 0x221F: return 28;
+    case 0x2194: return 29;
+    case 0x25B2: return 30;
+    case 0x25BC: return 31;
+    case 0x2302: return 127;
+    case 0x2591: return 176;
+    case 0x2592: return 177;
+    case 0x2593: return 178;
+    case 0x2502: return 179;
+    case 0x2524: return 180;
+    case 0x2561: return 181;
+    case 0x2562: return 182;
+    case 0x2556: return 183;
+    case 0x2555: return 184;
+    case 0x2563: return 185;
+    case 0x2551: return 186;
+    case 0x2557: return 187;
+    case 0x255D: return 188;
+    case 0x255C: return 189;
+    case 0x255B: return 190;
+    case 0x2510: return 191;
+    case 0x2514: return 192;
+    case 0x2534: return 193;
+    case 0x252C: return 194;
+    case 0x251C: return 195;
+    case 0x2500: return 196;
+    case 0x253C: return 197;
+    case 0x255E: return 198;
+    case 0x255F: return 199;
+    case 0x255A: return 200;
+    case 0x2554: return 201;
+    case 0x2569: return 202;
+    case 0x2566: return 203;
+    case 0x2560: return 204;
+    case 0x2550: return 205;
+    case 0x256C: return 206;
+    case 0x2567: return 207;
+    case 0x2568: return 208;
+    case 0x2564: return 209;
+    case 0x2565: return 210;
+    case 0x2559: return 211;
+    case 0x2558: return 212;
+    case 0x2552: return 213;
+    case 0x2553: return 214;
+    case 0x256B: return 215;
+    case 0x256A: return 216;
+    case 0x2518: return 217;
+    case 0x250C: return 218;
+    case 0x2588: return 219;
+    case 0x2584: return 220;
+    case 0x258C: return 221;
+    case 0x2590: return 222;
+    case 0x2580: return 223;
+    default:
+      printf("Unknown code point: %04x\n", code_point);
+      return '?';
+  }
+}
+
+static void convert_string(char *str) {
+  char *s;
+  int next = 0;
+  int code_point = 0;
+  if (!str) {
+    return;
+  }
+  for (s = str ; *s; s++) {
+    if (*s & 0x80) {
+      if (*s & 0x40) {
+        if (code_point) {
+          str[next++] = convert_code_point(code_point);
+          code_point = 0;
+        }
+        if ((*s & 0xE0) == 0xC0) {
+          code_point = *s & 0x1F;
+        } else if ((*s & 0xF0) == 0xE0) {
+          code_point = *s & 0x0F;
+        } else if ((*s & 0xF8) == 0xF0) {
+          code_point = *s & 0x07;
+        }
+      } else {
+        code_point <<= 6;
+        code_point |= *s & 0x3F;
+      }
+    } else {
+      if (code_point) {
+        str[next++] = convert_code_point(code_point);
+        code_point = 0;
+      }
+      str[next++] = *s;
+    }
+  }
+  if (code_point) {
+    str[next++] = convert_code_point(code_point);
+    code_point = 0;
+  }
+  str[next] = 0;
+}
+
+static void convert_layout(Layout *layout) {
+  convert_string(layout->top);
+  convert_string(layout->middle);
+  convert_string(layout->bottom);
+}
+
+static void convert_theme(Theme *theme) {
+  theme->utf8 = 0;
+  convert_string(theme->heart);
+  convert_string(theme->spade);
+  convert_string(theme->diamond);
+  convert_string(theme->club);
+  convert_layout(&theme->empty_layout);
+  convert_layout(&theme->back_layout);
+  convert_layout(&theme->red_layout);
+  convert_layout(&theme->black_layout);
+}
+
+#endif
+
 void ui_main(Game *game, Theme *theme, int enable_color, unsigned int seed) {
+#ifdef USE_PDCURSES
+  if (theme->utf8) {
+    printf("Converting UTF8 theme\n");
+    convert_theme(theme);
+  }
+#endif
   setlocale(LC_ALL, "");
   initscr();
   if (enable_color) {

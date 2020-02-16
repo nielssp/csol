@@ -1,6 +1,7 @@
 theme {
   name cp437
   title "Code page 437 (DOS)"
+  utf8 0
   heart   
   spade   
   diamond 

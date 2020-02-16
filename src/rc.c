@@ -87,7 +87,11 @@ typedef enum {
   K_STATS,
   K_STATS_FILE,
   K_SHOW_SCORE,
-  K_RANK
+  K_RANK,
+  K_TEXT,
+  K_ALIGN,
+  K_FORMAT,
+  K_UTF8
 } Keyword;
 
 struct symbol {
@@ -132,6 +136,7 @@ struct symbol theme_commands[] ={
   {"fg", K_FG},
   {"bg", K_BG},
   {"rank", K_RANK},
+  {"utf8", K_UTF8},
   {NULL, K_UNDEFINED}
 };
 
@@ -143,6 +148,15 @@ struct symbol layout_commands[] = {
   {"bg", K_BG},
   {"left_padding", K_LEFT_PADDING},
   {"right_padding", K_RIGHT_PADDING},
+  {"text", K_TEXT},
+  {NULL, K_UNDEFINED}
+};
+
+struct symbol text_commands[] = {
+  {"x", K_X},
+  {"y", K_Y},
+  {"align", K_ALIGN},
+  {"format", K_FORMAT},
   {NULL, K_UNDEFINED}
 };
 
@@ -438,6 +452,58 @@ int end_block(FILE *file) {
   return expect('}', file);
 }
 
+TextFormat read_text_format(FILE *file) {
+  char *symbol = read_value(file);
+  TextFormat format = TEXT_NONE;
+  if (strcmp(symbol, "rank_suit") == 0) {
+    format = TEXT_RANK_SUIT;
+  } else if (strcmp(symbol, "suit_rank") == 0) {
+    format = TEXT_SUIT_RANK;
+  } else if (strcmp(symbol, "suit") == 0) {
+    format = TEXT_SUIT;
+  } else if (strcmp(symbol, "rank") == 0) {
+    format = TEXT_RANK;
+  }
+  free(symbol);
+  return format;
+}
+
+int read_text_align(FILE *file) {
+  char *symbol = read_value(file);
+  int align = 0;
+  if (strcmp(symbol, "right") == 0) {
+    align = 1;
+  }
+  free(symbol);
+  return align;
+}
+
+Text define_text(FILE *file) {
+  Keyword command;
+  Text text = init_text();
+  begin_block(file);
+  while ((command = read_command(file, text_commands))) {
+    switch (command) {
+      case K_FORMAT:
+        text.format = read_text_format(file);
+        break;
+      case K_X:
+        text.x = read_int(file);
+        break;
+      case K_Y:
+        text.y = read_int(file);
+        break;
+      case K_ALIGN:
+        text.align_right = read_text_align(file);
+        break;
+      default:
+        break;
+    }
+  }
+  end_block(file);
+  return text;
+}
+
 Layout define_layout(FILE *file) {
   Keyword command;
   Layout layout = init_layout();
@@ -465,6 +531,13 @@ Layout define_layout(FILE *file) {
       case K_RIGHT_PADDING:
         layout.right_padding = read_int(file);
         break;
+      case K_TEXT: {
+        Text text = define_text(file);
+        text.next = layout.text_fields;
+        layout.text_fields = malloc(sizeof(Text));
+        *layout.text_fields = text;
+        break;
+      }
       default:
         break;
     }
@@ -566,6 +639,9 @@ void define_theme(FILE *file) {
         }
         break;
       }
+      case K_UTF8:
+        theme->utf8 = read_int(file);
+        break;
       default:
         break;
     }

@@ -57,6 +57,7 @@ Theme *new_theme() {
   theme->y_spacing = 1;
   theme->x_margin = 2;
   theme->y_margin = 1;
+  theme->utf8 = 1;
   theme->colors = NULL;
   theme->background.fg = 7;
   theme->background.fg_name = NULL;
@@ -82,6 +83,16 @@ Layout init_layout() {
   l.right_padding = 1;
   l.text_fields = NULL;
   return l;
+}
+
+Text init_text() {
+  Text t;
+  t.next = NULL;
+  t.format = TEXT_NONE;
+  t.x = 0;
+  t.y = 0;
+  t.align_right = 0;
+  return t;
 }
 
 void define_color(Theme *theme, char *name, short index, short red, short green, short blue) {

@@ -9,6 +9,7 @@ theme {
   height 1
   x_spacing 0
   y_spacing 0
+  rank 10 T
   empty {
     top    --
     fg green

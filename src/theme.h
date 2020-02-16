@@ -16,6 +16,14 @@ typedef struct layout Layout;
 typedef struct theme Theme;
 typedef struct theme_list ThemeList;
 
+typedef enum {
+  TEXT_NONE,
+  TEXT_RANK,
+  TEXT_SUIT,
+  TEXT_RANK_SUIT,
+  TEXT_SUIT_RANK
+} TextFormat;
+
 struct color {
   Color *next;
   char *name;
@@ -32,15 +40,9 @@ struct color_pair {
   char *bg_name;
 };
 
-enum text_format {
-  RANK,
-  SUIT,
-  RANK_SUIT,
-  SUIT_RANK
-};
-
 struct text {
-  enum text_format format;
+  Text *next;
+  TextFormat format;
   short x;
   short y;
   short align_right;
@@ -70,6 +72,7 @@ struct theme {
   int y_spacing;
   int x_margin;
   int y_margin;
+  int utf8;
   Color *colors;
   ColorPair background;
   Layout empty_layout;
@@ -85,6 +88,7 @@ struct theme_list {
 
 Theme *new_theme();
 Layout init_layout();
+Text init_text();
 void define_color(Theme *theme, char *name, short index, short red, short green, short blue);
 
 void register_theme(Theme *theme);
