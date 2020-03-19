@@ -24,7 +24,7 @@
 #include <time.h>
 
 #ifdef PDCURSES
-#define RAW_OUTPUT(n) raw_output(1)
+#define RAW_OUTPUT(n) raw_output(n)
 #else
 #define RAW_OUTPUT(n)
 #define KEY_SUP    337
