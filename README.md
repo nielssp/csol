@@ -83,7 +83,7 @@ Klondike Freecell: `csol klondikefc`
 * `--config <file>`/`-c <file>`: Use a configuration file
 * `--colors`/`-C`: List colors available in the current terminal
 * `--scores`/`-S`: Show stats for all games.
-* `--scores <game>`/`-S <game>`: Show history of all scores for a game.
+* `--scores <game>`/`-S <game>`: Show history of all scores in a game.
 
 ## Keys
 
@@ -121,9 +121,19 @@ csol will use `$XDG_CONFIG_HOME/csol/csolrc` or `$HOME/.config/csol/csolrc` inst
 include /etc/xdg/csol/csolrc
 default_game yukon
 default_theme default-xl
+scores 1
+stats 1
+scores_file scores.csv
+stats_file stats.csv
 ```
 
 The `theme_dir` and `game_dir` commands can be used to lazily load theme and game configuration files from a directory.
+
+The `scores` command enable or disable the use of CSV file to record all scores. `scores_file` can be used to set the file path of the scores file.
+
+The `stats` command enable or disable the use of CSV file to keep track of total game time and the best scores for each game. `stats_file` can be used to set the file path of the stats file.
+
+On Linux the default location for `scores.csv` and `stats.csv` is either `$XDG_DATA_HOME/csol/` or `$HOME/.local/share/csol/`. On DOS and Windows the default location is the same directory as `csol.exe`.
 
 ### Themes
 
