@@ -233,15 +233,50 @@ int main(int argc, char *argv[]) {
       break;
     case SHOW_SCORES:
       if (game_name) {
+        char date[100];
+        Score score;
+        FILE *f;
+        time_t now = time(NULL);
+        int date_width = strftime(date, sizeof(date), "%x %X", localtime(&now));
+        printf("%-*s %-3s %10s %10s\n", date_width, "Timestamp", "Won", "Time", "Score");
+        if (!scores_file_path) {
+          printf("No scores file\n");
+          break;
+        }
+        f = fopen(scores_file_path, "rb");
+        if (!f) {
+          printf("%s: %s\n", scores_file_path, strerror(errno));
+          break;
+        }
+        while (read_scores(f, &score)) {
+          if (strcmp(score.game, game_name) == 0) {
+            if (strftime(date, sizeof(date), "%x %X", localtime(&score.timestamp))) {
+              char time[18];
+              format_time(time, score.duration);
+              printf("%-*s %-3s %10s %10d\n", date_width, date, score.victory ? "X" : "", time, score.score);
+            } else {
+              printf("strftime() failed: %s\n", strerror(errno));
+            }
+          }
+          free(score.game);
+        }
+        fclose(f);
       } else {
         Stats *stats = get_stats();
         Stats *current;
-        printf("%-20s %-7s %-7s %-12s %-10s %-10s\n", "Game", "Won", "Lost", "Time spent", "Best time", "Best score");
+        int max = 4;
+        for (current = stats; current; current = current->next) {
+          int l = strlen(current->game);
+          if (l > max) {
+            max = l;
+          }
+        }
+        printf("%-*s %7s %7s %12s %10s %10s\n", max, "Game", "Won", "Lost", "Time spent", "Best time", "Best score");
         for (current = stats; current; current = current->next) {
           char total_time_played[18], best_time[18];
           format_time(total_time_played, current->total_time_played);
           format_time(best_time, current->best_time);
-          printf("%-20s %7d %7d %12s %10s %10d\n", current->game, current->times_won, current->times_played - current->times_won, total_time_played, best_time, current->best_score);
+          printf("%-*s %7d %7d %12s %10s %10d\n", max, current->game, current->times_won, current->times_played - current->times_won, total_time_played, best_time, current->best_score);
         }
         delete_stats(stats);
       }

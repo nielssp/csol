@@ -9,6 +9,10 @@ static char *read_string(FILE *file) {
   int c;
   size_t size = 32, i = 0;
   char *buffer = malloc(size);
+  if (!buffer) {
+    printf("malloc() failed\n");
+    return NULL;
+  }
   while ((c = fgetc(file)) != EOF && c != ',' && c != '\n') {
     buffer[i++] = c;
     if (i >= size) {
@@ -16,6 +20,7 @@ static char *read_string(FILE *file) {
       size += 32;
       new_buffer = realloc(buffer, size);
       if (!new_buffer) {
+        printf("realloc() failed\n");
         i--;
         break;
       }
@@ -54,12 +59,19 @@ static int read_int(FILE *file) {
 static time_t read_time(FILE *file) {
   time_t t = time(NULL);
   struct tm *time = gmtime(&t);
-  if (fscanf(file, "%d-%d-%dT%d:%d:%dZ", &time->tm_year, &time->tm_mon, &time->tm_mday, &time->tm_hour,
+  char *s = read_string(file);
+  if (!s) {
+    return 0;
+  }
+  if (sscanf(s, "%d-%d-%dT%d:%d:%dZ", &time->tm_year, &time->tm_mon, &time->tm_mday, &time->tm_hour,
         &time->tm_min, &time->tm_sec)) {
+    time->tm_year -= 1900;
     time->tm_mon--;
     t = mktime(time);
+    free(s);
     return t + (mktime(localtime(&t)) - mktime(gmtime(&t)));
   }
+  free(s);
   return 0;
 }
 
@@ -89,10 +101,15 @@ int read_csv(FILE *file, const char *columns, ...) {
         *t = eol ? 0 : read_time(file);
         break;
       }
+      default:
+        va_arg(ap, void *);
+        break;
     }
-    while ((c = fgetc(file)) != EOF && c != '\n' && c != ',') { }
-    if (c == '\n' || c == EOF) {
-      eol = 1;
+    if (!eol) {
+      while ((c = fgetc(file)) != EOF && c != '\n' && c != ',') { }
+      if (c == '\n' || c == EOF) {
+        eol = 1;
+      }
     }
   }
   va_end(ap);

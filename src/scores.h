@@ -8,8 +8,10 @@
 #define SCORES_H
 
 #include <time.h>
+#include <stdio.h>
 
 typedef struct stats Stats;
+typedef struct score Score;
 
 struct stats {
   Stats *next;
@@ -21,6 +23,14 @@ struct stats {
   int best_score;
   time_t first_played;
   time_t last_played;
+};
+
+struct score {
+  time_t timestamp;
+  char *game;
+  int victory;
+  int score;
+  int duration;
 };
 
 extern int scores_enabled;
@@ -41,5 +51,7 @@ int append_score(const char *game_name, int victory, int score, int duration, St
 
 Stats *get_stats();
 void delete_stats(Stats *stats);
+
+int read_scores(FILE *f, Score *score);
 
 #endif

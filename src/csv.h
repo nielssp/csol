@@ -7,6 +7,7 @@
  *  - s: char *
  *  - i: int
  *  - t: time_t
+ *  - *: ignore
  */
 int read_csv(FILE *f, const char *columns, ...);
 

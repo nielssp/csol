@@ -10,7 +10,6 @@
 #include "csv.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <errno.h>
 
@@ -165,12 +164,12 @@ int append_score(const char *game_name, int victory, int score,
 }
 
 Stats *get_stats() {
-  Stats *stats = NULL, *head = NULL;
+  Stats *stats = NULL, *head;
   FILE *f;
   if (!stats_file_path) {
     return NULL;
   }
-  f = fopen(stats_file_path, "rb+");
+  f = fopen(stats_file_path, "rb");
   if (!f) {
     printf("%s: %s\n", stats_file_path, strerror(errno));
     return NULL;
@@ -196,4 +195,8 @@ void delete_stats(Stats *stats) {
     free(stats->game);
   }
   free(stats);
+}
+
+int read_scores(FILE *f, Score *score) {
+  return read_csv(f, "tsiii", &score->timestamp, &score->game, &score->victory, &score->score, &score->duration);
 }
