@@ -238,7 +238,7 @@ int main(int argc, char *argv[]) {
         FILE *f;
         time_t now = time(NULL);
         int date_width = strftime(date, sizeof(date), "%x %X", localtime(&now));
-        printf("%-*s %-3s %10s %10s\n", date_width, "Timestamp", "Won", "Time", "Score");
+        printf("%-*s %-3s %10s %10s\n", date_width, "Date", "Won", "Time", "Score");
         if (!scores_file_path) {
           printf("No scores file\n");
           break;
