@@ -188,9 +188,10 @@ Stats *get_stats() {
 }
 
 void delete_stats(Stats *stats) {
-  if (stats->next) {
-    delete_stats(stats->next);
+  if (!stats) {
+    return;
   }
+  delete_stats(stats->next);
   if (stats->game) {
     free(stats->game);
   }
