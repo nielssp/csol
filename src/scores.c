@@ -7,6 +7,7 @@
 #include "scores.h"
 
 #include "util.h"
+#include "csv.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -161,4 +162,38 @@ int append_score(const char *game_name, int victory, int score,
   }
   fclose(f);
   return 1;
+}
+
+Stats *get_stats() {
+  Stats *stats = NULL, *head = NULL;
+  FILE *f;
+  if (!stats_file_path) {
+    return NULL;
+  }
+  f = fopen(stats_file_path, "rb+");
+  if (!f) {
+    printf("%s: %s\n", stats_file_path, strerror(errno));
+    return NULL;
+  }
+  head = malloc(sizeof(Stats));
+  while (read_csv(f, "siiiiitt", &head->game, &head->times_played,
+        &head->times_won, &head->total_time_played, &head->best_time,
+        &head->best_score, &head->first_played, &head->last_played)) {
+    head->next = stats;
+    stats = head;
+    head = malloc(sizeof(Stats));
+  }
+  free(head);
+  fclose(f);
+  return stats;
+}
+
+void delete_stats(Stats *stats) {
+  if (stats->next) {
+    delete_stats(stats->next);
+  }
+  if (stats->game) {
+    free(stats->game);
+  }
+  free(stats);
 }

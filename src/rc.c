@@ -212,7 +212,7 @@ int previous_column = 0;
 
 int has_error = 0;
 
-int read_char(FILE *file) {
+static int read_char(FILE *file) {
   int c = fgetc(file);
   if (c == '\n') {
     line++;
@@ -224,7 +224,7 @@ int read_char(FILE *file) {
   return c;
 }
 
-void unread_char(int c, FILE *file) {
+static void unread_char(int c, FILE *file) {
   ungetc(c, file);
   column--;
   if (column <= 0) {
@@ -233,7 +233,7 @@ void unread_char(int c, FILE *file) {
   }
 }
 
-struct position get_position(FILE *file) {
+static struct position get_position(FILE *file) {
   struct position p;
   p.offset = ftell(file);
   p.line = line;
@@ -241,13 +241,13 @@ struct position get_position(FILE *file) {
   return p;
 }
 
-void set_position(struct position pos, FILE *file) {
+static void set_position(struct position pos, FILE *file) {
   fseek(file, pos.offset, SEEK_SET);
   line = pos.line;
   column = pos.column;
 }
 
-void rc_error(const char *format, ...) {
+static void rc_error(const char *format, ...) {
   va_list va;
   has_error = 1;
   if (current_file) {
@@ -259,7 +259,7 @@ void rc_error(const char *format, ...) {
   printf("\n");
 }
 
-void skip_whitespace(FILE *file) {
+static void skip_whitespace(FILE *file) {
   int c;
   while (isspace(c = read_char(file)) || c == '#') {
     if (c == '#') {
@@ -269,7 +269,7 @@ void skip_whitespace(FILE *file) {
   unread_char(c, file);
 }
 
-char *resize_buffer(char *buffer, size_t oldsize, size_t newsize) {
+static char *resize_buffer(char *buffer, size_t oldsize, size_t newsize) {
   char *new = NULL;
   if (newsize < oldsize) {
     return NULL;
@@ -283,7 +283,7 @@ char *resize_buffer(char *buffer, size_t oldsize, size_t newsize) {
   return new;
 }
 
-char *read_symbol(FILE *file) {
+static char *read_symbol(FILE *file) {
   size_t size = BUFFER_INC, i = 0;
   char *buffer;
   int c = read_char(file);
@@ -305,7 +305,7 @@ char *read_symbol(FILE *file) {
   return buffer;
 }
 
-char *read_quoted(FILE *file) {
+static char *read_quoted(FILE *file) {
   size_t size = BUFFER_INC, i = 0;
   int c = read_char(file);
   char *buffer = malloc(size);
@@ -321,7 +321,7 @@ char *read_quoted(FILE *file) {
   return buffer;
 }
 
-char *read_line(FILE *file) {
+static char *read_line(FILE *file) {
   size_t size = BUFFER_INC, i = 0;
   int c = read_char(file);
   char *buffer = malloc(size);
@@ -345,7 +345,7 @@ char *read_line(FILE *file) {
   return buffer;
 }
 
-char *read_value(FILE *file) {
+static char *read_value(FILE *file) {
   int c;
   skip_whitespace(file);
   c = read_char(file);
@@ -356,7 +356,7 @@ char *read_value(FILE *file) {
   return read_line(file);
 }
 
-void redefine_property(char **property, FILE *file) {
+static void redefine_property(char **property, FILE *file) {
   char *value = read_value(file);
   if (*property) {
     free(*property);
@@ -364,7 +364,7 @@ void redefine_property(char **property, FILE *file) {
   *property = value;
 }
 
-int read_int(FILE *file) {
+static int read_int(FILE *file) {
   int c;
   int sign, value;
   skip_whitespace(file);
@@ -387,7 +387,7 @@ int read_int(FILE *file) {
   return value * sign;
 }
 
-int read_expr(FILE *file, int index) {
+static int read_expr(FILE *file, int index) {
   int increment;
   int value = read_int(file);
   int c = read_char(file);
@@ -402,7 +402,7 @@ int read_expr(FILE *file, int index) {
   return value + increment * index;
 }
 
-int read_color(FILE *file, char **name) {
+static int read_color(FILE *file, char **name) {
   int c;
   skip_whitespace(file);
   c = read_char(file);
@@ -414,7 +414,7 @@ int read_color(FILE *file, char **name) {
   return -1;
 }
 
-Keyword read_command(FILE *file, struct symbol *commands) {
+static Keyword read_command(FILE *file, struct symbol *commands) {
   char *keyword;
   skip_whitespace(file);
   keyword = read_symbol(file);
@@ -433,7 +433,7 @@ Keyword read_command(FILE *file, struct symbol *commands) {
   return K_UNDEFINED;
 }
 
-int expect(int expected, FILE *file) {
+static int expect(int expected, FILE *file) {
   int actual = read_char(file);
   if (actual != expected) {
     rc_error("unexpected '%c', expected '%c'", actual, expected);
@@ -442,17 +442,17 @@ int expect(int expected, FILE *file) {
   return 1;
 }
 
-int begin_block(FILE *file) {
+static int begin_block(FILE *file) {
   skip_whitespace(file);
   return expect('{', file);
 }
 
-int end_block(FILE *file) {
+static int end_block(FILE *file) {
   skip_whitespace(file);
   return expect('}', file);
 }
 
-TextFormat read_text_format(FILE *file) {
+static TextFormat read_text_format(FILE *file) {
   char *symbol = read_value(file);
   TextFormat format = TEXT_NONE;
   if (strcmp(symbol, "rank_suit") == 0) {
@@ -468,7 +468,7 @@ TextFormat read_text_format(FILE *file) {
   return format;
 }
 
-int read_text_align(FILE *file) {
+static int read_text_align(FILE *file) {
   char *symbol = read_value(file);
   int align = 0;
   if (strcmp(symbol, "right") == 0) {
@@ -478,7 +478,7 @@ int read_text_align(FILE *file) {
   return align;
 }
 
-Text define_text(FILE *file) {
+static Text define_text(FILE *file) {
   Keyword command;
   Text text = init_text();
   begin_block(file);
@@ -504,7 +504,7 @@ Text define_text(FILE *file) {
   return text;
 }
 
-Layout define_layout(FILE *file) {
+static Layout define_layout(FILE *file) {
   Keyword command;
   Layout layout = init_layout();
   begin_block(file);
@@ -546,7 +546,7 @@ Layout define_layout(FILE *file) {
   return layout;
 }
 
-void define_theme(FILE *file) {
+static void define_theme(FILE *file) {
   Keyword command;
   Theme *theme = new_theme();
   begin_block(file);
@@ -650,7 +650,7 @@ void define_theme(FILE *file) {
   register_theme(theme);
 }
 
-GameRuleSuit read_suit(FILE *file) {
+static GameRuleSuit read_suit(FILE *file) {
   char *symbol = read_value(file);
   GameRuleSuit suit = SUIT_NONE;
   if (strcmp(symbol, "any") == 0) {
@@ -680,7 +680,7 @@ GameRuleSuit read_suit(FILE *file) {
   return suit;
 }
 
-GameRuleRank read_rank(FILE *file) {
+static GameRuleRank read_rank(FILE *file) {
   char *symbol = read_value(file);
   GameRuleRank rank = RANK_NONE;
   if (strcmp(symbol, "any") == 0) {
@@ -728,7 +728,7 @@ GameRuleRank read_rank(FILE *file) {
   return rank;
 }
 
-GameRuleMove read_move_rule(FILE *file) {
+static GameRuleMove read_move_rule(FILE *file) {
   char *symbol = read_value(file);
   GameRuleMove move = MOVE_ONE;
   if (strcmp(symbol, "any") == 0) {
@@ -742,7 +742,7 @@ GameRuleMove read_move_rule(FILE *file) {
   return move;
 }
 
-GameRuleType read_from_rule(FILE *file) {
+static GameRuleType read_from_rule(FILE *file) {
   char *symbol = read_value(file);
   GameRuleType type = RULE_ANY;
   if (strcmp(symbol, "foundation") == 0) {
@@ -762,7 +762,7 @@ GameRuleType read_from_rule(FILE *file) {
   return type;
 }
 
-GameRule *define_game_rule(FILE *file, GameRuleType type, int index) {
+static GameRule *define_game_rule(FILE *file, GameRuleType type, int index) {
   Keyword command;
   GameRule *rule = new_game_rule(type);
   begin_block(file);
@@ -817,7 +817,7 @@ GameRule *define_game_rule(FILE *file, GameRuleType type, int index) {
   return rule;
 }
 
-void execute_rule_block(FILE *file, Game *game, int index) {
+static void execute_rule_block(FILE *file, Game *game, int index) {
   Keyword command;
   int i, rep;
   struct position pos;
@@ -871,13 +871,13 @@ void execute_rule_block(FILE *file, Game *game, int index) {
   end_block(file);
 }
 
-void define_game(FILE *file) {
+static void define_game(FILE *file) {
   Game *game = new_game();
   execute_rule_block(file, game, 0);
   register_game(game);
 }
 
-void set_property(const char *name, const char *value) {
+static void set_property(const char *name, const char *value) {
   struct property *property = malloc(sizeof(struct property));
   size_t n1 = strlen(name);
   size_t n2 = strlen(value);

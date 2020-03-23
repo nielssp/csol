@@ -25,7 +25,7 @@
 #include <errno.h>
 #include <time.h>
 
-const char *short_options = "?hvlt:Tms:c:C";
+const char *short_options = "?hvlt:Tms:c:CS";
 
 #ifdef USE_GETOPT
 const struct option long_options[] = {
@@ -38,11 +38,12 @@ const struct option long_options[] = {
   {"seed", required_argument, NULL, 's'},
   {"config", required_argument, NULL, 'c'},
   {"colors", no_argument, NULL, 'C'},
+  {"scores", no_argument, NULL, 'S'},
   {0, 0, 0, 0}
 };
 #endif
 
-enum action { PLAY, LIST_GAMES, LIST_THEMES, LIST_COLORS };
+enum action { PLAY, LIST_GAMES, LIST_THEMES, LIST_COLORS, SHOW_SCORES };
 
 void describe_option(const char *short_option, const char *long_option, const char *description) {
 #ifdef USE_GETOPT
@@ -148,6 +149,7 @@ int main(int argc, char *argv[]) {
         describe_option("s <seed>", "seed <seed>", "Select seed.");
         describe_option("c <file>", "config <file>", "Select configuration file.");
         describe_option("C", "colors", "List colors");
+        describe_option("S", "scores", "List scores");
         return 0;
       case 'v':
         puts("csol " CSOL_VERSION);
@@ -172,6 +174,9 @@ int main(int argc, char *argv[]) {
         break;
       case 'C':
         action = LIST_COLORS;
+        break;
+      case 'S':
+        action = SHOW_SCORES;
         break;
 
     }
@@ -225,6 +230,17 @@ int main(int argc, char *argv[]) {
     }
     case LIST_COLORS:
       ui_list_colors();
+      break;
+    case SHOW_SCORES:
+      if (game_name) {
+      } else {
+        Stats *stats = get_stats();
+        Stats *current;
+        for (current = stats; current; current = current->next) {
+          printf("%s: played %d times\n", current->game, current->times_played);
+        }
+        delete_stats(stats);
+      }
       break;
     case PLAY:
       if (theme_name == NULL) {

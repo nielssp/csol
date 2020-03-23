@@ -39,4 +39,7 @@ int touch_stats_file(const char *arg0);
 
 int append_score(const char *game_name, int victory, int score, int duration, Stats *stats);
 
+Stats *get_stats();
+void delete_stats(Stats *stats);
+
 #endif
