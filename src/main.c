@@ -236,8 +236,12 @@ int main(int argc, char *argv[]) {
       } else {
         Stats *stats = get_stats();
         Stats *current;
+        printf("%-20s %-7s %-7s %-12s %-10s %-10s\n", "Game", "Won", "Lost", "Time spent", "Best time", "Best score");
         for (current = stats; current; current = current->next) {
-          printf("%s: played %d times\n", current->game, current->times_played);
+          char total_time_played[18], best_time[18];
+          format_time(total_time_played, current->total_time_played);
+          format_time(best_time, current->best_time);
+          printf("%-20s %7d %7d %12s %10s %10d\n", current->game, current->times_won, current->times_played - current->times_won, total_time_played, best_time, current->best_score);
         }
         delete_stats(stats);
       }
