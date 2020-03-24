@@ -344,7 +344,9 @@ static void ui_box(int y, int x, int height, int width, int fill) {
 }
 
 void format_time(char *out, int time) {
-  if (time > 3600) {
+  if (time > 86400) {
+    sprintf(out, "%dd %02d:%02d:%02d", time / 86400, (time / 3600) % 24, (time / 60) % 60, time % 60);
+  } else if (time > 3600) {
     sprintf(out, "%d:%02d:%02d", time / 3600, (time / 60) % 60, time % 60);
   } else if (time >= 0) {
     sprintf(out, "%d:%02d", time / 60, time % 60);
