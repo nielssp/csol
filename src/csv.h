@@ -5,7 +5,7 @@
 
 /* column types:
  *  - s: char *
- *  - i: int
+ *  - i: int32_t
  *  - t: time_t
  *  - *: ignore
  */

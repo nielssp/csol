@@ -9,6 +9,7 @@
 
 #include <time.h>
 #include <stdio.h>
+#include <inttypes.h>
 
 typedef struct stats Stats;
 typedef struct score Score;
@@ -16,11 +17,11 @@ typedef struct score Score;
 struct stats {
   Stats *next;
   char *game;
-  int times_played;
-  int times_won;
-  int total_time_played;
-  int best_time;
-  int best_score;
+  int32_t times_played;
+  int32_t times_won;
+  int32_t total_time_played;
+  int32_t best_time;
+  int32_t best_score;
   time_t first_played;
   time_t last_played;
 };
@@ -28,9 +29,9 @@ struct stats {
 struct score {
   time_t timestamp;
   char *game;
-  int victory;
-  int score;
-  int duration;
+  int32_t victory;
+  int32_t score;
+  int32_t duration;
 };
 
 extern int scores_enabled;
@@ -47,7 +48,7 @@ int touch_scores_file(const char *arg0);
 void register_stats(const char *cwd, const char *file_name);
 int touch_stats_file(const char *arg0);
 
-int append_score(const char *game_name, int victory, int score, int duration, Stats *stats);
+int append_score(const char *game_name, int victory, int32_t score, int32_t duration, Stats *stats);
 
 Stats *get_stats();
 void delete_stats(Stats *stats);

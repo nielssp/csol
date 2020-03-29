@@ -10,7 +10,7 @@
 #include "game.h"
 #include "theme.h"
 
-void format_time(char *out, int time);
+void format_time(char *out, int32_t time);
 void ui_main(Game *game, Theme *theme, int enable_color, unsigned int seed);
 void ui_list_colors();
 

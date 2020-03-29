@@ -69,8 +69,8 @@ int touch_stats_file(const char *arg0) {
   return 1;
 }
 
-static void update_stats(const char *game_name, int victory, int score,
-    int duration, char *date, Stats *stats_out) {
+static void update_stats(const char *game_name, int victory, int32_t score,
+    int32_t duration, char *date, Stats *stats_out) {
   FILE *f;
   int found = 0;
   if (!stats_file_path) {
@@ -129,8 +129,8 @@ static void update_stats(const char *game_name, int victory, int score,
   fclose(f);
 }
 
-int append_score(const char *game_name, int victory, int score,
-    int duration, Stats *stats_out) {
+int append_score(const char *game_name, int victory, int32_t score,
+    int32_t duration, Stats *stats_out) {
   FILE *f;
   struct tm *utc;
   time_t now;

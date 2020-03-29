@@ -38,7 +38,7 @@ struct move *undo_moves = NULL;
 struct move *redo_moves = NULL;
 
 int move_counter = 0;
-int game_score = 0;
+int32_t game_score = 0;
 
 char *move_error = NULL;
 

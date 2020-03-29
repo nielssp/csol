@@ -343,7 +343,7 @@ static void ui_box(int y, int x, int height, int width, int fill) {
   }
 }
 
-void format_time(char *out, int time) {
+void format_time(char *out, int32_t time) {
   if (time > 86400) {
     sprintf(out, "%dd %02d:%02d:%02d", time / 86400, (time / 3600) % 24, (time / 60) % 60, time % 60);
   } else if (time > 3600) {
@@ -355,7 +355,7 @@ void format_time(char *out, int time) {
   }
 }
 
-static void ui_victory_banner(int y, int x, int score, int time, Stats stats) {
+static void ui_victory_banner(int y, int x, int32_t score, int32_t time, Stats stats) {
   char time_buffer[18];
   int height = 4;
   if (stats.times_played > 1 && stats.best_time >= 0) {
@@ -373,7 +373,7 @@ static void ui_victory_banner(int y, int x, int score, int time, Stats stats) {
   mvprintw(y + height - 2, x + 2, "Press 'r' to redeal or 'q' to quit");
 }
 
-static int ui_victory(Pile *piles, Theme *theme, int score, int time, Stats stats) {
+static int ui_victory(Pile *piles, Theme *theme, int32_t score, int32_t time, Stats stats) {
   int banner_y, banner_x;
   Pile *pile;
   Card *card;
@@ -478,7 +478,7 @@ static int ui_loop(Game *game, Theme *theme, Pile *piles) {
       }
       if (check_win_condition(piles)) {
         Stats stats;
-        int duration = time(NULL) - start_time;
+        int32_t duration = difftime(time(NULL), start_time);
         append_score(game->name, 1, game_score, duration, &stats);
         return ui_victory(piles, theme, game_score, duration, stats);
       }

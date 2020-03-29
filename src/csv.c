@@ -4,6 +4,7 @@
 #include <stdarg.h>
 #include <ctype.h>
 #include <time.h>
+#include <inttypes.h>
 
 static char *read_string(FILE *file) {
   int c;
@@ -32,9 +33,9 @@ static char *read_string(FILE *file) {
   return buffer;
 }
 
-static int read_int(FILE *file) {
+static int32_t read_int(FILE *file) {
   int c;
-  int sign, value;
+  int32_t sign, value;
   while (isspace(c = fgetc(file))) { }
   ungetc(c, file);
   c = fgetc(file);
@@ -92,7 +93,7 @@ int read_csv(FILE *file, const char *columns, ...) {
         break;
       }
       case 'i': {
-        int *i = va_arg(ap, int *);
+        int32_t *i = va_arg(ap, int32_t *);
         *i = eol ? 0 : read_int(file);
         break;
       }

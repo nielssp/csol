@@ -9,6 +9,8 @@
 
 #include "card.h"
 
+#include <inttypes.h>
+
 typedef struct pile Pile;
 typedef struct game_list GameList;
 typedef struct game Game;
@@ -110,7 +112,7 @@ struct pile {
 };
 
 extern int move_counter;
-extern int game_score;
+extern int32_t game_score;
 
 Game *new_game();
 GameRule *new_game_rule(GameRuleType type);
