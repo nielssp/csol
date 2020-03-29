@@ -344,12 +344,14 @@ static void ui_box(int y, int x, int height, int width, int fill) {
 }
 
 void format_time(char *out, int32_t time) {
-  if (time > 86400) {
-    sprintf(out, "%dd %02d:%02d:%02d", time / 86400, (time / 3600) % 24, (time / 60) % 60, time % 60);
-  } else if (time > 3600) {
-    sprintf(out, "%d:%02d:%02d", time / 3600, (time / 60) % 60, time % 60);
-  } else if (time >= 0) {
-    sprintf(out, "%d:%02d", time / 60, time % 60);
+  if (time > INT32_C(86400)) {
+    sprintf(out, "%" PRId32 "d %02" PRId32 ":%02" PRId32 ":%02" PRId32,
+        time / INT32_C(86400), (time / INT32_C(3600)) % INT32_C(24), (time / INT32_C(60)) % INT32_C(60), time % INT32_C(60));
+  } else if (time > INT32_C(3600)) {
+    sprintf(out, "%" PRId32 ":%02" PRId32 ":%02" PRId32,
+        time / INT32_C(3600), (time / INT32_C(60)) % INT32_C(60), time % INT32_C(60));
+  } else if (time >= INT32_C(0)) {
+    sprintf(out, "%" PRId32 ":%02" PRId32, time / INT32_C(60), time % INT32_C(60));
   } else {
     sprintf(out, "n/a");
   }
@@ -364,10 +366,10 @@ static void ui_victory_banner(int y, int x, int32_t score, int32_t time, Stats s
   attron(COLOR_PAIR(COLOR_PAIR_BACKGROUND));
   ui_box(y, x, height, 38, 1);
   format_time(time_buffer, time);
-  mvprintw(y + 1, x + 2, "VICTORY!  Score: %d / %s", score, time_buffer);
+  mvprintw(y + 1, x + 2, "VICTORY!  Score: %" PRId32 " / %s", score, time_buffer);
   if (stats.times_played > 1 && stats.best_time >= 0) {
     format_time(time_buffer, stats.best_time);
-    mvprintw(y + 2, x + 12, "Best:  %d / %s", stats.best_score,
+    mvprintw(y + 2, x + 12, "Best:  %" PRId32 " / %s", stats.best_score,
         time_buffer);
   }
   mvprintw(y + height - 2, x + 2, "Press 'r' to redeal or 'q' to quit");

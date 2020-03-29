@@ -88,7 +88,7 @@ static void update_stats(const char *game_name, int victory, int32_t score,
         Stats stats;
         char first_played[26];
         long offset = ftell(f);
-        if (fscanf(f, "%d,%d,%d,%d,%d,%25s", &stats.times_played,
+        if (fscanf(f, "%" PRId32 ",%" PRId32 ",%" PRId32 ",%" PRId32 ",%" PRId32 ",%25s", &stats.times_played,
               &stats.times_won, &stats.total_time_played, &stats.best_time,
               &stats.best_score, first_played)) {
           stats.times_played++;
@@ -101,8 +101,8 @@ static void update_stats(const char *game_name, int victory, int32_t score,
             stats.best_score = score;
           }
           fseek(f, offset, SEEK_SET);
-          fprintf(f, "%11d,%11d,%11d,%11d,%11d,%s,%s\n", stats.times_played,
-              stats.times_won, stats.total_time_played, stats.best_time,
+          fprintf(f, "%11" PRId32 ",%11" PRId32 ",%11" PRId32 ",%11" PRId32 ",%11" PRId32 ",%s,%s\n",
+              stats.times_played, stats.times_won, stats.total_time_played, stats.best_time,
               stats.best_score, first_played, date);
           if (stats_out) {
             *stats_out = stats;
@@ -116,8 +116,8 @@ static void update_stats(const char *game_name, int victory, int32_t score,
   }
   if (!found) {
     fseek(f, 0, SEEK_END);
-    fprintf(f, "%s,%11d,%11d,%11d,%11d,%11d,%s,%s\n", game_name, 1, victory,
-        duration, victory ? duration : -1, victory ? score : -1, date, date);
+    fprintf(f, "%s,%11d,%11d,%11" PRId32 ",%11" PRId32 ",%11" PRId32 ",%s,%s\n",
+        game_name, 1, victory, duration, victory ? duration : -1, victory ? score : -1, date, date);
     if (stats_out) {
       stats_out->times_played = 1;
       stats_out->times_won = victory;
@@ -151,7 +151,7 @@ int append_score(const char *game_name, int victory, int32_t score,
   utc = gmtime(&now);
   if (utc) {
     if (strftime(date, sizeof(date), "%Y-%m-%dT%H:%M:%SZ", utc)) {
-      fprintf(f, "%s,%s,%d,%d,%d\n", date, game_name, victory, score, duration);
+      fprintf(f, "%s,%s,%d,%" PRId32 ",%" PRId32 "\n", date, game_name, victory, score, duration);
       update_stats(game_name, victory, score, duration, date, stats_out);
     } else {
       printf("Saving score failed: %s\n", strerror(errno));
