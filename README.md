@@ -43,6 +43,18 @@ Klondike Freecell: `csol klondikefc`
 
 ![Klondike Freecell](images/klondikefc.png)
 
+Spider 1 Suit: `csol spider1`
+
+![Spider 1 Suit](images/spider1.png)
+
+Spider 2 Suits: `csol spider2`
+
+![Spider 2 Suits](images/spider2.png)
+
+Spider 4 Suits: `csol spider4`
+
+![Spider 4 Suits](images/spider4.png)
+
 ## Themes
 
 `csol -t default`
