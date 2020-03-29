@@ -31,6 +31,7 @@ struct move {
   char up;
   Pile *stock;
   Pile *waste;
+  struct move *next_combined;
 };
 
 struct move *undo_moves = NULL;
@@ -45,6 +46,8 @@ Game *new_game() {
   Game *game = malloc(sizeof(Game));
   game->name = NULL;
   game->title = NULL;
+  game->decks = 1;
+  game->deck_suits = DECK_HEART | DECK_DIAMOND | DECK_SPADE | DECK_CLUB;
   game->first_rule = NULL;
   game->last_rule = NULL;
   return game;
@@ -65,9 +68,12 @@ GameRule *new_game_rule(GameRuleType type) {
   rule->next_rank = RANK_ANY;
   rule->move_group = MOVE_ONE;
   rule->from = RULE_ANY;
+  rule->to = RULE_ANY;
   rule->win_rank = RANK_NONE;
   rule->class = 0;
+  rule->turn = 0;
   rule->same_class = NULL;
+  rule->valid_group = NULL;
   switch (type) {
     case RULE_FOUNDATION:
       rule->first_rank = RANK_ACE;
@@ -84,6 +90,8 @@ GameRule *new_game_rule(GameRuleType type) {
       rule->first_rank = RANK_NONE;
       rule->next_suit = SUIT_NONE;
       rule->next_rank = RANK_NONE;
+      rule->to = RULE_WASTE;
+      rule->turn = 1;
       break;
     case RULE_WASTE:
       rule->from = RULE_STOCK;
@@ -332,11 +340,18 @@ char *get_move_error() {
   return error;
 }
 
+static void delete_move(struct move *m) {
+  if (m->next_combined) {
+    delete_move(m->next_combined);
+  }
+  free(m);
+}
+
 void clear_redo_history() {
   while (redo_moves) {
     struct move *m = redo_moves;
     redo_moves = m->prev;
-    free(m);
+    delete_move(m);
   }
 }
 
@@ -345,7 +360,7 @@ void clear_undo_history() {
   while (undo_moves) {
     struct move *m = undo_moves;
     undo_moves = m->prev;
-    free(m);
+    delete_move(m);
   }
 }
 
@@ -358,6 +373,7 @@ static void record_move() {
   m->up = 0;
   m->stock = NULL;
   m->waste = NULL;
+  m->next_combined = NULL;
   undo_moves = m;
 }
 
@@ -379,10 +395,17 @@ static void record_redeal(Pile *stock, Pile *waste) {
   undo_moves->waste = waste;
 }
 
-static int do_move(struct move **history1, struct move **history2, int inc) {
-  if (*history1) {
-    struct move *m = *history1;
-    *history1 = m->prev;
+static void combine_undo_moves() {
+  if (!undo_moves || !undo_moves->prev) {
+    return;
+  }
+  undo_moves->next_combined = undo_moves->prev;
+  undo_moves->prev = undo_moves->next_combined->prev;
+  undo_moves->next_combined->prev = NULL;
+}
+
+static void do_move(struct move *m, int inc) {
+  while (m) {
     if (m->stock) {
       int from_stock;
       Card *src_card;
@@ -418,6 +441,15 @@ static int do_move(struct move **history1, struct move **history2, int inc) {
       }
       m->up = up;
     }
+    m = m->next_combined;
+  }
+}
+
+static int pop_move_history(struct move **history1, struct move **history2, int inc) {
+  if (*history1) {
+    struct move *m = *history1;
+    *history1 = m->prev;
+    do_move(m, inc);
     m->prev = *history2;
     *history2 = m;
     return 1;
@@ -426,7 +458,7 @@ static int do_move(struct move **history1, struct move **history2, int inc) {
 }
 
 int undo_move() {
-  if (do_move(&undo_moves, &redo_moves, -1)) {
+  if (pop_move_history(&undo_moves, &redo_moves, -1)) {
     game_score -= 20;
     return 1;
   }
@@ -434,7 +466,7 @@ int undo_move() {
 }
 
 int redo_move() {
-  if (do_move(&redo_moves, &undo_moves, 1)) {
+  if (pop_move_history(&redo_moves, &undo_moves, 1)) {
     game_score += 20;
     return 1;
   }
@@ -455,11 +487,18 @@ int count_free_cells(Pile *piles) {
 
 int legal_move_stack(Pile *dest, Card *src, Pile *src_pile, Pile *piles) {
   GameRule *rule = dest->rule;
+  GameRule *valid_group_rule = dest->rule;
   if (get_bottom(src) == get_bottom(dest->stack)) {
     return 0;
   }
+  if (rule->valid_group) {
+    valid_group_rule = rule->valid_group;
+  }
   if (rule->class == src_pile->rule->class && rule->same_class) {
     rule = rule->same_class;
+    if (rule->valid_group) {
+      valid_group_rule = rule->valid_group;
+    }
   }
   if (rule->from != RULE_ANY && rule->from != src_pile->rule->type) {
     move_error = "Invalid destination";
@@ -486,9 +525,19 @@ int legal_move_stack(Pile *dest, Card *src, Pile *src_pile, Pile *piles) {
       return 0;
     }
   }
-  if (rule->move_group == MOVE_GROUP && src->next && !check_stack(src->next, rule->next_suit, rule->next_rank)) {
+  if (rule->move_group == MOVE_GROUP && src->next && !check_stack(src->next, valid_group_rule->next_suit, valid_group_rule->next_rank)) {
     move_error = "Invalid sequence";
     return 0;
+  }
+  if (rule->move_group == MOVE_ALL) {
+    if (!check_stack(src->next, valid_group_rule->next_suit, valid_group_rule->next_rank)) {
+      move_error = "Invalid sequence";
+      return 0;
+    }
+    if (count_stack(src) != 13) {
+      move_error = "Invalid sequence";
+      return 0;
+    }
   }
   if (dest->stack->next) {
     Card *top = get_top(dest->stack);
@@ -527,17 +576,34 @@ int legal_move_stack(Pile *dest, Card *src, Pile *src_pile, Pile *piles) {
   return 1;
 }
 
-int move_to_waste(Card *card, Pile *stock, Pile *piles) {
+int turn_from_stock(Card *card, Pile *stock, Pile *piles) {
+  int turns = 0;
   Pile *dest;
-  for (dest = piles; dest; dest = dest->next) {
-    if (dest->rule->type == RULE_WASTE) {
-      if (legal_move_stack(dest, card, stock, piles)) {
-        card->up = 1;
-        return 1;
+  while (turns < stock->rule->turn) {
+    if (IS_BOTTOM(card)) {
+      break;
+    }
+    for (dest = piles; dest; dest = dest->next) {
+      if (dest->rule->type == stock->rule->to) {
+        if (legal_move_stack(dest, card, stock, piles)) {
+          if (turns) {
+            combine_undo_moves();
+          }
+          card->up = 1;
+          turns++;
+          card = get_top(stock->stack);
+        } else {
+          int i;
+          for (i = 0; i < turns; i++) {
+            undo_move();
+          }
+          clear_redo_history();
+          return 0;
+        }
       }
     }
   }
-  return 0;
+  return turns > 0;
 }
 
 int redeal(Pile *stock, Pile *piles) {

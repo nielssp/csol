@@ -41,6 +41,11 @@
 #define IS_BOTTOM(card) ((card)->suit & BOTTOM)
 #define NOT_BOTTOM(card) (!((card)->suit & BOTTOM))
 
+#define DECK_HEART   0x01
+#define DECK_DIAMOND 0x02
+#define DECK_SPADE   0x04
+#define DECK_CLUB    0x08
+
 extern char suits[];
 
 typedef struct card Card;
@@ -57,7 +62,8 @@ struct card {
 
 Card *new_card(char suit, char rank);
 void delete_stack(Card *stack);
-Card *new_deck();
+int count_stack(Card *stack);
+Card *new_deck(int decks, int deck_suits);
 Card *shuffle_stack(Card *stack);
 Card *take_card(Card *card);
 Card *take_stack(Card *stack);

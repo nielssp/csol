@@ -29,16 +29,30 @@ void delete_stack(Card *stack) {
   free(stack);
 }
 
-Card *new_deck() {
+int count_stack(Card *stack) {
+  int n = 0;
+  while (stack) {
+    n++;
+    stack = stack->next;
+  }
+  return n;
+}
+
+Card *new_deck(int decks, int deck_suits) {
+  int i;
   char suit, rank;
   Card *deck = new_card(BOTTOM, 0);
   Card *prev = deck;
-  for (suit = 0; suit < 4; suit++) {
-    for (rank = 1; rank <= 13; rank++) {
-      Card *card = new_card(suits[(int)suit], rank);
-      prev->next = card;
-      card->prev = prev;
-      prev = card;
+  for (i = 0; i < decks; i++) {
+    for (suit = 0; suit < 4; suit++) {
+      if (deck_suits & (1 << suit)) {
+        for (rank = 1; rank <= 13; rank++) {
+          Card *card = new_card(suits[(int)suit], rank);
+          prev->next = card;
+          card->prev = prev;
+          prev = card;
+        }
+      }
     }
   }
   return deck;

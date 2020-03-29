@@ -20,6 +20,7 @@
 #include <stdarg.h>
 #include <errno.h>
 #include <libgen.h>
+#include <limits.h>
 #if defined(MSDOS) || defined(USE_DIRECT)
 #include <direct.h>
 #else
@@ -91,7 +92,13 @@ typedef enum {
   K_TEXT,
   K_ALIGN,
   K_FORMAT,
-  K_UTF8
+  K_UTF8,
+  K_DECKS,
+  K_DECK_SUITS,
+  K_VALID_GROUP,
+  K_ALL,
+  K_TO,
+  K_TURN
 } Keyword;
 
 struct symbol {
@@ -169,6 +176,8 @@ struct symbol game_commands[] ={
   {"cell", K_CELL},
   {"stock", K_STOCK},
   {"waste", K_WASTE},
+  {"decks", K_DECKS},
+  {"deck_suits", K_DECK_SUITS},
   {NULL, K_UNDEFINED}
 };
 
@@ -187,6 +196,9 @@ struct symbol game_rule_commands[] ={
   {"win_rank", K_WIN_RANK},
   {"class", K_CLASS},
   {"same_class", K_SAME_CLASS},
+  {"valid_group", K_VALID_GROUP},
+  {"to", K_TO},
+  {"turn", K_TURN},
   {NULL, K_UNDEFINED}
 };
 
@@ -737,6 +749,8 @@ static GameRuleMove read_move_rule(FILE *file) {
     move = MOVE_GROUP;
   } else if (strcmp(symbol, "one") == 0) {
     move = MOVE_ONE;
+  } else if (strcmp(symbol, "all") == 0) {
+    move = MOVE_ALL;
   }
   free(symbol);
   return move;
@@ -755,6 +769,8 @@ static GameRuleType read_from_rule(FILE *file) {
     type = RULE_STOCK;
   } else if (strcmp(symbol, "waste") == 0) {
     type = RULE_WASTE;
+  } else if (strcmp(symbol, "none") == 0) {
+    type = RULE_NONE;
   } else if (strcmp(symbol, "any") == 0) {
     type = RULE_ANY;
   }
@@ -774,9 +790,21 @@ static GameRule *define_game_rule(FILE *file, GameRuleType type, int index) {
       case K_Y:
         rule->y = read_expr(file, index);
         break;
-      case K_DEAL:
-        rule->deal = read_expr(file, index);
+      case K_DEAL: {
+        char *keyword;
+        skip_whitespace(file);
+        keyword = read_symbol(file);
+        if (!keyword) {
+          rule->deal = read_expr(file, index);
+        } else {
+          if (strcmp(keyword, "rest") == 0) {
+            rule->deal = SHRT_MAX;
+          } else {
+            rc_error("undefined deal value: %s", keyword);
+          }
+        }
         break;
+      }
       case K_REDEAL:
         rule->redeals = read_expr(file, index);
         break;
@@ -792,7 +820,7 @@ static GameRule *define_game_rule(FILE *file, GameRuleType type, int index) {
       case K_NEXT_RANK:
         rule->next_rank = read_rank(file);
         break;
-      case K_NEXT_SUIT:
+      case K_NEXT_SUIT: 
         rule->next_suit = read_suit(file);
         break;
       case K_MOVE_GROUP:
@@ -801,14 +829,24 @@ static GameRule *define_game_rule(FILE *file, GameRuleType type, int index) {
       case K_FROM:
         rule->from = read_from_rule(file);
         break;
+      case K_TO:
+        rule->to = read_from_rule(file);
+        break;
       case K_WIN_RANK:
         rule->win_rank = read_rank(file);
         break;
       case K_CLASS:
         rule->class = read_expr(file, index);
         break;
+      case K_TURN:
+        rule->turn = read_expr(file, index);
+        break;
       case K_SAME_CLASS:
         rule->same_class = define_game_rule(file, type, index);
+        break;
+      case K_VALID_GROUP:
+        rule->valid_group = define_game_rule(file, type, index);
+        break;
       default:
         break;
     }
@@ -831,6 +869,34 @@ static void execute_rule_block(FILE *file, Game *game, int index) {
       case K_TITLE:
         redefine_property(&game->title, file);
         break;
+      case K_DECKS:
+        game->decks = read_int(file);
+        break;
+      case K_DECK_SUITS: {
+        char *symbol = read_value(file);
+        char *c;
+        if (symbol) {
+          game->deck_suits = 0;
+          for (c = symbol; *c; c++) {
+            switch (*c) {
+              case 'h':
+                game->deck_suits |= DECK_HEART;
+                break;
+              case 'd':
+                game->deck_suits |= DECK_DIAMOND;
+                break;
+              case 's':
+                game->deck_suits |= DECK_SPADE;
+                break;
+              case 'c':
+                game->deck_suits |= DECK_CLUB;
+                break;
+            }
+          }
+          free(symbol);
+        }
+        break;
+      }
       case K_REPEAT:
         rep = read_int(file);
         pos = get_position(file);

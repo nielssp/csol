@@ -14,6 +14,7 @@ typedef struct game_list GameList;
 typedef struct game Game;
 typedef struct game_rule GameRule;
 typedef enum {
+  RULE_NONE,
   RULE_ANY,
   RULE_TABLEAU,
   RULE_STOCK,
@@ -61,7 +62,8 @@ typedef enum {
 typedef enum {
   MOVE_GROUP,
   MOVE_ANY,
-  MOVE_ONE
+  MOVE_ONE,
+  MOVE_ALL
 } GameRuleMove;
 
 struct game_list {
@@ -72,6 +74,8 @@ struct game_list {
 struct game {
   char *name;
   char *title;
+  short decks;
+  short deck_suits;
   GameRule *first_rule;
   GameRule *last_rule;
 };
@@ -90,9 +94,12 @@ struct game_rule {
   GameRuleRank next_rank;
   GameRuleMove move_group;
   GameRuleType from;
+  GameRuleType to;
   GameRuleRank win_rank;
   short class;
+  short turn;
   GameRule *same_class;
+  GameRule *valid_group;
 };
 
 struct pile {
@@ -115,7 +122,7 @@ Game *get_game(const char *name);
 Pile *deal_cards(Game *game, Card *deck);
 void delete_piles(Pile *piles);
 int legal_move_stack(Pile *dest, Card *src, Pile *src_pile, Pile *pile);
-int move_to_waste(Card *card, Pile *stock, Pile *piles);
+int turn_from_stock(Card *card, Pile *stock, Pile *piles);
 int redeal(Pile *stock, Pile *piles);
 int move_to_foundation(Card *src, Pile *src_pile, Pile *piles);
 int move_to_free_cell(Card *src, Pile *src_pile, Pile *piles);

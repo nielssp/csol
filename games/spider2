@@ -1,0 +1,66 @@
+game {
+  name spider2
+  title Spider 2 Suits
+  decks 4
+  deck_suits hs
+  repeat 8 {
+    foundation {
+      x 2+
+      first_rank k
+      next_rank down
+      next_suit same
+      win_rank a
+      move_group all
+    }
+  }
+  repeat 4 {
+    tableau {
+      y 1
+      x 0+
+      class 1
+      deal 6
+      hide -1
+      from stock
+      first_rank none
+      next_suit any
+      next_rank any
+      same_class {
+        first_rank any
+        next_rank down
+        move_group group
+        from tableau
+        valid_group {
+          next_suit same
+        }
+      }
+    }
+  }
+  repeat 6 {
+    tableau {
+      y 1
+      x 4+
+      class 1
+      deal 5
+      hide -1
+      first_rank none
+      next_suit any
+      next_rank any
+      from stock
+      same_class {
+        first_rank any
+        next_rank down
+        move_group group
+        from tableau
+        valid_group {
+          next_suit same
+        }
+      }
+    }
+  }
+  stock {
+    deal rest
+    to tableau
+    turn 10
+  }
+}
+

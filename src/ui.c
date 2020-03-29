@@ -571,7 +571,7 @@ static int ui_loop(Game *game, Theme *theme, Pile *piles) {
                 selection_pile = cursor_pile;
               }
             } else if (cursor_pile->rule->type == RULE_STOCK) {
-              if (move_to_waste(cursor_card, cursor_pile, piles)) {
+              if (turn_from_stock(cursor_card, cursor_pile, piles)) {
                 move_made = 1;
                 clear();
               } else {
@@ -624,7 +624,7 @@ static int ui_loop(Game *game, Theme *theme, Pile *piles) {
               } else {
                 ui_message(get_move_error());
               }
-            } else if (move_to_waste(src, pile, piles)) {
+            } else if (turn_from_stock(src, pile, piles)) {
               move_made = 1;
               clear();
             } else {
@@ -964,7 +964,7 @@ void ui_main(Game *game, Theme *theme, int enable_color, unsigned int seed) {
     int redeal;
     srand(seed);
 
-    deck = new_deck();
+    deck = new_deck(game->decks, game->deck_suits);
     move_stack(deck, shuffle_stack(take_stack(deck->next)));
 
     piles = deal_cards(game, deck);

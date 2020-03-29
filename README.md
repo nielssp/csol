@@ -269,6 +269,10 @@ game {
 }
 ```
 
+The command `decks` specified how many decks of cards are used in the game (default is 1).
+
+The command `deck_suits` specifies which suits are used in a deck. The suits are identified by a letter, e.g. `deck_suits hs` matches hearts and spades.
+
 There are four types of rule-blocks that can be used inside a `game`-block: `foundation`, `tableau`, `stock`, and `waste`.
 
 The `repeat` command can be used to repeat a game rule. Inside a `repeat`-block it's possible to use expressions of the form `INIT+INCREMENT` where `INIT` is the value used for the first iteration. Before each additional iteration `INCREMENT` (optional, 1 by default) is added to the value.
@@ -289,18 +293,21 @@ The following command can be used in a rule block:
 
 * `x`: horizontal position of the pile (default: 0).
 * `y`: vertical position of the pile (default: 0).
-* `deal`: number of cards to initially deal to the pile (default: 0).
+* `deal`: number of cards to initially deal to the pile, `rest` can be used to deal remaining cards from deck (default: 0).
 * `redeal`: maximum number of redeals (for `stock`-pile). -1 for unlimited (default -1).
 * `hide`: number of cards to initially deal face-down. If the number is negative, i.e. `hide -n`, then all cards are hidden except the top n cards (default 0).
 * `first_rank`: rank of first card in pile (see below for possible values) (default: `ace` if foundation, `none` if stock, `any` otherwise).
 * `first_suit`: suit of first card in pile (see below for possible values) (default: `same` if foundation, `none` if stock, `any` otherwise).
 * `next_rank`: rank of next card in pile (see below for possible values) (default: `up` if foundation, `down` if tableau, `none` if stock or cell, `any` otherwise).
 * `next_suit`: suit of next card in pile (see below for possible values) (default: `same` if foundation, `any` if tableau, `none` if stock or cell, `any` otherwise).
-* `move_group`: whether it's possible to move a valid sequence (`group`), any sequence (`any`), or just single cards (`one`, default).
-* `from`: which pile to accept cards from: `foundation`, `cell`, `tableau`, `stock`, `waste`, or `any` (default: `stock` if waste, `any` otherwise).
+* `move_group`: whether it's possible to move a valid sequence (`group`), a complete sequence (`all`), any sequence (`any`), or just single cards (`one`, default).
+* `from`: which pile type to accept cards from: `foundation`, `cell`, `tableau`, `stock`, `waste`, `any`, or `none` (default: `stock` if waste, `any` otherwise).
+* `to`: which pile type to move stock cards to (default: `waste` if stock, `any` otherwise.
 * `win_rank`: the game is won when the top card of all foundations is of this rank (see below for possible values) (default: `king` if foundation, `none` otherwise).
 * `class`: an integer. Can be used to group together several game rules (default: 0).
+* `turn`: an integer. How many cards to turn from stock. (default: 1 if stock, 0 otherwise).
 * `same_class`: a rule block that applies only when the class of the source and destination is the same.
+* `valid_group`: a rule block that applies when moving sequences of cards.
 
 The following values can be used with commands that expect a rank:
 
