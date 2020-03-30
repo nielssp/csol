@@ -665,8 +665,18 @@ int auto_move_to_foundation(Pile *piles) {
           Pile *dest;
           for (dest = piles; dest; dest = dest->next) {
             if (dest->rule->type == RULE_FOUNDATION) {
-              if (legal_move_stack(dest, src_card, src, piles)) {
-                return 1;
+              if (dest->rule->move_group == MOVE_ONE) {
+                if (legal_move_stack(dest, src_card, src, piles)) {
+                  return 1;
+                }
+              } else {
+                Card *c = src_card;
+                while (c && !IS_BOTTOM(c) && c->up) {
+                  if (legal_move_stack(dest, c, src, piles)) {
+                    return 1;
+                  }
+                  c = c->prev;
+                }
               }
             }
           }
