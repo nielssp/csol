@@ -59,7 +59,8 @@ typedef enum {
   RANK_UP,
   RANK_UP_DOWN,
   RANK_LOWER,
-  RANK_HIGHER
+  RANK_HIGHER,
+  RANK_EMPTY
 } GameRuleRank;
 typedef enum {
   MOVE_GROUP,

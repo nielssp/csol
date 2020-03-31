@@ -277,6 +277,9 @@ int check_first_suit(Card *card, GameRuleSuit suit) {
 }
 
 int check_first_rank(Card *card, GameRuleRank rank) {
+  if (rank == RANK_EMPTY) {
+    return IS_BOTTOM(card);
+  }
   if (rank > 0 && rank <= RANK_KING) {
     return card->rank == (char)rank;
   }

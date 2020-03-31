@@ -55,6 +55,10 @@ Spider 4 Suits: `csol spider4`
 
 ![Spider 4 Suits](images/spider4.png)
 
+Golf: `csol golf`
+
+![Golf](images/golf.png)
+
 ## Themes
 
 `csol -t default`
@@ -325,6 +329,7 @@ The following values can be used with commands that expect a rank:
 
 * `any`: any rank
 * `none`: no cards allowed
+* `empty`: empty pile expected (e.g. `win_rank empty`)
 * `a`/`2`/`3`/`4`/`5`/`6`/`7`/`8`/`9`/`10`/`j`/`q`/`k`: exact rank
 * `same`: must be the same rank as the card below
 * `down`: must be exactly one rank lower than the card below

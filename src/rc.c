@@ -735,6 +735,8 @@ static GameRuleRank read_rank(FILE *file) {
     rank = RANK_LOWER;
   } else if (strcmp(symbol, "higher") == 0) {
     rank = RANK_HIGHER;
+  } else if (strcmp(symbol, "empty") == 0) {
+    rank = RANK_EMPTY;
   }
   free(symbol);
   return rank;
