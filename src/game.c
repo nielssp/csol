@@ -571,10 +571,18 @@ int legal_move_stack(Pile *dest, Card *src, Pile *src_pile, Pile *piles) {
     src->prev = dest->stack;
   }
   if (rule->win_rank != RANK_NONE) {
-    game_score += 10;
+    if (rule->win_rank == RANK_EMPTY) {
+      game_score -= 10;
+    } else {
+      game_score += 10;
+    }
   }
   if (src_pile->rule->win_rank != RANK_NONE) {
-    game_score -= 10;
+    if (src_pile->rule->win_rank == RANK_EMPTY) {
+      game_score += 10;
+    } else {
+      game_score -= 10;
+    }
   }
   return 1;
 }

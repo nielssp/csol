@@ -1,0 +1,33 @@
+game {
+  name golf
+  title Golf
+  foundation {
+    class 1
+    x 1
+    deal 1
+    next_suit any
+    next_rank any
+    win_rank none
+    same_class {
+      next_suit any
+      next_rank up_down
+      win_rank none
+    }
+  }
+  repeat 7 {
+    tableau {
+      class 1
+      y 1
+      x 0+
+      deal 5
+      first_rank none
+      next_rank none
+      win_rank empty
+    }
+  }
+  stock {
+    deal 52
+    to foundation
+  }
+}
+
