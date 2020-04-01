@@ -1,3 +1,9 @@
+/* csol
+ * Copyright (c) 2020 Niels Sonnich Poulsen (http://nielssp.dk)
+ * Licensed under the MIT license.
+ * See the LICENSE file or http://opensource.org/licenses/MIT for more information.
+ */
+
 #include "csv.h"
 
 #include <stdlib.h>
