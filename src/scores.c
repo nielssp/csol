@@ -4,6 +4,8 @@
  * See the LICENSE file or http://opensource.org/licenses/MIT for more information.
  */
 
+#define _XOPEN_SOURCE 500
+
 #include "scores.h"
 
 #include "util.h"
@@ -12,6 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <string.h>
 
 int scores_enabled = 0;
 char *scores_file_path = NULL;
@@ -70,63 +73,41 @@ int touch_stats_file(const char *arg0) {
 }
 
 static void update_stats(const char *game_name, int victory, int32_t score,
-    int32_t duration, char *date, Stats *stats_out) {
-  FILE *f;
-  int found = 0;
-  if (!stats_file_path) {
-    return;
-  }
-  f = fopen(stats_file_path, "rb+");
-  if (!f) {
-    printf("%s: %s\n", stats_file_path, strerror(errno));
-    return;
-  }
-  while (!feof(f)) {
-    char game_name_buffer[100];
-    if (fscanf(f, "%99[^,],", game_name_buffer)) {
-      if (strcmp(game_name_buffer, game_name) == 0) {
-        Stats stats;
-        char first_played[26];
-        long offset = ftell(f);
-        if (fscanf(f, "%" PRId32 ",%" PRId32 ",%" PRId32 ",%" PRId32 ",%" PRId32 ",%25s", &stats.times_played,
-              &stats.times_won, &stats.total_time_played, &stats.best_time,
-              &stats.best_score, first_played)) {
-          stats.times_played++;
-          stats.times_won += victory;
-          stats.total_time_played += duration;
-          if (victory && (stats.best_time < 0 || duration < stats.best_time)) {
-            stats.best_time = duration;
-          }
-          if (victory && score > stats.best_score) {
-            stats.best_score = score;
-          }
-          fseek(f, offset, SEEK_SET);
-          fprintf(f, "%11" PRId32 ",%11" PRId32 ",%11" PRId32 ",%11" PRId32 ",%11" PRId32 ",%s,%s\n",
-              stats.times_played, stats.times_won, stats.total_time_played, stats.best_time,
-              stats.best_score, first_played, date);
-          if (stats_out) {
-            *stats_out = stats;
-          }
-          found = 1;
-          break;
-        }
-      }
-    }
-    fscanf(f, "%*[^\n]\n");
-  }
-  if (!found) {
-    fseek(f, 0, SEEK_END);
-    fprintf(f, "%s,%11d,%11d,%11" PRId32 ",%11" PRId32 ",%11" PRId32 ",%s,%s\n",
-        game_name, 1, victory, duration, victory ? duration : -1, victory ? score : -1, date, date);
-    if (stats_out) {
-      stats_out->times_played = 1;
-      stats_out->times_won = victory;
-      stats_out->total_time_played = duration;
-      stats_out->best_time = victory ? duration : -1;
-      stats_out->best_score = victory ? score : -1;
+    int32_t duration, time_t date, Stats *stats_out) {
+  Stats *current, *existing = NULL, *stats = get_stats();
+  for (current = stats; current; current = current->next) {
+    if (strcmp(current->game, game_name) == 0) {
+      existing = current;
+      break;
     }
   }
-  fclose(f);
+  if (!existing) {
+    existing = malloc(sizeof(Stats));
+    existing->next = stats;
+    existing->game = strdup(game_name);
+    existing->times_played = 0;
+    existing->times_won = 0;
+    existing->total_time_played = 0;
+    existing->best_time = -1;
+    existing->best_score = -1;
+    existing->first_played = date;
+    stats = existing;
+  }
+  existing->times_played++;
+  existing->times_won += victory;
+  existing->total_time_played += duration;
+  if (victory && (existing->best_time < 0 || duration < existing->best_time)) {
+    existing->best_time = duration;
+  }
+  if (victory && score > existing->best_score) {
+    existing->best_score = score;
+  }
+  existing->last_played = date;
+  if (stats_out) {
+    *stats_out = *existing;
+  }
+  put_stats(stats);
+  delete_stats(stats);
 }
 
 int append_score(const char *game_name, int victory, int32_t score,
@@ -152,7 +133,7 @@ int append_score(const char *game_name, int victory, int32_t score,
   if (utc) {
     if (strftime(date, sizeof(date), "%Y-%m-%dT%H:%M:%SZ", utc)) {
       fprintf(f, "%s,%s,%d,%" PRId32 ",%" PRId32 "\n", date, game_name, victory, score, duration);
-      update_stats(game_name, victory, score, duration, date, stats_out);
+      update_stats(game_name, victory, score, duration, now, stats_out);
     } else {
       printf("Saving score failed: %s\n", strerror(errno));
     }
@@ -161,6 +142,18 @@ int append_score(const char *game_name, int victory, int32_t score,
   }
   fclose(f);
   return 1;
+}
+
+static void reverse_stats(Stats **stats) {
+  Stats *current = *stats;
+  Stats *previous = NULL;
+  while (current) {
+    Stats *next = current->next;
+    current->next = previous;
+    previous = current;
+    current = next;
+  }
+  *stats = previous;
 }
 
 Stats *get_stats() {
@@ -184,7 +177,42 @@ Stats *get_stats() {
   }
   free(head);
   fclose(f);
+  reverse_stats(&stats);
   return stats;
+}
+
+void put_stats(Stats *stats) {
+  Stats *head;
+  FILE *f;
+  if (!stats_file_path) {
+    return;
+  }
+  f = fopen(stats_file_path, "wb");
+  if (!f) {
+    printf("%s: %s\n", stats_file_path, strerror(errno));
+    return;
+  }
+  for (head = stats; head; head = head->next) {
+    char date[26];
+    struct tm *utc;
+    fprintf(f, "%s,%" PRId32 ",%" PRId32 ",%" PRId32 ",%" PRId32 ",%" PRId32 ",", head->game,
+        head->times_played, head->times_won, head->total_time_played, head->best_time, head->best_score);
+    utc = gmtime(&head->first_played);
+    if (utc && strftime(date, sizeof(date), "%Y-%m-%dT%H:%M:%SZ", utc)) {
+      fprintf(f, "%s", date);
+    } else {
+      printf("Saving score failed: %s\n", strerror(errno));
+    }
+    fprintf(f, ",");
+    utc = gmtime(&head->last_played);
+    if (utc && strftime(date, sizeof(date), "%Y-%m-%dT%H:%M:%SZ", utc)) {
+      fprintf(f, "%s", date);
+    } else {
+      printf("Saving score failed: %s\n", strerror(errno));
+    }
+    fprintf(f, "\n");
+  }
+  fclose(f);
 }
 
 void delete_stats(Stats *stats) {

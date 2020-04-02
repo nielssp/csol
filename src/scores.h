@@ -51,6 +51,7 @@ int touch_stats_file(const char *arg0);
 int append_score(const char *game_name, int victory, int32_t score, int32_t duration, Stats *stats);
 
 Stats *get_stats();
+void put_stats(Stats *stats);
 void delete_stats(Stats *stats);
 
 int read_scores(FILE *f, Score *score);
