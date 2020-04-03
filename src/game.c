@@ -604,7 +604,9 @@ int turn_from_stock(Card *card, Pile *stock, Pile *piles) {
           turns++;
           card = get_top(stock->stack);
         } else {
-          undo_move();
+          if (turns > 0) {
+            undo_move();
+          }
           clear_redo_history();
           return 0;
         }
