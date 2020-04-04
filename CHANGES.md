@@ -1,6 +1,6 @@
 # csol changelog
 
-## Unreleased
+## csol 1.4.0
 
 New features:
 
@@ -9,7 +9,7 @@ New features:
   - `golf`: Golf
 - Themes added:
   - `corners`
-- Ask before resetting or quitting game, but only if no moves have been made.
+- Asks before resetting or quitting game, but only if no moves have been made.
 - It's now possible to load games with long file names in DOS.
 - Adds stats and scores CSV files to keep track of wins/losses and playtime across games.
 - Adds automatic conversion from UTF8 to CP437 so that the default Unicode-based themes can be used in DOS and Windows.
