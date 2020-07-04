@@ -445,6 +445,7 @@ static int ui_loop(Game *game, Theme *theme, Pile *piles) {
   game_score = 0;
   off_y = 0;
   wbkgd(stdscr, COLOR_PAIR(COLOR_PAIR_BACKGROUND));
+  refresh();
   while (1) {
     Pile *pile;
     int ch;
