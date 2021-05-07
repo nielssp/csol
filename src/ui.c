@@ -419,10 +419,10 @@ static int ui_victory(Pile *piles, Theme *theme, int32_t score, int32_t time, St
       }
     }
   }
+  nodelay(stdscr, 0);
   while (1) {
     switch (getch()) {
       case 'r':
-        nodelay(stdscr, 0);
         curs_set(1);
         return 1;
       case 'q':
