@@ -1,5 +1,13 @@
 # csol changelog
 
+## csol 1.4.1
+
+Fixed issues:
+
+- Fix initial cursor position.
+- [#3](https://github.com/nielssp/csol/issues/3): Fix busy wait after victory animation
+
+
 ## csol 1.4.0
 
 New features:

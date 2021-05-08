@@ -1,1 +1,1 @@
-#define CSOL_VERSION "1.4.0"
+#define CSOL_VERSION "1.4.1"
