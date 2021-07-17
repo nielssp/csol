@@ -1,0 +1,169 @@
+.TH CSOL 1
+.SH NAME
+csol \- play solitaire
+.SH SYNOPSIS
+.B csol
+[\fB\-ChlmSTv\fR]
+[\fB-c\fR \fIfile\fR]
+[\fB-s\fR \fIseed\fR]
+[\fB\-t\fR \fItheme\fR]
+[\fIgame\fR]
+.SH DESCRIPTION
+.B csol
+is a small collection of solitaire games.
+.SH OPTIONS
+.TP
+.BR \-c\ \fIfile\fR ", " \-\-config =\fIfile\fR
+Set the configuration file to use.
+.TP
+.BR \-C ", " \-\-colors
+Display all colors currently available in the terminal. This may be useful when creating themes
+for \fBcsol\fR. Press any key to exit.
+.TP
+.BR \-h ", " \-\-help
+Show a summary of the available command-line options then exit.
+.TP
+.BR \-l ", " \-\-list
+Show a list of available games then exit.
+.TP
+.BR \-m ", " \-\-mono
+Disable all colors.
+.TP
+.BR \-s\ \fIseed\fR ", " \-\-seed =\fIseed\fR
+Set the seed used for shuffling cards. Must be an integer. By default the current time is used as
+seed.
+.TP
+.BR \-S ", " \-\-scores
+If no \fIgame\fR has been selected, then a table of scores and statistics for all games is shown.
+If a \fIgame\fR has been selected, a list of all scores in that \fIgame\fR is shown.
+.TP
+.BR \-t\ \fItheme\fR ", " \-\-theme =\fItheme\fR
+Set the theme to use for drawing cards. Use \fB\-\-theme\fR to see a list of all available themes.
+.TP
+.BR \-T ", " \-\-themes
+Show a list of available themes then exit.
+.TP
+.BR \-v ", " \-\-version
+Show the \fBcsol\fR version then exit.
+.SH KEYS
+.TP
+.B h, j, k, l, Left, Down, Up, Right
+Move cursor left, down, up, or right.
+.TP
+.B H, L, S-Left, S-Right
+Move cursor to the leftmost or rightmost position.
+.TP
+.B J, K, S-Down, S-Up
+Move cursor to the top or bottom of the pile under the cursor.
+.TP
+.B Space
+Select the card under the cursor, or - if the card is already selected - move the selected card
+to a foundation or free cell if possible.
+.TP
+.B m, Enter, ^J
+Move the selected card to the pile under the cursor.
+.TP
+.B a
+Automatically move a card from any tableau, waste, or cell to a foundation pile if possible.
+.TP
+.B s
+Move a card from the stock to the waste or redeal if stock is empty.
+.TP
+.B W
+Move card from the waste to the pile under the cursor.
+.TP
+.B 1, 2, 3, 4, 5, 6, 7, 8, 9
+Move a card from a cell (in Frecell-style games) to the pile under the cursor.
+.TP
+.B u, ^Z
+Undo one or more moves.
+.TP
+.B U, ^Y
+Redo a move that was previously undone.
+.TP
+.B Esc, ^J
+Clear the current selection.
+.TP
+.B ^L
+Redraw the screen.
+.TP
+.B r
+Shuffle the deck and deal a new game.
+.TP
+.B q
+Exit \fBcsol\fR.
+.SH MOUSE
+In terminals with mouse support it's possible to select cards using the left mouse button (same as \fBSpace\fR) and to move cards using the right mouse button (same as \fBm\fR).
+.SH EXAMPLES
+To play Klondike Solitaire, use the command:
+.PP
+.nf
+.RS
+csol klondike
+.RE
+.fi
+.PP
+To display all your Klondike scores, use the command:
+.PP
+.nf
+.RS
+csol -S klondike
+.RE
+.fi
+.PP
+.SH CONFIGURATION
+The configuration can be changed by creating or editing the file \fI~/.config/csol/csolrc\fR.
+A \fBcsol\fR configuration file consists of a newline separated list of commands.
+Most commands expect a single parameter.
+
+An example configuration file that loads the system-wide configuration file, and changes the default game to Yukon:
+.PP
+.nf
+.RS
+include /etc/xdg/csol/csolrc
+default_game yukon
+.RE
+.fi
+.PP
+The following top level commands are available:
+.TP
+.B default_game \fIgame\fR
+Set the game that is selected by default when \fBcsol\fR is run without arguments.
+.TP
+.B default_Theme \fItheme\fR
+Set the theme that is selected by default when \fBcsol\fR is run without the \fB\-t\fR option.
+.TP
+.B scores \fIbit\fR
+Enable (1) or disable (0) the use of a file for keeping track of game scores.
+.TP
+.B stats \fIbit\fR
+Enable (1) or disable (0) the use of a file for keeping track of game statistics.
+.TP
+.B scores_file \fIfile\fR
+Set the file path used for the scores file.
+.TP
+.B stats_file \fIfile\fR
+Set the file path used for the stats file.
+.TP
+.B smart_cursor \fIbit\fR
+Enable (1) or disable (0) the use of smart cursor movement. When enabled, the cursor will
+always move to a card.
+.TP
+.B include \fIfile\fR
+Execute the commands of another configuration \fIfile\fR. Useful for including the system-wide
+configuration (i.e. games and themes) into your local configuration file.
+.TP
+.B theme_dir \fIdirectory\fR
+Lazily load themes from \fIdirectory\fR. When listing themes with \fB\-T\fR, all configuration
+files in \fIdirectory\fR will be loaded. When playing a game, only the selected theme will be
+loaded based on its filename.
+.TP
+.B game_dir \fIdirectory\fR
+Lazily load games from \fIdirectory\fR. When listing games with \fB\-l\fR, all configuration
+files in \fIdirectory\fR will be loaded. When playing a game, only the selected game will be
+loaded based on its filename.
+.PP
+It's possible to define new games and themes using the \fBcsol\fR configuration langauge. For more details, see
+.IR https://github.com/nielssp/csol .
+.SH LINKS
+.I https://github.com/nielssp/csol
