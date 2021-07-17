@@ -127,9 +127,9 @@ Press <kbd>W</kbd> to move a card from the waste to the pile under the cursor.
 
 Press <kbd>1</kbd> &ndash; <kbd>9</kbd> to move a card from a cell to the tableau or foundation under cursor.
 
-Press <kbd>U</kbd> to undo one or more moves.
+Press <kbd>U</kbd> or <kbd>Ctrl</kbd>+<kbd>Z</kbd> to undo one or more moves.
 
-Press <kbd>Shift</kbd>+<kbd>U</kbd> to redo.
+Press <kbd>Shift</kbd>+<kbd>U</kbd> or <kbd>Ctrl</kbd>+<kbd>Y</kbd> to redo.
 
 Press <kbd>Esc</kbd> to clear the current selection.
 
