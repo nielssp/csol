@@ -55,6 +55,14 @@ Pile *selection_pile = NULL;
 Card *cursor_card = NULL;
 Pile *cursor_pile = NULL;
 
+/* Next card in all four directions for smart cursor movement */
+Card *n_card = NULL;
+Card *e_card = NULL;
+Card *s_card = NULL;
+Card *w_card = NULL;
+Pile *e_pile = NULL;
+Pile *w_pile = NULL;
+
 struct color_name {
   char *name;
   int index;
@@ -222,6 +230,31 @@ static int theme_x(int x, Theme *theme) {
   return theme->x_margin + x * (theme->width + theme->x_spacing);
 }
 
+static void update_directions(Card *card, int y_max) {
+  if (card->x == cur_x) {
+    if (card->y < cur_y) {
+      if (!n_card || card->y > n_card->y) {
+        n_card = card;
+      }
+    } else if (card->y > cur_y) {
+      if (!s_card || card->y < s_card->y) {
+        s_card = card;
+      }
+    }
+  }
+  if (card->y <= cur_y && y_max >= cur_y) {
+    if (card->x < cur_x) {
+      if (!w_card || card->x > w_card->x) {
+        w_card = card;
+      }
+    } else if (card->x > cur_x) {
+      if (!e_card || card->x < e_card->x) {
+        e_card = card;
+      }
+    }
+  }
+}
+
 static int print_card_in_grid(int y, int x, Card *card, int full, Theme *theme) {
   int y2 = y + full * (theme->height - 1);
   if (y2 > max_y) max_y = y2;
@@ -229,6 +262,7 @@ static int print_card_in_grid(int y, int x, Card *card, int full, Theme *theme) 
   if (y <= cur_y && y2 >= cur_y && x == cur_x) cursor_card = card;
   card->x = x;
   card->y = y;
+  update_directions(card, y2);
   y = theme_y(y, theme);
   x = theme_x(x, theme);
   if (win_h - 1 < y) {
@@ -279,6 +313,12 @@ static void print_pile(Pile *pile, Theme *theme) {
   } else if (pile->stack->suit == TABLEAU) {
     if (print_tableau(y, pile->rule->x, pile->stack, theme)) {
       cursor_pile = pile;
+    } else if (cur_y >= y) {
+      if (pile->rule->x < cur_x && (!w_pile || w_pile->rule->x < pile->rule->x)) {
+        w_pile = pile;
+      } else if (pile->rule->x > cur_x && (!e_pile || e_pile->rule->x > pile->rule->x)) {
+        e_pile = pile;
+      }
     }
   } else if (print_stack(y, pile->rule->x, pile->stack, theme)) {
     cursor_pile = pile;
@@ -346,7 +386,8 @@ static void ui_box(int y, int x, int height, int width, int fill) {
 void format_time(char *out, int32_t time) {
   if (time > INT32_C(86400)) {
     sprintf(out, "%" PRId32 "d %02" PRId32 ":%02" PRId32 ":%02" PRId32,
-        time / INT32_C(86400), (time / INT32_C(3600)) % INT32_C(24), (time / INT32_C(60)) % INT32_C(60), time % INT32_C(60));
+        time / INT32_C(86400), (time / INT32_C(3600)) % INT32_C(24), (time / INT32_C(60)) % INT32_C(60),
+        time % INT32_C(60));
   } else if (time > INT32_C(3600)) {
     sprintf(out, "%" PRId32 ":%02" PRId32 ":%02" PRId32,
         time / INT32_C(3600), (time / INT32_C(60)) % INT32_C(60), time % INT32_C(60));
@@ -450,6 +491,12 @@ static int ui_loop(Game *game, Theme *theme, Pile *piles) {
     Pile *pile;
     int ch;
     cursor_card = NULL;
+    n_card = NULL;
+    e_card = NULL;
+    s_card = NULL;
+    w_card = NULL;
+    e_pile = NULL;
+    w_pile = NULL;
     cursor_pile = NULL;
     max_x = max_y = 0;
     getmaxyx(stdscr, win_h, win_w);
@@ -497,23 +544,59 @@ static int ui_loop(Game *game, Theme *theme, Pile *piles) {
     switch (ch) {
       case 'h':
       case KEY_LEFT:
-        cur_x--;
-        if (cur_x < 0) cur_x = 0;
+        if (smart_cursor) {
+          if (w_pile && (!w_card || w_card->x < w_pile->rule->x)) {
+            Card *card = get_top(w_pile->stack);
+            cur_x = card->x;
+            cur_y = card->y;
+          } else if (w_card) {
+            cur_x = w_card->x;
+            cur_y = w_card->y;
+          }
+        } else {
+          cur_x--;
+          if (cur_x < 0) cur_x = 0;
+        }
         break;
       case 'j':
       case KEY_DOWN:
-        cur_y++;
-        if (cur_y > max_y) cur_y = max_y;
+        if (smart_cursor) {
+          if (s_card) {
+            cur_x = s_card->x;
+            cur_y = s_card->y;
+          }
+        } else {
+          cur_y++;
+          if (cur_y > max_y) cur_y = max_y;
+        }
         break;
       case 'k':
       case KEY_UP:
-        cur_y--;
-        if (cur_y < 0) cur_y = 0;
+        if (smart_cursor) {
+          if (n_card) {
+            cur_x = n_card->x;
+            cur_y = n_card->y;
+          }
+        } else {
+          cur_y--;
+          if (cur_y < 0) cur_y = 0;
+        }
         break;
       case 'l':
       case KEY_RIGHT:
-        cur_x++;
-        if (cur_x > max_x) cur_x = max_x;
+        if (smart_cursor) {
+          if (e_pile && (!e_card || e_card->x > e_pile->rule->x)) {
+            Card *card = get_top(e_pile->stack);
+            cur_x = card->x;
+            cur_y = card->y;
+          } else if (e_card) {
+            cur_x = e_card->x;
+            cur_y = e_card->y;
+          }
+        } else {
+          cur_x++;
+          if (cur_x > max_x) cur_x = max_x;
+        }
         break;
       case 'K':
       case KEY_SUP:
@@ -524,13 +607,19 @@ static int ui_loop(Game *game, Theme *theme, Pile *piles) {
               card = card->prev;
             }
             cur_y = card->y;
-          } else {
+          } else if (n_card) {
+            cur_x = n_card->x;
+            cur_y = n_card->y;
+          } else if (!smart_cursor) {
             cur_y -= theme->height;
           }
         } else if (cursor_pile) {
           Card *card = get_top(cursor_pile->stack);
           cur_y = card->y;
-        } else {
+        } else if (n_card) {
+          cur_x = n_card->x;
+          cur_y = n_card->y;
+        } else if (!smart_cursor) {
           cur_y -= theme->height;
         }
         if (cur_y < 0) cur_y = 0;
@@ -543,7 +632,10 @@ static int ui_loop(Game *game, Theme *theme, Pile *piles) {
             card = card->next;
           }
           cur_y = card->y;
-        } else {
+        } else if (s_card) {
+          cur_x = s_card->x;
+          cur_y = s_card->y;
+        } else if (!smart_cursor) {
           cur_y += theme->height;
         }
         if (cur_y > max_y) cur_y = max_y;

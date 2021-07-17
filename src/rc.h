@@ -7,6 +7,8 @@
 #ifndef RC_H
 #define RC_H
 
+extern int smart_cursor;
+
 int execute_file(const char *file);
 void execute_dir(const char *dir);
 

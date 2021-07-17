@@ -88,6 +88,7 @@ typedef enum {
   K_STATS,
   K_STATS_FILE,
   K_SHOW_SCORE,
+  K_SMART_CURSOR,
   K_RANK,
   K_TEXT,
   K_ALIGN,
@@ -119,6 +120,7 @@ struct symbol root_commands[] = {
   {"stats", K_STATS},
   {"stats_file", K_STATS_FILE},
   {"show_score", K_SHOW_SCORE},
+  {"smart_cursor", K_SMART_CURSOR},
   {NULL, K_UNDEFINED}
 };
 
@@ -223,6 +225,8 @@ struct property *properties = NULL;
 int previous_column = 0;
 
 int has_error = 0;
+
+int smart_cursor = 0;
 
 static int read_char(FILE *file) {
   int c = fgetc(file);
@@ -1039,6 +1043,9 @@ int execute_file(const char *file_name) {
         break;
       case K_SHOW_SCORE:
         show_score = read_int(file);
+        break;
+      case K_SMART_CURSOR:
+        smart_cursor = read_int(file);
         break;
       default:
         break;

@@ -105,11 +105,19 @@ Golf: `csol golf`
 
 Move the cursor using <kbd>H</kbd>, <kbd>J</kbd>, <kbd>K</kbd>, and <kbd>L</kbd> or the arrow keys.
 
-Select the card under the cursor using <kbd>SPACE</kbd>.
+Move the cursor to the leftmost position using <kbd>Shift</kbd>+<kbd>H</kbd> or <kbd>Shift</kbd>+<kbd>←</kbd>.
 
-Move the selected card to the tableau or foundaton under the cursor using <kbd>M</kbd> or <kbd>ENTER</kbd>.
+Move the cursor to the rightmost position using <kbd>Shift</kbd>+<kbd>L</kbd> or <kbd>Shift</kbd>+<kbd>→</kbd>.
 
-If the card under the cursor is already selected, pressing <kbd>SPACE</kbd> again will move the card to a foundation or a free cell if possible.
+Move the cursor to the bottom of the current pile using <kbd>Shift</kbd>+<kbd>J</kbd> or <kbd>Shift</kbd>+<kbd>↓</kbd>.
+
+Move the cursor to the top of the current pile using <kbd>Shift</kbd>+<kbd>K</kbd> or <kbd>Shift</kbd>+<kbd>↑</kbd>.
+
+Select the card under the cursor using <kbd>Space</kbd>.
+
+Move the selected card to the tableau or foundaton under the cursor using <kbd>M</kbd> or <kbd>Enter</kbd>.
+
+If the card under the cursor is already selected, pressing <kbd>Space</kbd> again will move the card to a foundation or a free cell if possible.
 
 Press <kbd>A</kbd> to automatically move a card (from any tableau or cell) to a foundation if possible.
 
@@ -118,6 +126,14 @@ Press <kbd>S</kbd> to move a card from the stock to the waste or redeal if stock
 Press <kbd>W</kbd> to move a card from the waste to the pile under the cursor.
 
 Press <kbd>1</kbd> &ndash; <kbd>9</kbd> to move a card from a cell to the tableau or foundation under cursor.
+
+Press <kbd>U</kbd> to undo one or more moves.
+
+Press <kbd>Shift</kbd>+<kbd>U</kbd> to redo.
+
+Press <kbd>Esc</kbd> to clear the current selection.
+
+Press <kbd>Ctrl</kbd>+<kbd>L</kbd> to redraw the screen.
 
 Press <kbd>R</kbd> to play a new game.
 
@@ -141,15 +157,18 @@ scores 1
 stats 1
 scores_file scores.csv
 stats_file stats.csv
+smart_cursor 0
 ```
 
 The `theme_dir` and `game_dir` commands can be used to lazily load theme and game configuration files from a directory.
 
-The `scores` command enable or disable the use of CSV file to record all scores. `scores_file` can be used to set the file path of the scores file.
+The `scores` command enables or disables the use of CSV file to record all scores. `scores_file` can be used to set the file path of the scores file.
 
-The `stats` command enable or disable the use of CSV file to keep track of total game time and the best scores for each game. `stats_file` can be used to set the file path of the stats file.
+The `stats` command enables or disables the use of CSV file to keep track of total game time and the best scores for each game. `stats_file` can be used to set the file path of the stats file.
 
 On Linux the default location for `scores.csv` and `stats.csv` is either `$XDG_DATA_HOME/csol/` or `$HOME/.local/share/csol/`. On DOS and Windows the default location is the same directory as `csol.exe`.
+
+The `smart_cursor` command toggles an alternative cursor movement scheme that always places the cursor on a card.
 
 ### Themes
 
