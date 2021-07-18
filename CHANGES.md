@@ -1,5 +1,12 @@
 # csol changelog
 
+## Unreleased
+
+New features:
+
+- [#4](https://github.com/nielssp/csol/issues/4): Smart cursor movement (`smart_cursor 1` in `csolrc`)
+- [#5](https://github.com/nielssp/csol/issues/5): Manpage added
+
 ## csol 1.4.1
 
 Fixed issues:
