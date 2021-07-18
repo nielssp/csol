@@ -899,6 +899,7 @@ static int ui_loop(Game *game, Theme *theme, Pile *piles) {
             == OK) {
           cur_y = mouse.y - theme->y_margin - off_y;
           cur_x = (mouse.x - theme->x_margin) / (theme->width + theme->x_spacing);
+          max_cur_y = cur_y;
           if (mouse.bstate & BUTTON3_CLICKED) {
             mouse_action = 'm';
           } else if (mouse.bstate & BUTTON1_CLICKED) {
