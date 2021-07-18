@@ -53,8 +53,13 @@ Move cursor left, down, up, or right.
 .B H, L, S-Left, S-Right
 Move cursor to the leftmost or rightmost position.
 .TP
-.B J, K, S-Down, S-Up
-Move cursor to the top or bottom of the pile under the cursor.
+.B J, S-Down
+Move cursor to the bottommost position of the pile under the cursor or the topmost visible card of the next pile down
+if already at the bottommost position.
+.TP
+.B K, S-Up
+Move cursor to the topmost position of the pile under the cursor or the bottommost card of the next pile up if already
+at or above the topmost visible card.
 .TP
 .B Space
 Select the card under the cursor, or - if the card is already selected - move the selected card
@@ -144,6 +149,9 @@ Set the file path used for the scores file.
 .TP
 .B stats_file \fIfile\fR
 Set the file path used for the stats file.
+.TP
+.B show_score \fIbit\fR
+Enable (1) or disable (0) display of the current score in the bottom left corner of the screen.
 .TP
 .B smart_cursor \fIbit\fR
 Enable (1) or disable (0) the use of smart cursor movement. When enabled, the cursor will

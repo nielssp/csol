@@ -42,6 +42,8 @@ int deals = 0;
 int cur_x = 0;
 int cur_y = 0;
 
+int max_cur_y = 0;
+
 int max_x = 0;
 int max_y = 0;
 
@@ -60,8 +62,16 @@ Card *n_card = NULL;
 Card *e_card = NULL;
 Card *s_card = NULL;
 Card *w_card = NULL;
+/* Next pile in all four directions for smart cursor movement */
+Pile *n_pile = NULL;
 Pile *e_pile = NULL;
+Pile *s_pile = NULL;
 Pile *w_pile = NULL;
+/* Left- and rightmost cards for smart cursor movement */
+Card *em_card = NULL;
+Card *wm_card = NULL;
+Pile *em_pile = NULL;
+Pile *wm_pile = NULL;
 
 struct color_name {
   char *name;
@@ -242,14 +252,20 @@ static void update_directions(Card *card, int y_max) {
       }
     }
   }
-  if (card->y <= cur_y && y_max >= cur_y) {
+  if (card->y <= max_cur_y && y_max >= max_cur_y) {
     if (card->x < cur_x) {
       if (!w_card || card->x > w_card->x) {
         w_card = card;
       }
+      if (!wm_card || card->x < wm_card->x) {
+        wm_card = card;
+      }
     } else if (card->x > cur_x) {
       if (!e_card || card->x < e_card->x) {
         e_card = card;
+      }
+      if (!em_card || card->x > em_card->x) {
+        em_card = card;
       }
     }
   }
@@ -309,19 +325,43 @@ static void print_pile(Pile *pile, Theme *theme) {
     top->up = 0;
     if (print_card_full(y, pile->rule->x, top, theme)) {
       cursor_pile = pile;
+    } else if (pile->rule->x == cur_x) {
+      if (y < cur_y && (!n_pile || n_pile->rule->y < pile->rule->y)) {
+        n_pile = pile;
+      } else if (y > cur_y && (!s_pile || s_pile->rule->y > pile->rule->y)) {
+        s_pile = pile;
+      }
     }
   } else if (pile->stack->suit == TABLEAU) {
     if (print_tableau(y, pile->rule->x, pile->stack, theme)) {
       cursor_pile = pile;
     } else if (cur_y >= y) {
-      if (pile->rule->x < cur_x && (!w_pile || w_pile->rule->x < pile->rule->x)) {
-        w_pile = pile;
-      } else if (pile->rule->x > cur_x && (!e_pile || e_pile->rule->x > pile->rule->x)) {
-        e_pile = pile;
+      if (pile->rule->x < cur_x) {
+        if (!w_pile || w_pile->rule->x < pile->rule->x) {
+          w_pile = pile;
+        }
+        if (!wm_pile || wm_pile->rule->x > pile->rule->x) {
+          wm_pile = pile;
+        }
+      } else if (pile->rule->x > cur_x) {
+        if (!e_pile || e_pile->rule->x > pile->rule->x) {
+          e_pile = pile;
+        }
+        if (!em_pile || em_pile->rule->x < pile->rule->x) {
+          em_pile = pile;
+        }
       }
+    } else if (pile->rule->x == cur_x) {
+      s_pile = pile;
     }
   } else if (print_stack(y, pile->rule->x, pile->stack, theme)) {
     cursor_pile = pile;
+  } else if (pile->rule->x == cur_x) {
+    if (y < cur_y && (!n_pile || n_pile->rule->y < pile->rule->y)) {
+      n_pile = pile;
+    } else if (y > cur_y && (!s_pile || s_pile->rule->y > pile->rule->y)) {
+      s_pile = pile;
+    }
   }
 }
 
@@ -491,18 +531,16 @@ static int ui_loop(Game *game, Theme *theme, Pile *piles) {
     Pile *pile;
     int ch;
     cursor_card = NULL;
-    n_card = NULL;
-    e_card = NULL;
-    s_card = NULL;
-    w_card = NULL;
-    e_pile = NULL;
-    w_pile = NULL;
+    n_card = e_card = s_card = w_card = NULL;
+    n_pile = e_pile = s_pile = w_pile = NULL;
+    em_card = wm_card = NULL;
+    em_pile = wm_pile = NULL;
     cursor_pile = NULL;
     max_x = max_y = 0;
     getmaxyx(stdscr, win_h, win_w);
-    if (theme->y_margin + off_y + cur_y >= win_h) {
+    if (theme->y_margin + off_y + cur_y + theme->height - 1 >= win_h) {
       clear();
-      off_y = win_h - cur_y - theme->y_margin - 1;
+      off_y = win_h - cur_y - theme->y_margin - theme->height;
     }
     if (theme->y_margin + off_y + cur_y < 0) {
       clear();
@@ -564,6 +602,7 @@ static int ui_loop(Game *game, Theme *theme, Pile *piles) {
           if (s_card) {
             cur_x = s_card->x;
             cur_y = s_card->y;
+            max_cur_y = cur_y;
           }
         } else {
           cur_y++;
@@ -576,6 +615,10 @@ static int ui_loop(Game *game, Theme *theme, Pile *piles) {
           if (n_card) {
             cur_x = n_card->x;
             cur_y = n_card->y;
+            max_cur_y = cur_y;
+          } else if (off_y < 0) {
+            off_y++;
+            clear();
           }
         } else {
           cur_y--;
@@ -601,11 +644,15 @@ static int ui_loop(Game *game, Theme *theme, Pile *piles) {
       case 'K':
       case KEY_SUP:
         if (cursor_card) {
-          if (cursor_card->prev && NOT_BOTTOM(cursor_card->prev)) {
+          if (cursor_card->prev && NOT_BOTTOM(cursor_card->prev) && cursor_card->prev->up) {
             Card *card = cursor_card->prev;
             while (card->prev && card->prev->up == card->up && NOT_BOTTOM(card->prev)) {
               card = card->prev;
             }
+            cur_y = card->y;
+          } else if (n_pile) {
+            Card *card = get_top(n_pile->stack);
+            cur_x = card->x;
             cur_y = card->y;
           } else if (n_card) {
             cur_x = n_card->x;
@@ -623,12 +670,24 @@ static int ui_loop(Game *game, Theme *theme, Pile *piles) {
           cur_y -= theme->height;
         }
         if (cur_y < 0) cur_y = 0;
+        max_cur_y = cur_y;
         break;
       case 'J':
       case KEY_SDOWN:
         if (cursor_card && cursor_card->next) {
-          Card *card = cursor_card->next;
-          while (card->next && card->next->up == card->up) {
+          Card *card;
+          if (cursor_card->up) {
+            card = get_top(cursor_card);
+          } else {
+            card = cursor_card->next;
+            while (!card->up && card->next) {
+              card = card->next;
+            }
+          }
+          cur_y = card->y;
+        } else if (s_pile) {
+          Card *card = s_pile->stack;
+          while ((IS_BOTTOM(card) || !card->up) && card->next) {
             card = card->next;
           }
           cur_y = card->y;
@@ -639,14 +698,37 @@ static int ui_loop(Game *game, Theme *theme, Pile *piles) {
           cur_y += theme->height;
         }
         if (cur_y > max_y) cur_y = max_y;
+        max_cur_y = cur_y;
         break;
       case 'H':
       case KEY_SLEFT:
-        cur_x = 0;
+        if (smart_cursor) {
+          if (wm_pile && (!wm_card || wm_card->x > wm_pile->rule->x)) {
+            Card *card = get_top(wm_pile->stack);
+            cur_x = card->x;
+            cur_y = card->y;
+          } else if (wm_card) {
+            cur_x = wm_card->x;
+            cur_y = wm_card->y;
+          }
+        } else {
+          cur_x = 0;
+        }
         break;
       case 'L':
       case KEY_SRIGHT:
-        cur_x = max_x;
+        if (smart_cursor) {
+          if (em_pile && (!em_card || em_card->x < em_pile->rule->x)) {
+            Card *card = get_top(em_pile->stack);
+            cur_x = card->x;
+            cur_y = card->y;
+          } else if (em_card) {
+            cur_x = em_card->x;
+            cur_y = em_card->y;
+          }
+        } else {
+          cur_x = max_x;
+        }
         break;
       case ' ':
         if (cursor_card) {
