@@ -90,6 +90,7 @@ typedef enum {
   K_SHOW_SCORE,
   K_SMART_CURSOR,
   K_KEEP_VERTICAL_POSITION,
+  K_ALT_CURSOR,
   K_RANK,
   K_TEXT,
   K_ALIGN,
@@ -123,6 +124,7 @@ struct symbol root_commands[] = {
   {"show_score", K_SHOW_SCORE},
   {"smart_cursor", K_SMART_CURSOR},
   {"keep_vertical_position", K_KEEP_VERTICAL_POSITION},
+  {"alt_cursor", K_ALT_CURSOR},
   {NULL, K_UNDEFINED}
 };
 
@@ -231,6 +233,8 @@ int has_error = 0;
 int smart_cursor = 0;
 
 int keep_vertical_position = 0;
+
+int alt_cursor = 0;
 
 static int read_char(FILE *file) {
   int c = fgetc(file);
@@ -1053,6 +1057,9 @@ int execute_file(const char *file_name) {
         break;
       case K_KEEP_VERTICAL_POSITION:
         keep_vertical_position = read_int(file);
+        break;
+      case K_ALT_CURSOR:
+        alt_cursor = read_int(file);
         break;
       default:
         break;

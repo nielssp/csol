@@ -229,7 +229,9 @@ static void print_card(int y, int x, Card *card, int full, Theme *theme) {
       print_card_name_l(y, x + left_padding, card, theme);
     }
   }
-  attroff(A_REVERSE);
+  if (card == selection) {
+    attroff(A_REVERSE);
+  }
 }
 
 static int theme_y(int y, Theme *theme) {
@@ -519,10 +521,13 @@ static int ui_victory(Pile *piles, Theme *theme, int32_t score, int32_t time, St
 
 static int ui_loop(Game *game, Theme *theme, Pile *piles) {
   MEVENT mouse;
+  int new_game = 1;
   int move_made = 0;
   int mouse_action = 0;
   int game_started = 0;
   time_t start_time;
+  int old_cur_x = 0;
+  int old_cur_y = 0;
   selection = NULL;
   selection_pile = NULL;
   clear();
@@ -543,9 +548,9 @@ static int ui_loop(Game *game, Theme *theme, Pile *piles) {
     cursor_pile = NULL;
     max_x = max_y = 0;
     getmaxyx(stdscr, win_h, win_w);
-    if (theme->y_margin + off_y + cur_y + theme->height - 1 >= win_h) {
+    if (theme->y_margin + off_y + cur_y >= win_h) {
       clear();
-      off_y = win_h - cur_y - theme->y_margin - theme->height;
+      off_y = win_h - cur_y - theme->y_margin - 1;
     }
     if (theme->y_margin + off_y + cur_y < 0) {
       clear();
@@ -561,8 +566,37 @@ static int ui_loop(Game *game, Theme *theme, Pile *piles) {
     if (show_score) {
       mvprintw(win_h - 1, 0, "Score: %d", game_score);
     }
-    move(theme->y_margin + off_y + cur_y, theme->x_margin + cur_x * (theme->width + theme->x_spacing));
-    refresh();
+    if (new_game) {
+      new_game = 0;
+      if (smart_cursor && !cursor_card) {
+        if (s_card) {
+          cur_x = s_card->x;
+          cur_y = s_card->y;
+          continue;
+        } else if (e_card) {
+          cur_x = e_card->x;
+          cur_y = e_card->y;
+          continue;
+        }
+      }
+    }
+    if (alt_cursor) {
+      mvprintw(theme->y_margin + off_y + old_cur_y,
+          theme->x_margin + old_cur_x * (theme->width + theme->x_spacing) - 1, " ");
+      mvprintw(theme->y_margin + off_y + old_cur_y,
+          theme->x_margin + old_cur_x * (theme->width + theme->x_spacing) + theme->width, " ");
+      refresh();
+      mvprintw(theme->y_margin + off_y + cur_y,
+          theme->x_margin + cur_x * (theme->width + theme->x_spacing) - 1, ">");
+      mvprintw(theme->y_margin + off_y + cur_y,
+          theme->x_margin + cur_x * (theme->width + theme->x_spacing) + theme->width, "<");
+      refresh();
+      old_cur_x = cur_x;
+      old_cur_y = cur_y;
+    } else {
+      refresh();
+      move(theme->y_margin + off_y + cur_y, theme->x_margin + cur_x * (theme->width + theme->x_spacing));
+    }
 
     if (move_made) {
       if (!game_started) {
@@ -1171,7 +1205,7 @@ void ui_main(Game *game, Theme *theme, int enable_color, unsigned int seed) {
   }
   raw();
   clear();
-  curs_set(1);
+  curs_set(!alt_cursor);
   keypad(stdscr, 1);
   noecho();
 
