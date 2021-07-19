@@ -8,6 +8,7 @@
 #define RC_H
 
 extern int smart_cursor;
+extern int keep_vertical_position;
 
 int execute_file(const char *file);
 void execute_dir(const char *dir);

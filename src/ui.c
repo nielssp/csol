@@ -241,6 +241,9 @@ static int theme_x(int x, Theme *theme) {
 }
 
 static void update_directions(Card *card, int y_max) {
+  if (!card->up && card->next) {
+    return;
+  }
   if (card->x == cur_x) {
     if (card->y < cur_y) {
       if (!n_card || card->y > n_card->y) {
@@ -252,7 +255,9 @@ static void update_directions(Card *card, int y_max) {
       }
     }
   }
-  if (card->y <= max_cur_y && y_max >= max_cur_y) {
+  if (keep_vertical_position
+      ? card->y <= cur_y && y_max >= cur_y
+      : card->y <= max_cur_y && y_max >= max_cur_y) {
     if (card->x < cur_x) {
       if (!w_card || card->x > w_card->x) {
         w_card = card;
@@ -584,12 +589,21 @@ static int ui_loop(Game *game, Theme *theme, Pile *piles) {
       case KEY_LEFT:
         if (smart_cursor) {
           if (w_pile && (!w_card || w_card->x < w_pile->rule->x)) {
-            Card *card = get_top(w_pile->stack);
-            cur_x = card->x;
-            cur_y = card->y;
+            if (keep_vertical_position) {
+              cur_x = w_pile->rule->x;
+            } else {
+              Card *card = w_pile->stack;
+              while (card->next && (IS_BOTTOM(card) || !card->up || card->y < cur_y)) {
+                card = card->next;
+              }
+              cur_x = card->x;
+              cur_y = card->y;
+            }
           } else if (w_card) {
             cur_x = w_card->x;
-            cur_y = w_card->y;
+            if (!keep_vertical_position) {
+              cur_y = w_card->y;
+            }
           }
         } else {
           cur_x--;
@@ -629,12 +643,21 @@ static int ui_loop(Game *game, Theme *theme, Pile *piles) {
       case KEY_RIGHT:
         if (smart_cursor) {
           if (e_pile && (!e_card || e_card->x > e_pile->rule->x)) {
-            Card *card = get_top(e_pile->stack);
-            cur_x = card->x;
-            cur_y = card->y;
+            if (keep_vertical_position) {
+              cur_x = e_pile->rule->x;
+            } else {
+              Card *card = e_pile->stack;
+              while (card->next && (IS_BOTTOM(card) || !card->up || card->y < cur_y)) {
+                card = card->next;
+              }
+              cur_x = card->x;
+              cur_y = card->y;
+            }
           } else if (e_card) {
             cur_x = e_card->x;
-            cur_y = e_card->y;
+            if (!keep_vertical_position) {
+              cur_y = e_card->y;
+            }
           }
         } else {
           cur_x++;
@@ -704,12 +727,21 @@ static int ui_loop(Game *game, Theme *theme, Pile *piles) {
       case KEY_SLEFT:
         if (smart_cursor) {
           if (wm_pile && (!wm_card || wm_card->x > wm_pile->rule->x)) {
-            Card *card = get_top(wm_pile->stack);
-            cur_x = card->x;
-            cur_y = card->y;
+            if (keep_vertical_position) {
+              cur_x = wm_pile->rule->x;
+            } else {
+              Card *card = wm_pile->stack;
+              while (card->next && (IS_BOTTOM(card) || !card->up || card->y < cur_y)) {
+                card = card->next;
+              }
+              cur_x = card->x;
+              cur_y = card->y;
+            }
           } else if (wm_card) {
             cur_x = wm_card->x;
-            cur_y = wm_card->y;
+            if (!keep_vertical_position) {
+              cur_y = wm_card->y;
+            }
           }
         } else {
           cur_x = 0;
@@ -719,12 +751,21 @@ static int ui_loop(Game *game, Theme *theme, Pile *piles) {
       case KEY_SRIGHT:
         if (smart_cursor) {
           if (em_pile && (!em_card || em_card->x < em_pile->rule->x)) {
-            Card *card = get_top(em_pile->stack);
-            cur_x = card->x;
-            cur_y = card->y;
+            if (keep_vertical_position) {
+              cur_x = em_pile->rule->x;
+            } else {
+              Card *card = em_pile->stack;
+              while (card->next && (IS_BOTTOM(card) || !card->up || card->y < cur_y)) {
+                card = card->next;
+              }
+              cur_x = card->x;
+              cur_y = card->y;
+            }
           } else if (em_card) {
             cur_x = em_card->x;
-            cur_y = em_card->y;
+            if (!keep_vertical_position) {
+              cur_y = em_card->y;
+            }
           }
         } else {
           cur_x = max_x;

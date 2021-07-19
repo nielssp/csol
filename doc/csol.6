@@ -157,6 +157,11 @@ Enable (1) or disable (0) display of the current score in the bottom left corner
 Enable (1) or disable (0) the use of smart cursor movement. When enabled, the cursor will
 always move to a card.
 .TP
+.B keep_vertical_position \fIbit\fR
+When enabled, the smart cursor behavior is changed so that the vertical position of the cursor doesn't
+change when moving horizontally. This means that the cursor doesn't always move to a card when changing
+horizontal position.
+.TP
 .B include \fIfile\fR
 Execute the commands of another configuration \fIfile\fR. Useful for including the system-wide
 configuration (i.e. games and themes) into your local configuration file.
