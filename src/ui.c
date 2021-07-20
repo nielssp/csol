@@ -571,11 +571,11 @@ static int ui_loop(Game *game, Theme *theme, Pile *piles) {
       if (smart_cursor && !cursor_card) {
         if (s_card) {
           cur_x = s_card->x;
-          cur_y = s_card->y;
+          max_cur_y = cur_y = s_card->y;
           continue;
         } else if (e_card) {
           cur_x = e_card->x;
-          cur_y = e_card->y;
+          max_cur_y = cur_y = e_card->y;
           continue;
         }
       }
@@ -627,7 +627,7 @@ static int ui_loop(Game *game, Theme *theme, Pile *piles) {
               cur_x = w_pile->rule->x;
             } else {
               Card *card = w_pile->stack;
-              while (card->next && (IS_BOTTOM(card) || !card->up || card->y < cur_y)) {
+              while (card->next && (IS_BOTTOM(card) || !card->up || card->y < max_cur_y)) {
                 card = card->next;
               }
               cur_x = card->x;
@@ -681,7 +681,7 @@ static int ui_loop(Game *game, Theme *theme, Pile *piles) {
               cur_x = e_pile->rule->x;
             } else {
               Card *card = e_pile->stack;
-              while (card->next && (IS_BOTTOM(card) || !card->up || card->y < cur_y)) {
+              while (card->next && (IS_BOTTOM(card) || !card->up || card->y < max_cur_y)) {
                 card = card->next;
               }
               cur_x = card->x;
