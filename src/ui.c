@@ -956,6 +956,7 @@ static int ui_loop(Game *game, Theme *theme, Pile *piles) {
         break;
       case 'U':
       case 25: /* ^y */
+      case 18: /* ^r */
         redo_move();
         clear();
         break;
