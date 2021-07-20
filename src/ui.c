@@ -584,12 +584,16 @@ static int ui_loop(Game *game, Theme *theme, Pile *piles) {
       if (!keep_vertical_position) {
         if (cursor_card && cursor_card->y < cur_y) {
           cur_y = cursor_card->y;
-        } else if (cur_y < max_cur_y) {
+        } else if (cursor_card && cursor_card->next && cur_y < max_cur_y) {
           while (cursor_card->next && cursor_card->y < max_cur_y) {
             cursor_card = cursor_card->next;
           }
           cur_x = cursor_card->x;
           cur_y = cursor_card->y;
+          continue; /* Necessary because the cursor card has changed */
+        } else if (!cursor_card && n_card) {
+          cur_x = n_card->x;
+          cur_y = n_card->y;
         }
       }
       if (!cursor_card && !n_card && !s_card && !w_card && !e_card) {
