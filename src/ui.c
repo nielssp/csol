@@ -247,7 +247,7 @@ static void update_directions(Card *card, int y_max) {
     return;
   }
   if (card->x == cur_x) {
-    if (card->y < cur_y) {
+    if (card->y < cur_y && (card->next || y_max < cur_y)) {
       if (!n_card || card->y > n_card->y) {
         n_card = card;
       }
@@ -578,6 +578,26 @@ static int ui_loop(Game *game, Theme *theme, Pile *piles) {
           max_cur_y = cur_y = e_card->y;
           continue;
         }
+      }
+    }
+    if (smart_cursor) {
+      if (!keep_vertical_position) {
+        if (cursor_card && cursor_card->y < cur_y) {
+          cur_y = cursor_card->y;
+        } else if (cur_y < max_cur_y) {
+          while (cursor_card->next && cursor_card->y < max_cur_y) {
+            cursor_card = cursor_card->next;
+          }
+          cur_x = cursor_card->x;
+          cur_y = cursor_card->y;
+        }
+      }
+      if (!cursor_card && !n_card && !s_card && !w_card && !e_card) {
+        cur_x = 0;
+        cur_y = 0;
+        new_game = 1;
+        mouse_action = 0;
+        continue;
       }
     }
     if (alt_cursor) {
