@@ -965,6 +965,22 @@ static int ui_loop(Game *game, Theme *theme, Pile *piles) {
         selection = NULL;
         selection_pile = NULL;
         break;
+      case 19: /* ^s */
+        smart_cursor = !smart_cursor;
+        if (smart_cursor) {
+          ui_message("Smart cursor: Enabled");
+        } else {
+          ui_message("Smart cursor: Disabled");
+        }
+        break;
+      case 22: /* ^v */
+        keep_vertical_position = !keep_vertical_position;
+        if (keep_vertical_position) {
+          ui_message("Keep vertical position: Enabled");
+        } else {
+          ui_message("Keep vertical position: Disabled");
+        }
+        break;
       case 12: /* ^l */
         clear();
         break;

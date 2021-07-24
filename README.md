@@ -131,6 +131,10 @@ Press <kbd>U</kbd> or <kbd>Ctrl</kbd>+<kbd>Z</kbd> to undo one or more moves.
 
 Press <kbd>Shift</kbd>+<kbd>U</kbd> or <kbd>Ctrl</kbd>+<kbd>Y</kbd> to redo.
 
+Press <kbd>Ctrl</kbd>+<kbd>S</kbd> to toggle smart cursor.
+
+Press <kbd>Ctrl</kbd>+<kbd>V</kbd> to toggle vertical stabilization for smart cursor.
+
 Press <kbd>Esc</kbd> to clear the current selection.
 
 Press <kbd>Ctrl</kbd>+<kbd>L</kbd> to redraw the screen.
