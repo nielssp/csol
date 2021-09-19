@@ -6,7 +6,15 @@ Can be compiled using:
 - [pdcurses](https://pdcurses.sourceforge.io/)
 - [Open Watcom](http://www.openwatcom.org/)
 
-## Compiling using DOSBox
+## Compiling using DOSBox (Automatic)
+
+A bash script is provided that automatically downloads and builds Open Watcom, PDCurses, and csol using DOSBox.
+
+- Download and unpack the csol sources
+- Run the script `./dos/build.sh`
+- You can now run csol from the current directory: `dosbox csol`
+
+## Compiling using DOSBox (Manual)
 
 - Download and unpack the csol sources
 - Download the PDCurses source from https://github.com/wmcbrine/PDCurses/releases and unpack to `dos/pdcurses`

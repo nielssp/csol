@@ -129,7 +129,7 @@ Press <kbd>1</kbd> &ndash; <kbd>9</kbd> to move a card from a cell to the tablea
 
 Press <kbd>U</kbd> or <kbd>Ctrl</kbd>+<kbd>Z</kbd> to undo one or more moves.
 
-Press <kbd>Shift</kbd>+<kbd>U</kbd> or <kbd>Ctrl</kbd>+<kbd>Y</kbd> to redo.
+Press <kbd>Shift</kbd>+<kbd>U</kbd>, <kbd>Ctrl</kbd>+<kbd>Y</kbd>, or <kbd>Ctrl</kbd>+<kbd>R</kbd> to redo.
 
 Press <kbd>Ctrl</kbd>+<kbd>S</kbd> to toggle smart cursor.
 
