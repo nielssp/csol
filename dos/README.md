@@ -12,7 +12,7 @@ A bash script is provided that automatically downloads and builds Open Watcom, P
 
 - Download and unpack the csol sources
 - Run the script `./dos/build.sh`
-- You can now run csol from the current directory: `dosbox csol`
+- You can now run csol from the current directory: `dosbox CSOL.EXE`
 
 ## Compiling using DOSBox (Manual)
 
