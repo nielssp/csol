@@ -162,6 +162,8 @@ stats 1
 scores_file scores.csv
 stats_file stats.csv
 smart_cursor 0
+keep_vertical_position 0
+alt_cursor 0
 ```
 
 The `theme_dir` and `game_dir` commands can be used to lazily load theme and game configuration files from a directory.
@@ -172,7 +174,15 @@ The `stats` command enables or disables the use of CSV file to keep track of tot
 
 On Linux the default location for `scores.csv` and `stats.csv` is either `$XDG_DATA_HOME/csol/` or `$HOME/.local/share/csol/`. On DOS and Windows the default location is the same directory as `csol.exe`.
 
-The `smart_cursor` command toggles an alternative cursor movement scheme that always places the cursor on a card.
+The `smart_cursor` command toggles an alternative cursor movement scheme that always places the cursor on a card. `keep_vertical_position` is used in conjunction with the smart cursor, if it's set to 1, then the cursor won't move vertically when moving left and right.
+
+`alt_cursor` switches between two styles of cursor:
+
+`alt_cursor 0`: 
+![alt_cursor 0](images/alt-cursor-0.png)
+
+`alt_cursor 1`:
+![alt_cursor 1](images/alt-cursor-1.png)
 
 ### Themes
 

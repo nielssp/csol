@@ -1,11 +1,20 @@
 # csol changelog
 
-## Unreleased
+## csol 1.5.0
 
 New features:
 
-- [#4](https://github.com/nielssp/csol/issues/4): Smart cursor movement (`smart_cursor 1` in `csolrc`)
+- [#4](https://github.com/nielssp/csol/issues/4): Smart cursor movement and improvements to shift movement
 - [#5](https://github.com/nielssp/csol/issues/5): Manpage added
+- Alternative cursor style with `alt_cursor`
+
+### Smart cursor
+
+This release changes the default cursor movement. Previously when using the arrow keys or hjkl, the cursor would move a single cell in a grid where each cell is 1 character tall and a card's width plus spacing wide. Since most cells didn't contain moveable cards (or cards at all), a lot of extra key presses were necessary to move between cards. With the new smart cursor movement, the cursor will only move to cells that have cards facing up or cards that can be turned. This means that when pressing for instance the left arrow key, the cursor will move left but may also change position vertically.
+
+Smart cursor movement can be toggled at runtime by pressing <kbd>Ctrl</kbd>+<kbd>S</kbd>, and turned off entirely by adding `smart_cursor 0` to `csolrc`.
+
+I've made this the default because I think it's a better way to play. If you disagree or have ideas for improvements please don't hesitate to [create an issue on GitHub](https://github.com/nielssp/csol/issues).
 
 ## csol 1.4.1
 

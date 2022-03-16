@@ -4,3 +4,7 @@ default_theme default
 default_game klondike
 scores 1
 stats 1
+show_score 0
+smart_cursor 1
+keep_vertical_position 0
+alt_cursor 1
