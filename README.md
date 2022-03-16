@@ -178,10 +178,12 @@ The `smart_cursor` command toggles an alternative cursor movement scheme that al
 
 `alt_cursor` switches between two styles of cursor:
 
-`alt_cursor 0`: 
+`alt_cursor 0` uses the normal block cursor. Depending on the terminal and color scheme it may be hard to spot:
+
 ![alt_cursor 0](images/alt-cursor-0.png)
 
-`alt_cursor 1`:
+`alt_cursor 1` uses the new default cursor:
+
 ![alt_cursor 1](images/alt-cursor-1.png)
 
 ### Themes
