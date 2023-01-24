@@ -99,6 +99,58 @@ struct color_name default_colors[] = {
   {NULL, -1}
 };
 
+typedef struct Menu Menu;
+
+struct Menu {
+  char *label;
+  char *key;
+  Menu *submenu;
+};
+
+Menu file_menu[] = {
+  {"Select &game", NULL, NULL},
+  {"Select &theme", NULL, NULL},
+  {"&Quit", "q", NULL},
+  {NULL, NULL, NULL}
+};
+
+Menu game_menu[] = {
+  {"&Undo", "u", NULL},
+  {"&Redo", "U", NULL},
+  {"&Auto", "a", NULL},
+  {"From &Stock", "s", NULL},
+  {"From &Waste", "w", NULL},
+  {"R&estart", "r", NULL},
+  {NULL, NULL, NULL}
+};
+
+Menu settings_menu[] = {
+  {"Smart &cursor", "^S", NULL},
+  {"&Vertical stabilization", "^V", NULL},
+  {"Show &score", "", NULL},
+  {"Show &menubar", "", NULL},
+  {NULL, NULL, NULL}
+};
+
+Menu help_menu[] = {
+  {"&How to play", "?", NULL},
+  {"&About csol", "", NULL},
+  {NULL, NULL, NULL}
+};
+
+Menu main_menu[] = {
+  {"&File", NULL, file_menu},
+  {"&Game", NULL, game_menu},
+  {"&Settings", NULL, settings_menu},
+  {"&Help", NULL, help_menu},
+  {NULL, NULL, NULL}
+};
+
+Menu *menu_selection[] = {
+  NULL,
+  NULL
+};
+
 static void print_card_name_l(int y, int x, Card *card, Theme *theme) {
   if (y < 0 || y >= win_h) {
     return;
@@ -519,7 +571,78 @@ static int ui_victory(Pile *piles, Theme *theme, int32_t score, int32_t time, St
   }
 }
 
+static void print_menu_label(const char *label) {
+  while (*label) {
+    if (*label == '&') {
+      label++;
+      attron(A_BOLD);
+      if (*label) {
+        printw("%c", *label);
+        label++;
+      }
+      attroff(A_BOLD);
+    } else {
+      printw("%c", *label);
+      label++;
+    }
+  }
+}
+
+static void ui_menu(int y, int x, Menu *menu, Menu **selection) {
+  Menu *item;
+  int max_length = 0;
+  int height = 0;
+  for (item = menu; item->label; item++) {
+    int length = strlen(item->label);
+    if (item->key) {
+      length += 2 + strlen(item->key);
+    }
+    if (length > max_length) {
+      max_length = length;
+    }
+    height++;
+  }
+  ui_box(y++, x, height + 2, max_length + 4, 1);
+  for (item = menu; item->label; item++) {
+    if (item == *selection) {
+      attron(A_REVERSE);
+    }
+    mvprintw(y, x + 1, " %*s ", max_length, item->key ? item-> key : "");
+    move(y, x + 2);
+    print_menu_label(item->label);
+    if (item == *selection) {
+      attroff(A_REVERSE);
+    }
+    y++;
+  }
+}
+
+static void ui_menubar() {
+  Menu *item;
+  move(0, 0);
+  for (item = main_menu; item->label; item++) {
+    if (item == menu_selection[0]) {
+      int x1 = getcurx(stdscr), x2;
+      attron(A_REVERSE);
+      printw(" ");
+      print_menu_label(item->label);
+      printw(" ");
+      attroff(A_REVERSE);
+      x2 = getcurx(stdscr);
+      if (item->submenu) {
+        ui_menu(1, x1, item->submenu, &menu_selection[1]);
+      }
+      move(0, x2);
+    } else {
+      printw(" ");
+      print_menu_label(item->label);
+      printw(" ");
+    }
+  }
+}
+
 static int ui_loop(Game *game, Theme *theme, Pile *piles) {
+  Menu *menu_item;
   MEVENT mouse;
   int new_game = 1;
   int move_made = 0;
@@ -563,6 +686,7 @@ static int ui_loop(Game *game, Theme *theme, Pile *piles) {
       print_pile(pile, theme);
     }
     attron(COLOR_PAIR(COLOR_PAIR_BACKGROUND));
+    ui_menubar();
     if (show_score) {
       mvprintw(win_h - 1, 0, "Score: %d", game_score);
     }
@@ -641,6 +765,51 @@ static int ui_loop(Game *game, Theme *theme, Pile *piles) {
       mouse_action = 0;
     } else {
       ch = getch();
+    }
+    if (menu_selection[0]) {
+      switch (ch) {
+        case KEY_LEFT:
+          if (menu_selection[0] > main_menu) {
+            menu_selection[0]--;
+          } else {
+            for (menu_item = main_menu; menu_item->label; menu_item++) {
+              menu_selection[0] = menu_item;
+            }
+          }
+          menu_selection[1] = NULL;
+          break;
+        case KEY_RIGHT:
+          menu_selection[0]++;
+          if (!menu_selection[0]->label) {
+            menu_selection[0] = main_menu;
+          }
+          menu_selection[1] = NULL;
+          break;
+        case KEY_UP:
+          if (menu_selection[1] && menu_selection[1] > menu_selection[0]->submenu) {
+            menu_selection[1]--;
+          } else if (menu_selection[0]->submenu) {
+            for (menu_item = menu_selection[0]->submenu; menu_item->label; menu_item++) {
+              menu_selection[1] = menu_item;
+            }
+          }
+          break;
+        case KEY_DOWN:
+          if (menu_selection[1]) {
+            menu_selection[1]++;
+            if (!menu_selection[1]->label) {
+              menu_selection[1] = menu_selection[0]->submenu;
+            }
+          } else {
+            menu_selection[1] = menu_selection[0]->submenu;
+          }
+          break;
+        case 27:
+          menu_selection[0] = NULL;
+          menu_selection[1] = NULL;
+          break;
+      }
+      continue;
     }
     switch (ch) {
       case 'h':
@@ -960,10 +1129,29 @@ static int ui_loop(Game *game, Theme *theme, Pile *piles) {
         redo_move();
         clear();
         break;
+      case KEY_F(10):
+        menu_selection[0] = main_menu;
+        break;
       case 27:
-        clear();
         selection = NULL;
         selection_pile = NULL;
+        ch = getch();
+        for (menu_item = main_menu; menu_item->label; menu_item++) {
+          char *l = menu_item->label;
+          while (*l) {
+            if (*l == '&') {
+              if (tolower(l[1]) == ch) {
+                menu_selection[0] = menu_item;
+              }
+              break;
+            }
+            l++;
+          }
+          if (menu_selection[0]) {
+            break;
+          }
+        }
+        clear();
         break;
       case 19: /* ^s */
         smart_cursor = !smart_cursor;
@@ -1218,6 +1406,7 @@ static void convert_theme(Theme *theme) {
 #endif
 
 void ui_main(Game *game, Theme *theme, int enable_color, unsigned int seed) {
+  Color *color;
 #ifdef USE_PDCURSES
   if (theme->utf8) {
     printf("Converting UTF8 theme\n");
@@ -1228,10 +1417,10 @@ void ui_main(Game *game, Theme *theme, int enable_color, unsigned int seed) {
   initscr();
   if (enable_color) {
     short index = 15;
-    Color *color;
     start_color();
     for (color = theme->colors; color; color = color->next) {
       short color_index = color->name ? ++index : color->index;
+      color_content(color_index, &color->old_red, &color->old_green, &color->old_blue);
       if (init_color(color_index, color->red, color->green, color->blue) == 0) {
         color->index = color_index;
       } else {
@@ -1274,7 +1463,12 @@ void ui_main(Game *game, Theme *theme, int enable_color, unsigned int seed) {
       break;
     }
   }
-
+  /* Restore palette colors to their previous values */
+  for (color = theme->colors; color; color = color->next) {
+    if (color->index) {
+      init_color(color->index, color->old_red, color->old_green, color->old_blue);
+    }
+  }
   endwin();
 }
 

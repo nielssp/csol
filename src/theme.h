@@ -31,6 +31,9 @@ struct color {
   short red;
   short green;
   short blue;
+  short old_red;
+  short old_green;
+  short old_blue;
 };
 
 struct color_pair {
