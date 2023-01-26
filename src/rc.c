@@ -816,6 +816,7 @@ static GameRule *define_game_rule(FILE *file, GameRuleType type, int index) {
           } else {
             rc_error("undefined deal value: %s", keyword);
           }
+          free(keyword);
         }
         break;
       }
