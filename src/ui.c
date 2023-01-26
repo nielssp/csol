@@ -87,42 +87,42 @@ enum {
 };
 
 Menu file_menu[] = {
-  {"&Restart", "r", ACTION_RESTART, NULL},
-  {"&Quit", "q", ACTION_QUIT, NULL},
-  {NULL, NULL, 0, NULL}
+  {"&Restart", "r", ACTION_RESTART, NULL, NULL},
+  {"&Quit", "q", ACTION_QUIT, NULL, NULL},
+  {NULL, NULL, 0, NULL, NULL}
 };
 
 Menu move_menu[] = {
-  {"&Undo", "u", ACTION_UNDO, NULL},
-  {"&Redo", "U", ACTION_REDO, NULL},
-  {"&Auto", "a", ACTION_AUTO, NULL},
-  {"From &Stock", "s", ACTION_STOCK, NULL},
-  {"From &Waste", "w", ACTION_WASTE, NULL},
-  {NULL, NULL, 0, NULL}
+  {"&Undo", "u", ACTION_UNDO, NULL, NULL},
+  {"&Redo", "U", ACTION_REDO, NULL, NULL},
+  {"&Auto", "a", ACTION_AUTO, NULL, NULL},
+  {"From &Stock", "s", ACTION_STOCK, NULL, NULL},
+  {"From &Waste", "w", ACTION_WASTE, NULL, NULL},
+  {NULL, NULL, 0, NULL, NULL}
 };
 
 Menu settings_menu[] = {
-  {"Smart &cursor", "^S", ACTION_SMART_CURSOR, NULL},
-  {"&Vertical stabilization", "^V", ACTION_VERTICAL_STABILIZATION, NULL},
-  {"Show &score", "", ACTION_SHOW_SCORE, NULL},
-  {"Show &menubar", "", ACTION_SHOW_MENUBAR, NULL},
-  {NULL, NULL, 0, NULL}
+  {"Smart &cursor", "^S", ACTION_SMART_CURSOR, NULL, NULL},
+  {"&Vertical stabilization", "^V", ACTION_VERTICAL_STABILIZATION, NULL, NULL},
+  {"Show &score", "", ACTION_SHOW_SCORE, NULL, NULL},
+  {"Show &menubar", "", ACTION_SHOW_MENUBAR, NULL, NULL},
+  {NULL, NULL, 0, NULL, NULL}
 };
 
 Menu help_menu[] = {
-  {"&How to play", "?", ACTION_HOW_TO_PLAY, NULL},
-  {"&About csol", "", ACTION_ABOUT, NULL},
-  {NULL, NULL, 0, NULL}
+  {"&How to play", "?", ACTION_HOW_TO_PLAY, NULL, NULL},
+  {"&About csol", "", ACTION_ABOUT, NULL, NULL},
+  {NULL, NULL, 0, NULL, NULL}
 };
 
 Menu main_menu[] = {
-  {"&File", NULL, 0, file_menu},
-  {"&Move", NULL, 0, move_menu},
-  {"&Game", NULL, 0, game_menu},
-  {"&Theme", NULL, 0, theme_menu},
-  {"&Settings", NULL, 0, settings_menu},
-  {"&Help", NULL, 0, help_menu},
-  {NULL, NULL, 0, NULL}
+  {"&File", NULL, 0, NULL, file_menu},
+  {"&Move", NULL, 0, NULL, move_menu},
+  {"&Game", NULL, 0, NULL, game_menu},
+  {"&Theme", NULL, 0, NULL, theme_menu},
+  {"&Settings", NULL, 0, NULL, settings_menu},
+  {"&Help", NULL, 0, NULL, help_menu},
+  {NULL, NULL, 0, NULL, NULL}
 };
 
 Menu *menu_selection[] = {
@@ -524,7 +524,7 @@ static int ui_victory(Pile *piles, Theme *theme, int32_t score, int32_t time, St
   }
 }
 
-static int ui_loop(Game *game, Theme *theme, Pile *piles) {
+static int ui_loop(Game **current_game, Theme **current_theme, Pile *piles) {
   MEVENT mouse;
   int new_game = 1;
   int move_made = 0;
@@ -533,6 +533,9 @@ static int ui_loop(Game *game, Theme *theme, Pile *piles) {
   time_t start_time;
   int old_cur_x = 0;
   int old_cur_y = 0;
+  void *menu_data = NULL;
+  Game *game = *current_game;
+  Theme *theme = *current_theme;
   selection = NULL;
   selection_pile = NULL;
   clear();
@@ -623,7 +626,7 @@ static int ui_loop(Game *game, Theme *theme, Pile *piles) {
       old_cur_y = cur_y;
     }
 
-    switch (ui_menubar(main_menu, menu_selection)) {
+    switch (ui_menubar(main_menu, menu_selection, &menu_data)) {
       case MENU_IS_CLOSED:
         break;
       case ACTION_RESTART:
@@ -646,6 +649,20 @@ static int ui_loop(Game *game, Theme *theme, Pile *piles) {
         continue;
       case ACTION_WASTE:
         mouse_action = 'w';
+        continue;
+      case ACTION_GAME:
+        if (!game_started || ui_confirm("Redeal?")) {
+          if (game_started) {
+            append_score(game->name, 0, game_score, time(NULL) - start_time, NULL);
+          }
+          *current_game = menu_data;
+          return 1;
+        }
+        clear();
+        continue;
+      case ACTION_THEME:
+        *current_theme = theme = menu_data;
+        clear();
         continue;
       case ACTION_SHOW_SCORE:
         show_score = !show_score;
@@ -1279,7 +1296,7 @@ void ui_main(Game *game, Theme *theme, int enable_color, unsigned int seed) {
     piles = deal_cards(game, deck);
     deals++;
 
-    redeal = ui_loop(game, theme, piles);
+    redeal = ui_loop(&game, &theme, piles);
     delete_piles(piles);
     delete_stack(deck);
 

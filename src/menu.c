@@ -22,11 +22,11 @@
 #endif
 
 Menu game_menu[] = {
-  {NULL, NULL, 0, NULL}
+  {NULL, NULL, 0, NULL, NULL}
 };
 
 Menu theme_menu[] = {
-  {NULL, NULL, 0, NULL}
+  {NULL, NULL, 0, NULL, NULL}
 };
 
 void ui_message(const char *format, ...) {
@@ -186,7 +186,7 @@ static void close_menu(int y_min, int y_max, int x_min, int x_max, Menu **menu_s
   }
 }
 
-int ui_menubar(Menu *menu, Menu **menu_selection) {
+int ui_menubar(Menu *menu, Menu **menu_selection, void **data) {
   int y_min = 1, y_max = 0, x_min = 0, x_max = 0;
   Menu *item;
   if (!show_menu && !menu_selection[0]) {
@@ -219,6 +219,8 @@ int ui_menubar(Menu *menu, Menu **menu_selection) {
             for (list = list_games(); list; list = list->next) {
               item->submenu[i].label = list->game->title;
               item->submenu[i].key = NULL;
+              item->submenu[i].action = ACTION_GAME;
+              item->submenu[i].data = list->game;
               item->submenu[i].submenu = NULL;
               i++;
             }
@@ -241,6 +243,8 @@ int ui_menubar(Menu *menu, Menu **menu_selection) {
             for (list = list_themes(); list; list = list->next) {
               item->submenu[i].label = list->theme->name;
               item->submenu[i].key = NULL;
+              item->submenu[i].action = ACTION_THEME;
+              item->submenu[i].data = list->theme;
               item->submenu[i].submenu = NULL;
               i++;
             }
@@ -306,6 +310,7 @@ int ui_menubar(Menu *menu, Menu **menu_selection) {
         case 13: /* enter */
           if (menu_selection[1]) {
             int action = menu_selection[1]->action;
+            *data = menu_selection[1]->data;
             close_menu(y_min, y_max, x_min, x_max, menu_selection);
             return action;
           } else {
@@ -324,6 +329,7 @@ int ui_menubar(Menu *menu, Menu **menu_selection) {
                 if (tolower(l[1]) == ch) {
                   if (menu_selection[1]) {
                     int action = menu_item->action;
+                    *data = menu_item->data;
                     close_menu(y_min, y_max, x_min, x_max, menu_selection);
                     return action;
                   } else {
