@@ -101,7 +101,8 @@ typedef enum {
   K_VALID_GROUP,
   K_ALL,
   K_TO,
-  K_TURN
+  K_TURN,
+  K_SHOW_MENU
 } Keyword;
 
 struct symbol {
@@ -125,6 +126,7 @@ struct symbol root_commands[] = {
   {"smart_cursor", K_SMART_CURSOR},
   {"keep_vertical_position", K_KEEP_VERTICAL_POSITION},
   {"alt_cursor", K_ALT_CURSOR},
+  {"show_menu", K_SHOW_MENU},
   {NULL, K_UNDEFINED}
 };
 
@@ -235,6 +237,8 @@ int smart_cursor = 0;
 int keep_vertical_position = 0;
 
 int alt_cursor = 0;
+
+int show_menu = 0;
 
 static int read_char(FILE *file) {
   int c = fgetc(file);
@@ -1061,6 +1065,9 @@ int execute_file(const char *file_name) {
         break;
       case K_ALT_CURSOR:
         alt_cursor = read_int(file);
+        break;
+      case K_SHOW_MENU:
+        show_menu = read_int(file);
         break;
       default:
         break;

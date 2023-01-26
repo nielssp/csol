@@ -11,6 +11,8 @@
 #include "theme.h"
 #include "scores.h"
 #include "menu.h"
+#include "color.h"
+#include "config.h"
 
 #include <stdlib.h>
 #ifdef USE_PDCURSES
@@ -31,12 +33,6 @@
 #define KEY_SUP    337
 #define KEY_SDOWN  336
 #endif
-
-#define COLOR_PAIR_BACKGROUND 1
-#define COLOR_PAIR_EMPTY 2
-#define COLOR_PAIR_BACK 3
-#define COLOR_PAIR_RED 4
-#define COLOR_PAIR_BLACK 5
 
 int deals = 0;
 
@@ -74,71 +70,59 @@ Card *wm_card = NULL;
 Pile *em_pile = NULL;
 Pile *wm_pile = NULL;
 
-struct color_name {
-  char *name;
-  int index;
-};
-
-struct color_name default_colors[] = {
-  {"default", -1},
-  {"black", COLOR_BLACK},
-  {"red", COLOR_RED},
-  {"green", COLOR_GREEN},
-  {"yellow", COLOR_YELLOW},
-  {"blue", COLOR_BLUE},
-  {"magenta", COLOR_MAGENTA},
-  {"cyan", COLOR_CYAN},
-  {"white", COLOR_WHITE},
-  {"bright_black", COLOR_BLACK | 8},
-  {"bright_red", COLOR_RED | 8},
-  {"bright_green", COLOR_GREEN | 8},
-  {"bright_yellow", COLOR_YELLOW | 8},
-  {"bright_blue", COLOR_BLUE | 8},
-  {"bright_magenta", COLOR_MAGENTA | 8},
-  {"bright_cyan", COLOR_CYAN | 8},
-  {"bright_white", COLOR_WHITE | 8},
-  {NULL, -1}
+enum {
+  ACTION_RESTART = 1,
+  ACTION_QUIT,
+  ACTION_UNDO,
+  ACTION_REDO,
+  ACTION_AUTO,
+  ACTION_STOCK,
+  ACTION_WASTE,
+  ACTION_SMART_CURSOR,
+  ACTION_VERTICAL_STABILIZATION,
+  ACTION_SHOW_SCORE,
+  ACTION_SHOW_MENUBAR,
+  ACTION_HOW_TO_PLAY,
+  ACTION_ABOUT
 };
 
 Menu file_menu[] = {
-  {"Select &game", NULL, NULL},
-  {"Select &theme", NULL, NULL},
-  {"R&estart", "r", NULL},
-  {"&Quit", "q", NULL},
-  {NULL, NULL, NULL}
+  {"&Restart", "r", ACTION_RESTART, NULL},
+  {"&Quit", "q", ACTION_QUIT, NULL},
+  {NULL, NULL, 0, NULL}
 };
 
 Menu move_menu[] = {
-  {"&Undo", "u", NULL},
-  {"&Redo", "U", NULL},
-  {"&Auto", "a", NULL},
-  {"From &Stock", "s", NULL},
-  {"From &Waste", "w", NULL},
-  {NULL, NULL, NULL}
+  {"&Undo", "u", ACTION_UNDO, NULL},
+  {"&Redo", "U", ACTION_REDO, NULL},
+  {"&Auto", "a", ACTION_AUTO, NULL},
+  {"From &Stock", "s", ACTION_STOCK, NULL},
+  {"From &Waste", "w", ACTION_WASTE, NULL},
+  {NULL, NULL, 0, NULL}
 };
 
 Menu settings_menu[] = {
-  {"Smart &cursor", "^S", NULL},
-  {"&Vertical stabilization", "^V", NULL},
-  {"Show &score", "", NULL},
-  {"Show &menubar", "", NULL},
-  {NULL, NULL, NULL}
+  {"Smart &cursor", "^S", ACTION_SMART_CURSOR, NULL},
+  {"&Vertical stabilization", "^V", ACTION_VERTICAL_STABILIZATION, NULL},
+  {"Show &score", "", ACTION_SHOW_SCORE, NULL},
+  {"Show &menubar", "", ACTION_SHOW_MENUBAR, NULL},
+  {NULL, NULL, 0, NULL}
 };
 
 Menu help_menu[] = {
-  {"&How to play", "?", NULL},
-  {"&About csol", "", NULL},
-  {NULL, NULL, NULL}
+  {"&How to play", "?", ACTION_HOW_TO_PLAY, NULL},
+  {"&About csol", "", ACTION_ABOUT, NULL},
+  {NULL, NULL, 0, NULL}
 };
 
 Menu main_menu[] = {
-  {"&File", NULL, file_menu},
-  {"&Move", NULL, move_menu},
-  {"&Game", NULL, game_menu},
-  {"&Theme", NULL, theme_menu},
-  {"&Settings", NULL, settings_menu},
-  {"&Help", NULL, help_menu},
-  {NULL, NULL, NULL}
+  {"&File", NULL, 0, file_menu},
+  {"&Move", NULL, 0, move_menu},
+  {"&Game", NULL, 0, game_menu},
+  {"&Theme", NULL, 0, theme_menu},
+  {"&Settings", NULL, 0, settings_menu},
+  {"&Help", NULL, 0, help_menu},
+  {NULL, NULL, 0, NULL}
 };
 
 Menu *menu_selection[] = {
@@ -434,6 +418,38 @@ void format_time(char *out, int32_t time) {
   }
 }
 
+static void how_to_play() {
+  int y, x;
+  int height = 7;
+  int width = 60;
+  getmaxyx(stdscr, win_h, win_w);
+  y = win_h / 2 - 3;
+  x = win_w >= width ? win_w / 2 - width / 2 : 0;
+  attron(COLOR_PAIR(COLOR_PAIR_BACKGROUND));
+  ui_box(y, x, height, width, 1);
+  mvprintw(y + 1, x + 2, "Use the arrow keys or h, j, k, and l to move the cursor.");
+  mvprintw(y + 2, x + 2, "Press space to select the card under the cursor.");
+  mvprintw(y + 3, x + 2, "With a card selected, move the cursor again and press");
+  mvprintw(y + 4, x + 2, "Enter or m to move the selected card to the position");
+  mvprintw(y + 5, x + 2, "under the cursor.");
+  getch();
+}
+
+static void about() {
+  int y, x;
+  int height = 5;
+  int width = 50;
+  getmaxyx(stdscr, win_h, win_w);
+  y = win_h / 2 - 3;
+  x = win_w >= width ? win_w / 2 - width / 2 : 0;
+  attron(COLOR_PAIR(COLOR_PAIR_BACKGROUND));
+  ui_box(y, x, height, width, 1);
+  mvprintw(y + 1, x + 2, "csol " CSOL_VERSION);
+  mvprintw(y + 2, x + 2, "Copyright (c) 2017-2023 Niels Sonnich Poulsen");
+  mvprintw(y + 3, x + 2, "https://nielssp.dk/csol");
+  getch();
+}
+
 static void ui_victory_banner(int y, int x, int32_t score, int32_t time, Stats stats) {
   char time_buffer[18];
   int height = 4;
@@ -509,9 +525,7 @@ static int ui_victory(Pile *piles, Theme *theme, int32_t score, int32_t time, St
 }
 
 static int ui_loop(Game *game, Theme *theme, Pile *piles) {
-  Menu *menu_item;
   MEVENT mouse;
-  int menu_y = 0;
   int new_game = 1;
   int move_made = 0;
   int mouse_action = 0;
@@ -609,7 +623,48 @@ static int ui_loop(Game *game, Theme *theme, Pile *piles) {
       old_cur_y = cur_y;
     }
 
-    menu_y = ui_menubar(main_menu, menu_selection);
+    switch (ui_menubar(main_menu, menu_selection)) {
+      case MENU_IS_CLOSED:
+        break;
+      case ACTION_RESTART:
+        mouse_action = 'r';
+        continue;
+      case ACTION_QUIT:
+        mouse_action = 'q';
+        continue;
+      case ACTION_UNDO:
+        mouse_action = 'u';
+        continue;
+      case ACTION_REDO:
+        mouse_action = 'U';
+        continue;
+      case ACTION_AUTO:
+        mouse_action = 'a';
+        continue;
+      case ACTION_STOCK:
+        mouse_action = 's';
+        continue;
+      case ACTION_WASTE:
+        mouse_action = 'w';
+        continue;
+      case ACTION_SHOW_SCORE:
+        show_score = !show_score;
+        clear();
+        continue;
+      case ACTION_SHOW_MENUBAR:
+        show_menu = !show_menu;
+        clear();
+        continue;
+      case ACTION_HOW_TO_PLAY:
+        mouse_action = '?';
+        continue;
+      case ACTION_ABOUT:
+        about();
+        clear();
+        continue;
+      default:
+        continue;
+    }
     refresh();
 
     if (!alt_cursor) {
@@ -635,82 +690,6 @@ static int ui_loop(Game *game, Theme *theme, Pile *piles) {
       mouse_action = 0;
     } else {
       ch = getch();
-    }
-    if (menu_selection[0]) {
-      int y;
-      switch (ch) {
-        case KEY_LEFT:
-          if (menu_selection[0] > main_menu) {
-            menu_selection[0]--;
-          } else {
-            for (menu_item = main_menu; menu_item->label; menu_item++) {
-              menu_selection[0] = menu_item;
-            }
-          }
-          menu_selection[1] = menu_selection[0]->submenu;
-          break;
-        case KEY_RIGHT:
-          menu_selection[0]++;
-          if (!menu_selection[0]->label) {
-            menu_selection[0] = main_menu;
-            menu_selection[1] = main_menu->submenu;
-          }
-          menu_selection[1] = menu_selection[0]->submenu;
-          break;
-        case KEY_UP:
-          if (menu_selection[1] && menu_selection[1] > menu_selection[0]->submenu) {
-            menu_selection[1]--;
-          } else if (menu_selection[0]->submenu) {
-            for (menu_item = menu_selection[0]->submenu; menu_item->label; menu_item++) {
-              menu_selection[1] = menu_item;
-            }
-          }
-          break;
-        case KEY_DOWN:
-          if (menu_selection[1]) {
-            menu_selection[1]++;
-            if (!menu_selection[1]->label) {
-              menu_selection[1] = menu_selection[0]->submenu;
-            }
-          } else {
-            menu_selection[1] = menu_selection[0]->submenu;
-          }
-          break;
-        case KEY_F(10):
-        case 27:
-          menu_selection[0] = NULL;
-          menu_selection[1] = NULL;
-          break;
-        default:
-          for (menu_item = menu_selection[1] ? menu_selection[0]->submenu : main_menu; menu_item->label; menu_item++) {
-            int match = 0;
-            char *l = menu_item->label;
-            while (*l) {
-              if (*l == '&') {
-                if (tolower(l[1]) == ch) {
-                  if (menu_selection[1]) {
-                    menu_selection[1] = menu_item;
-                  } else {
-                    menu_selection[0] = menu_item;
-                    menu_selection[1] = menu_item->submenu;
-                  }
-                  match = 1;
-                }
-                break;
-              }
-              l++;
-            }
-            if (match) {
-              break;
-            }
-          }
-          break;
-      }
-      for (y = 0; y <= menu_y; y++) {
-        move(y, 0);
-        clrtoeol();
-      }
-      continue;
     }
     switch (ch) {
       case 'h':
@@ -1036,23 +1015,7 @@ static int ui_loop(Game *game, Theme *theme, Pile *piles) {
       case 27:
         selection = NULL;
         selection_pile = NULL;
-        ch = getch();
-        for (menu_item = main_menu; menu_item->label; menu_item++) {
-          char *l = menu_item->label;
-          while (*l) {
-            if (*l == '&') {
-              if (tolower(l[1]) == ch) {
-                menu_selection[0] = menu_item;
-                menu_selection[1] = menu_item->submenu;
-              }
-              break;
-            }
-            l++;
-          }
-          if (menu_selection[0]) {
-            break;
-          }
-        }
+        open_menu(getch(), main_menu, menu_selection);
         clear();
         break;
       case 19: /* ^s */
@@ -1075,6 +1038,10 @@ static int ui_loop(Game *game, Theme *theme, Pile *piles) {
         clear();
         break;
       case KEY_RESIZE:
+        clear();
+        break;
+      case '?':
+        how_to_play();
         clear();
         break;
       case 'r':
@@ -1114,7 +1081,9 @@ static int ui_loop(Game *game, Theme *theme, Pile *piles) {
         }
         break;
       default:
-        if (isgraph(ch)) {
+        if (ch >= 417 && ch <= 442) {
+          open_menu('a' + ch - 417, main_menu, menu_selection);
+        } else if (isgraph(ch)) {
           ui_message("Unbound key: %c (%d)", ch, ch);
         } else if (ch < ' ') {
           ui_message("Unbound key: ^%c", '@' + ch);
@@ -1125,36 +1094,6 @@ static int ui_loop(Game *game, Theme *theme, Pile *piles) {
     }
   }
   return 0;
-}
-
-static short find_color(Theme *theme, short index, char *name) {
-  if (name) {
-    struct color_name *default_color;
-    Color *color;
-    for (color = theme->colors; color; color = color->next) {
-      if (strcmp(color->name, name) == 0) {
-        return color->index;
-      }
-    }
-    for (default_color = default_colors; default_color->name; default_color++) {
-      if (strcmp(default_color->name, name) == 0) {
-        return default_color->index;
-      }
-    }
-  }
-  return index;
-}
-
-static void find_and_init_color_pair(Theme *theme, short index, ColorPair color_pair) {
-  short fg = find_color(theme, color_pair.fg, color_pair.fg_name);
-  short bg = find_color(theme, color_pair.bg, color_pair.bg_name);
-  if (fg >= COLORS) {
-    printf("Unsupported color index: %d\n", fg);
-  }
-  if (bg >= COLORS) {
-    printf("Unsupported color index: %d\n", bg);
-  }
-  init_pair(index, fg, bg);
 }
 
 #ifdef USE_PDCURSES
@@ -1318,22 +1257,7 @@ void ui_main(Game *game, Theme *theme, int enable_color, unsigned int seed) {
   setlocale(LC_ALL, "");
   initscr();
   if (enable_color) {
-    short index = 15;
-    start_color();
-    for (color = theme->colors; color; color = color->next) {
-      short color_index = color->name ? ++index : color->index;
-      color_content(color_index, &color->old_red, &color->old_green, &color->old_blue);
-      if (init_color(color_index, color->red, color->green, color->blue) == 0) {
-        color->index = color_index;
-      } else {
-        printf("Unable to initialize color: %s\n", color->name);
-      }
-    }
-    find_and_init_color_pair(theme, COLOR_PAIR_BACKGROUND, theme->background);
-    find_and_init_color_pair(theme, COLOR_PAIR_EMPTY, theme->empty_layout.color);
-    find_and_init_color_pair(theme, COLOR_PAIR_BACK, theme->back_layout.color);
-    find_and_init_color_pair(theme, COLOR_PAIR_RED, theme->red_layout.color);
-    find_and_init_color_pair(theme, COLOR_PAIR_BLACK, theme->black_layout.color);
+    init_theme_colors(theme);
   }
   raw();
   clear();
@@ -1372,102 +1296,4 @@ void ui_main(Game *game, Theme *theme, int enable_color, unsigned int seed) {
     }
   }
   endwin();
-}
-
-void ui_list_colors() {
-  int i, pair = 0;
-  initscr();
-  curs_set(0);
-  start_color();
-  printw("Colors: %d  Color pairs: %d\n", COLORS, COLOR_PAIRS);
-  printw("Standard colors\n");
-  for (i = 0; i < 8; i++) {
-    switch (i) {
-      case COLOR_BLACK:
-        printw("%-8s", "black");
-        break;
-      case COLOR_RED:
-        printw("%-8s", "red");
-        break;
-      case COLOR_GREEN:
-        printw("%-8s", "green");
-        break;
-      case COLOR_YELLOW:
-        printw("%-8s", "yellow");
-        break;
-      case COLOR_BLUE:
-        printw("%-8s", "blue");
-        break;
-      case COLOR_MAGENTA:
-        printw("%-8s", "magenta");
-        break;
-      case COLOR_CYAN:
-        printw("%-8s", "cyan");
-        break;
-      case COLOR_WHITE:
-        printw("%-8s", "white");
-        break;
-      default:
-        printw("%-8s", "");
-    }
-  }
-  printw("\n");
-  for (i = 0; i < 8; i++) {
-    init_pair(++pair, i, 0);
-    attron(COLOR_PAIR(pair));
-    printw(" %2d ", i);
-    init_pair(++pair, 0, i);
-    attron(COLOR_PAIR(pair));
-    printw(" %2d ", i);
-    attroff(COLOR_PAIR(pair));
-  }
-  if (COLORS > 8) {
-    printw("\nHigh-intensity colors\n");
-    for (i = 8; i < 16; i++) {
-      init_pair(++pair, i, 0);
-      attron(COLOR_PAIR(pair));
-      printw(" %2d ", i);
-      init_pair(++pair, 0, i);
-      attron(COLOR_PAIR(pair));
-      printw(" %2d ", i);
-      attroff(COLOR_PAIR(pair));
-    }
-    if (COLORS > 16) {
-      printw("\n216 colors\n");
-      for (i = 0; i < 6; i++) {
-        int j;
-        for (j = 0; j < 18; j++) {
-          int bg = 16 + i * 36 + j;
-          init_pair(++pair, 7, bg);
-          attron(COLOR_PAIR(pair));
-          printw(" %3d", bg);
-          attroff(COLOR_PAIR(pair));
-        }
-        printw("\n");
-      }
-      for (i = 0; i < 6; i++) {
-        int j;
-        for (j = 18; j < 36; j++) {
-          int bg = 16 + i * 36 + j;
-          init_pair(++pair, 0, bg);
-          attron(COLOR_PAIR(pair));
-          printw(" %3d", bg);
-          attroff(COLOR_PAIR(pair));
-        }
-        printw("\n");
-      }
-      printw("Grayscale colors\n");
-      for (i = 0; i < 24; i++) {
-        int bg = 232 + i;
-        int fg = i >= 12 ? 0 : 7;
-        init_pair(++pair, fg, bg);
-        attron(COLOR_PAIR(pair));
-        printw("%3d", bg);
-        attroff(COLOR_PAIR(pair));
-      }
-    }
-  }
-  getch();
-  endwin();
-  use_default_colors();
 }

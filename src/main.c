@@ -13,6 +13,7 @@
 #include "ui.h"
 #include "util.h"
 #include "scores.h"
+#include "color.h"
 
 #include <stdio.h>
 #include <stdlib.h>
