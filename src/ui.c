@@ -72,6 +72,7 @@ Pile *wm_pile = NULL;
 
 enum {
   ACTION_RESTART = 1,
+  ACTION_SAVE_CONFIG,
   ACTION_QUIT,
   ACTION_UNDO,
   ACTION_REDO,
@@ -80,6 +81,7 @@ enum {
   ACTION_WASTE,
   ACTION_SMART_CURSOR,
   ACTION_VERTICAL_STABILIZATION,
+  ACTION_CHANGE_CURSOR,
   ACTION_SHOW_SCORE,
   ACTION_SHOW_MENUBAR,
   ACTION_HOW_TO_PLAY,
@@ -88,6 +90,7 @@ enum {
 
 Menu file_menu[] = {
   {"&Restart", "r", ACTION_RESTART, NULL, NULL},
+  {"&Save config", NULL, ACTION_SAVE_CONFIG, NULL, NULL},
   {"&Quit", "q", ACTION_QUIT, NULL, NULL},
   {NULL, NULL, 0, NULL, NULL}
 };
@@ -104,6 +107,7 @@ Menu move_menu[] = {
 Menu settings_menu[] = {
   {"Smart &cursor", "^S", ACTION_SMART_CURSOR, NULL, NULL},
   {"&Vertical stabilization", "^V", ACTION_VERTICAL_STABILIZATION, NULL, NULL},
+  {"&CHange cursor", NULL, ACTION_CHANGE_CURSOR, NULL, NULL},
   {"Show &score", "", ACTION_SHOW_SCORE, NULL, NULL},
   {"Show &menubar", "", ACTION_SHOW_MENUBAR, NULL, NULL},
   {NULL, NULL, 0, NULL, NULL}
@@ -632,6 +636,9 @@ static int ui_loop(Game **current_game, Theme **current_theme, Pile *piles) {
       case ACTION_RESTART:
         mouse_action = 'r';
         continue;
+      case ACTION_SAVE_CONFIG:
+        /* TODO */
+        continue;
       case ACTION_QUIT:
         mouse_action = 'q';
         continue;
@@ -662,6 +669,21 @@ static int ui_loop(Game **current_game, Theme **current_theme, Pile *piles) {
         continue;
       case ACTION_THEME:
         *current_theme = theme = menu_data;
+        convert_theme(theme);
+        if (show_menu && theme->y_margin < 2) {
+          theme->y_margin = 2;
+        }
+        clear();
+        continue;
+      case ACTION_SMART_CURSOR:
+        smart_cursor = !smart_cursor;
+        continue;
+      case ACTION_VERTICAL_STABILIZATION:
+        keep_vertical_position = !keep_vertical_position;
+        continue;
+      case ACTION_CHANGE_CURSOR:
+        alt_cursor = !alt_cursor;
+        curs_set(!alt_cursor);
         clear();
         continue;
       case ACTION_SHOW_SCORE:
@@ -1057,6 +1079,7 @@ static int ui_loop(Game **current_game, Theme **current_theme, Pile *piles) {
       case KEY_RESIZE:
         clear();
         break;
+      case KEY_F(1):
       case '?':
         how_to_play();
         clear();
@@ -1113,156 +1136,6 @@ static int ui_loop(Game **current_game, Theme **current_theme, Pile *piles) {
   return 0;
 }
 
-#ifdef USE_PDCURSES
-
-static unsigned char convert_code_point(int code_point) {
-  switch (code_point) {
-    case 0x263A: return 1;
-    case 0x263B: return 2;
-    case 0x2665: return 3;
-    case 0x2666: return 4;
-    case 0x2663: return 5;
-    case 0x2660: return 6;
-    case 0x2022: return 7;
-    case 0x25D8: return 8;
-    case 0x25CB: return 9;
-    case 0x25D9: return 10;
-    case 0x2642: return 11;
-    case 0x2640: return 12;
-    case 0x266A: return 13;
-    case 0x266B: return 14;
-    case 0x263C: return 15;
-    case 0x25BA: return 16;
-    case 0x25C4: return 17;
-    case 0x2195: return 18;
-    case 0x203C: return 19;
-    case 0x00B6: return 20;
-    case 0x00A7: return 21;
-    case 0x25AC: return 22;
-    case 0x21A8: return 23;
-    case 0x2191: return 24;
-    case 0x2193: return 25;
-    case 0x2192: return 26;
-    case 0x2190: return 27;
-    case 0x221F: return 28;
-    case 0x2194: return 29;
-    case 0x25B2: return 30;
-    case 0x25BC: return 31;
-    case 0x2302: return 127;
-    case 0x2591: return 176;
-    case 0x2592: return 177;
-    case 0x2593: return 178;
-    case 0x2502: return 179;
-    case 0x2524: return 180;
-    case 0x2561: return 181;
-    case 0x2562: return 182;
-    case 0x2556: return 183;
-    case 0x2555: return 184;
-    case 0x2563: return 185;
-    case 0x2551: return 186;
-    case 0x2557: return 187;
-    case 0x255D: return 188;
-    case 0x255C: return 189;
-    case 0x255B: return 190;
-    case 0x2510: return 191;
-    case 0x2514: return 192;
-    case 0x2534: return 193;
-    case 0x252C: return 194;
-    case 0x251C: return 195;
-    case 0x2500: return 196;
-    case 0x253C: return 197;
-    case 0x255E: return 198;
-    case 0x255F: return 199;
-    case 0x255A: return 200;
-    case 0x2554: return 201;
-    case 0x2569: return 202;
-    case 0x2566: return 203;
-    case 0x2560: return 204;
-    case 0x2550: return 205;
-    case 0x256C: return 206;
-    case 0x2567: return 207;
-    case 0x2568: return 208;
-    case 0x2564: return 209;
-    case 0x2565: return 210;
-    case 0x2559: return 211;
-    case 0x2558: return 212;
-    case 0x2552: return 213;
-    case 0x2553: return 214;
-    case 0x256B: return 215;
-    case 0x256A: return 216;
-    case 0x2518: return 217;
-    case 0x250C: return 218;
-    case 0x2588: return 219;
-    case 0x2584: return 220;
-    case 0x258C: return 221;
-    case 0x2590: return 222;
-    case 0x2580: return 223;
-    default:
-      printf("Unknown code point: %04x\n", code_point);
-      return '?';
-  }
-}
-
-static void convert_string(char *str) {
-  char *s;
-  int next = 0;
-  int code_point = 0;
-  if (!str) {
-    return;
-  }
-  for (s = str ; *s; s++) {
-    if (*s & 0x80) {
-      if (*s & 0x40) {
-        if (code_point) {
-          str[next++] = convert_code_point(code_point);
-          code_point = 0;
-        }
-        if ((*s & 0xE0) == 0xC0) {
-          code_point = *s & 0x1F;
-        } else if ((*s & 0xF0) == 0xE0) {
-          code_point = *s & 0x0F;
-        } else if ((*s & 0xF8) == 0xF0) {
-          code_point = *s & 0x07;
-        }
-      } else {
-        code_point <<= 6;
-        code_point |= *s & 0x3F;
-      }
-    } else {
-      if (code_point) {
-        str[next++] = convert_code_point(code_point);
-        code_point = 0;
-      }
-      str[next++] = *s;
-    }
-  }
-  if (code_point) {
-    str[next++] = convert_code_point(code_point);
-    code_point = 0;
-  }
-  str[next] = 0;
-}
-
-static void convert_layout(Layout *layout) {
-  convert_string(layout->top);
-  convert_string(layout->middle);
-  convert_string(layout->bottom);
-}
-
-static void convert_theme(Theme *theme) {
-  theme->utf8 = 0;
-  convert_string(theme->heart);
-  convert_string(theme->spade);
-  convert_string(theme->diamond);
-  convert_string(theme->club);
-  convert_layout(&theme->empty_layout);
-  convert_layout(&theme->back_layout);
-  convert_layout(&theme->red_layout);
-  convert_layout(&theme->black_layout);
-}
-
-#endif
-
 void ui_main(Game *game, Theme *theme, int enable_color, unsigned int seed) {
   Color *color;
 #ifdef USE_PDCURSES
@@ -1271,6 +1144,9 @@ void ui_main(Game *game, Theme *theme, int enable_color, unsigned int seed) {
     convert_theme(theme);
   }
 #endif
+  if (show_menu && theme->y_margin < 2) {
+    theme->y_margin = 2;
+  }
   setlocale(LC_ALL, "");
   initscr();
   if (enable_color) {

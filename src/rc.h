@@ -18,4 +18,6 @@ void execute_dir(const char *dir);
 
 char *get_property(const char *name);
 
+void save_config();
+
 #endif

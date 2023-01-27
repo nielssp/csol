@@ -1092,3 +1092,7 @@ void execute_dir(const char *dir_path) {
     closedir(dir);
   }
 }
+
+void save_config() {
+  /* TODO */
+}

@@ -103,4 +103,6 @@ ThemeList *list_themes();
 Theme *get_theme(const char *name);
 char *card_suit(Card *card, Theme *theme);
 
+void convert_theme(Theme *theme);
+
 #endif
