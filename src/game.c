@@ -129,8 +129,6 @@ void register_game_dir(const char *cwd, const char *dir) {
 
 void load_game_dirs() {
   struct dir_list *current = game_dirs;
-  first_game = NULL;
-  last_game = NULL;
   while (current) {
     struct dir_list *next;
     execute_dir(current->dir);
@@ -167,6 +165,8 @@ Game *get_game(const char *name) {
     if (file_exists(game_path)) {
       execute_file(game_path);
       game = get_game_in_list(name);
+      first_game = NULL;
+      last_game = NULL;
       if (game) {
         free(game_path);
         return game;

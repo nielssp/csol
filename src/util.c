@@ -71,6 +71,34 @@ char *find_data_file(const char *name, const char *arg0) {
   return path;
 }
 
+char *find_config_file(const char *name, const char *arg0) {
+  char *path = NULL;
+#ifdef USE_XDG_PATHS
+    char *data_dir = getenv("XDG_CONFIG_HOME");
+    if (data_dir) {
+      char *combined_data_dir = combine_paths(data_dir, "csol");
+      if (mkdir_rec(combined_data_dir)) {
+        path = combine_paths(combined_data_dir, name);
+      }
+      free(combined_data_dir);
+    } else {
+      data_dir = getenv("HOME");
+      if (data_dir) {
+        char *combined_data_dir = combine_paths(data_dir, ".config/csol");
+        if (mkdir_rec(combined_data_dir)) {
+          path = combine_paths(combined_data_dir, name);
+        }
+        free(combined_data_dir);
+      }
+    }
+#else
+  char *copy = strdup(arg0);
+  path = combine_paths(dirname(copy), name);
+  free(copy);
+#endif
+  return path;
+}
+
 static int check_dir(const char *path) {
   struct stat stat_buffer;
   if (stat(path, &stat_buffer) == 0 && S_ISDIR(stat_buffer.st_mode)) {

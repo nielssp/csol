@@ -119,10 +119,11 @@ static void print_menu_label(const char *label, int show_mnemonic) {
   }
 }
 
-static void ui_menu(int y, int x, Menu *menu, Menu **selection, int *y_max, int *x_max) {
+static int ui_menu(int y, int x, Menu *menu, Menu **selection, int *y_max, int *x_max, MenuClick *click) {
   Menu *item;
   int max_length = 0;
   int height = 0;
+  int activate = 0;
   for (item = menu; item->label; item++) {
     int length = strlen(item->label);
     if (item->key) {
@@ -135,6 +136,11 @@ static void ui_menu(int y, int x, Menu *menu, Menu **selection, int *y_max, int 
   }
   ui_box(y++, x, height + 2, max_length + 4, 1);
   for (item = menu; item->label; item++) {
+    if (click->click && click->y == y && click->x >= x + 1 && click->x <= x + 1 + max_length) {
+      click->click = 0;
+      selection[0] = item;
+      activate = 1;
+    }
     if (item == *selection) {
       attron(A_REVERSE);
     }
@@ -148,6 +154,7 @@ static void ui_menu(int y, int x, Menu *menu, Menu **selection, int *y_max, int 
   }
   *y_max = y + 1;
   *x_max = x + max_length + 4;
+  return activate;
 }
 
 
@@ -186,18 +193,20 @@ static void close_menu(int y_min, int y_max, int x_min, int x_max, Menu **menu_s
   }
 }
 
-int ui_menubar(Menu *menu, Menu **menu_selection, void **data) {
+int ui_menubar(Menu *menu, Menu **menu_selection, void **data, MenuClick *click) {
+  MEVENT mouse;
   int y_min = 1, y_max = 0, x_min = 0, x_max = 0;
   Menu *item;
   if (!show_menu && !menu_selection[0]) {
     return MENU_IS_CLOSED;
   }
   do {
+    int activate = 0;
     move(0, 0);
     printw(" ");
     for (item = menu; item->label; item++) {
+      int x1 = getcurx(stdscr), x2;
       if (item == menu_selection[0]) {
-        int x1 = getcurx(stdscr), x2;
         attron(A_REVERSE);
         printw(" ");
         print_menu_label(item->label, !menu_selection[1]);
@@ -254,18 +263,35 @@ int ui_menubar(Menu *menu, Menu **menu_selection, void **data) {
               menu_selection[1] = item->submenu;
             }
           }
-          ui_menu(1, x1 - 1, item->submenu, &menu_selection[1], &y_max, &x_max);
+          if (ui_menu(1, x1 - 1, item->submenu, &menu_selection[1], &y_max, &x_max, click)) {
+            activate = 1;
+          }
         }
         move(0, x2);
       } else {
         printw(" ");
         print_menu_label(item->label, !menu_selection[1]);
         printw(" ");
+        x2 = getcurx(stdscr);
+      }
+      if (click->click && click->y == 0 && click->x >= x1 && click->x <= x2) {
+        menu_selection[0] = item;
+        menu_selection[1] = NULL;
+        click->click = 0;
+        clear_box(y_min, x_min, y_max - y_min, x_max - x_min);
+        return MENU_IS_OPEN;
       }
     }
     if (menu_selection[0]) {
+      int ch;
       Menu *menu_item;
-      int ch = getch();
+      if (click->click) {
+        click->click = 0;
+        close_menu(y_min, y_max, x_min, x_max, menu_selection);
+        return MENU_IS_OPEN;
+      }
+      ch = activate ? 10 : getch();
+      click->click = 0;
       switch (ch) {
         case KEY_LEFT:
           if (menu_selection[0] > menu) {
@@ -304,6 +330,22 @@ int ui_menubar(Menu *menu, Menu **menu_selection, void **data) {
             }
           } else {
             menu_selection[1] = menu_selection[0]->submenu;
+          }
+          break;
+        case KEY_MOUSE:
+          if (
+#ifdef PDCURSES
+              nc_getmouse(&mouse)
+#else
+              getmouse(&mouse)
+#endif
+              == OK) {
+            if (mouse.bstate & BUTTON1_CLICKED) {
+              click->click = 1;
+              click->x = mouse.x;
+              click->y = mouse.y;
+              continue;
+            }
           }
           break;
         case 10: /* enter */
@@ -346,6 +388,8 @@ int ui_menubar(Menu *menu, Menu **menu_selection, void **data) {
           }
           break;
       }
+    } else {
+      click->click = 0;
     }
   } while (menu_selection[0]);
   return MENU_IS_CLOSED;

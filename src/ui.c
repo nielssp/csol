@@ -107,7 +107,7 @@ Menu move_menu[] = {
 Menu settings_menu[] = {
   {"Smart &cursor", "^S", ACTION_SMART_CURSOR, NULL, NULL},
   {"&Vertical stabilization", "^V", ACTION_VERTICAL_STABILIZATION, NULL, NULL},
-  {"&CHange cursor", NULL, ACTION_CHANGE_CURSOR, NULL, NULL},
+  {"&Change cursor", NULL, ACTION_CHANGE_CURSOR, NULL, NULL},
   {"Show &score", "", ACTION_SHOW_SCORE, NULL, NULL},
   {"Show &menubar", "", ACTION_SHOW_MENUBAR, NULL, NULL},
   {NULL, NULL, 0, NULL, NULL}
@@ -530,6 +530,7 @@ static int ui_victory(Pile *piles, Theme *theme, int32_t score, int32_t time, St
 
 static int ui_loop(Game **current_game, Theme **current_theme, Pile *piles) {
   MEVENT mouse;
+  MenuClick menu_click = {0, 0, 0};
   int new_game = 1;
   int move_made = 0;
   int mouse_action = 0;
@@ -630,14 +631,14 @@ static int ui_loop(Game **current_game, Theme **current_theme, Pile *piles) {
       old_cur_y = cur_y;
     }
 
-    switch (ui_menubar(main_menu, menu_selection, &menu_data)) {
+    switch (ui_menubar(main_menu, menu_selection, &menu_data, &menu_click)) {
       case MENU_IS_CLOSED:
         break;
       case ACTION_RESTART:
         mouse_action = 'r';
         continue;
       case ACTION_SAVE_CONFIG:
-        /* TODO */
+        save_config(theme, game);
         continue;
       case ACTION_QUIT:
         mouse_action = 'q';
@@ -668,8 +669,10 @@ static int ui_loop(Game **current_game, Theme **current_theme, Pile *piles) {
         clear();
         continue;
       case ACTION_THEME:
+        restore_colors(theme);
         *current_theme = theme = menu_data;
         convert_theme(theme);
+        init_theme_colors(theme);
         if (show_menu && theme->y_margin < 2) {
           theme->y_margin = 2;
         }
@@ -1117,6 +1120,9 @@ static int ui_loop(Game **current_game, Theme **current_theme, Pile *piles) {
             mouse_action = 'm';
           } else if (mouse.bstate & BUTTON1_CLICKED) {
             mouse_action = ' ';
+            menu_click.click = 1;
+            menu_click.x = mouse.x;
+            menu_click.y = mouse.y;
           }
         }
         break;
@@ -1137,7 +1143,6 @@ static int ui_loop(Game **current_game, Theme **current_theme, Pile *piles) {
 }
 
 void ui_main(Game *game, Theme *theme, int enable_color, unsigned int seed) {
-  Color *color;
 #ifdef USE_PDCURSES
   if (theme->utf8) {
     printf("Converting UTF8 theme\n");
@@ -1150,6 +1155,7 @@ void ui_main(Game *game, Theme *theme, int enable_color, unsigned int seed) {
   setlocale(LC_ALL, "");
   initscr();
   if (enable_color) {
+    start_color();
     init_theme_colors(theme);
   }
   raw();
@@ -1182,11 +1188,8 @@ void ui_main(Game *game, Theme *theme, int enable_color, unsigned int seed) {
       break;
     }
   }
-  /* Restore palette colors to their previous values */
-  for (color = theme->colors; color; color = color->next) {
-    if (color->index) {
-      init_color(color->index, color->old_red, color->old_green, color->old_blue);
-    }
+  if (enable_color) {
+    restore_colors(theme);
   }
   endwin();
 }

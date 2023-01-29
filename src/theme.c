@@ -129,8 +129,6 @@ void register_theme_dir(const char *cwd, const char *dir) {
 
 void load_theme_dirs() {
   struct dir_list *current = theme_dirs;
-  first_theme = NULL;
-  last_theme = NULL;
   while (current) {
     struct dir_list *next;
     execute_dir(current->dir);
@@ -167,6 +165,8 @@ Theme *get_theme(const char *name) {
     if (file_exists(theme_path)) {
       execute_file(theme_path);
       theme = get_theme_in_list(name);
+      first_theme = NULL;
+      last_theme = NULL;
       if (theme) {
         free(theme_path);
         return theme;

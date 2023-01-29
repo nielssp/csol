@@ -72,7 +72,6 @@ static void find_and_init_color_pair(Theme *theme, short index, ColorPair color_
 void init_theme_colors(Theme *theme) {
   Color *color;
   short index = 15;
-  start_color();
   for (color = theme->colors; color; color = color->next) {
     short color_index = color->name ? ++index : color->index;
     color_content(color_index, &color->old_red, &color->old_green, &color->old_blue);
@@ -87,6 +86,15 @@ void init_theme_colors(Theme *theme) {
   find_and_init_color_pair(theme, COLOR_PAIR_BACK, theme->back_layout.color);
   find_and_init_color_pair(theme, COLOR_PAIR_RED, theme->red_layout.color);
   find_and_init_color_pair(theme, COLOR_PAIR_BLACK, theme->black_layout.color);
+}
+
+void restore_colors(Theme *theme) {
+  Color *color;
+  for (color = theme->colors; color; color = color->next) {
+    if (color->index) {
+      init_color(color->index, color->old_red, color->old_green, color->old_blue);
+    }
+  }
 }
 
 void ui_list_colors() {

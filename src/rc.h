@@ -7,6 +7,9 @@
 #ifndef RC_H
 #define RC_H
 
+#include "theme.h"
+#include "game.h"
+
 extern int smart_cursor;
 extern int keep_vertical_position;
 extern int alt_cursor;
@@ -18,6 +21,6 @@ void execute_dir(const char *dir);
 
 char *get_property(const char *name);
 
-void save_config();
+void save_config(Theme *theme, Game *game);
 
 #endif

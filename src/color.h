@@ -16,6 +16,7 @@
 #define COLOR_PAIR_BLACK 5
 
 void init_theme_colors(Theme *theme);
+void restore_colors(Theme *theme);
 void ui_list_colors();
 
 #endif

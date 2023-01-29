@@ -46,7 +46,7 @@ const struct option long_options[] = {
 
 enum action { PLAY, LIST_GAMES, LIST_THEMES, LIST_COLORS, SHOW_SCORES };
 
-void describe_option(const char *short_option, const char *long_option, const char *description) {
+static void describe_option(const char *short_option, const char *long_option, const char *description) {
 #ifdef USE_GETOPT
   printf("  -%-14s --%-18s %s\n", short_option, long_option, description);
 #else
@@ -54,7 +54,7 @@ void describe_option(const char *short_option, const char *long_option, const ch
 #endif
 }
 
-char *find_csolrc() {
+static char *find_csolrc() {
   FILE *f;
 #ifdef USE_XDG_PATHS
   char *config_dir = getenv("XDG_CONFIG_HOME");

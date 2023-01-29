@@ -1012,7 +1012,13 @@ int execute_file(const char *file_name) {
         value = read_value(file);
         this_line = line;
         this_column = column;
-        has_error |= !execute_file(value);
+        if (value[0] == PATH_SEP || (value[0] && value[1] == ':')) {
+          has_error |= !execute_file(value);
+        } else {
+          char *path = combine_paths(cwd, value);
+          has_error |= !execute_file(path);
+          free(path);
+        }
         line = this_line;
         column = this_column;
         current_file = file_name;
@@ -1093,6 +1099,23 @@ void execute_dir(const char *dir_path) {
   }
 }
 
-void save_config() {
-  /* TODO */
+void save_config(Theme *theme, Game *game) {
+  FILE *f;
+  char *path = find_config_file("userrc", "");
+  if (!path) {
+    return;
+  }
+  f = fopen(path, "wb");
+  if (!f) {
+    printf("%s: %s\n", path, strerror(errno));
+    return;
+  }
+  fprintf(f, "show_menu %d\n", show_menu);
+  fprintf(f, "show_score %d\n", show_score);
+  fprintf(f, "smart_cursor %d\n", smart_cursor);
+  fprintf(f, "keep_vertical_position %d\n", keep_vertical_position);
+  fprintf(f, "alt_cursor %d\n", alt_cursor);
+  fprintf(f, "default_theme %s\n", theme->name);
+  fprintf(f, "default_game %s\n", game->name);
+  fclose(f);
 }
