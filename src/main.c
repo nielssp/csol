@@ -60,57 +60,29 @@ static char *find_csolrc() {
   char *config_dir = getenv("XDG_CONFIG_HOME");
   char *config_file = NULL;
   if (config_dir) {
-    config_file = combine_paths(config_dir, "csol/csolrc");
+    config_file = user_rc_path = combine_paths(config_dir, "csol/csolrc");
   } else {
     config_dir = getenv("HOME");
     if (config_dir) {
-      config_file = combine_paths(config_dir, ".config/csol/csolrc");
+      config_file = user_rc_path = combine_paths(config_dir, ".config/csol/csolrc");
     }
   }
   if (config_file) {
     f = fopen(config_file, "r");
     if (f) {
       fclose(f);
-      return config_file;
+      return strdup(config_file);
     }
-    free(config_file);
   }
-  config_dir = getenv("XDG_CONFIG_DIRS");
-  if (config_dir) {
-    int i = 0;
-    while (1) {
-      if (!config_dir[i] || config_dir[i] == ':') {
-        char *dir = malloc(i + 1);
-        strncpy(dir, config_dir, i);
-        dir[i] = '\0';
-        config_file = combine_paths(dir, "csol/csolrc");
-        f = fopen(config_file, "r");
-        free(dir);
-        if (f) {
-          fclose(f);
-          return config_file;
-        }
-        free(config_file);
-        if (!config_dir[i]) {
-          break;
-        }
-        config_dir = config_dir + i + 1;
-        i = 0;
-      } else {
-        i++;
-      }
-    }
-  } else {
-    f = fopen("/etc/xdg/csol/csolrc", "r");
-    if (f) {
-      fclose(f);
-      return strdup("/etc/xdg/csol/csolrc");
-    }
+  config_file = find_system_config_file("csolrc");
+  if (config_file) {
+    return config_file;
   }
 #endif
   f = fopen("csolrc", "r");
   if (f) {
     fclose(f);
+    user_rc_path = "csolrc";
     return strdup("csolrc");
   }
   return NULL;
@@ -171,7 +143,7 @@ int main(int argc, char *argv[]) {
         seed = atol(optarg);
         break;
       case 'c':
-        rc_file = optarg;
+        rc_file = user_rc_path = optarg;
         break;
       case 'C':
         action = LIST_COLORS;

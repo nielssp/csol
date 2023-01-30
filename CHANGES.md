@@ -1,5 +1,11 @@
 # csol changelog
 
+## unreleased
+
+New features:
+
+- Menu making it possible to change game, theme, and other settings from within csol
+
 ## csol 1.5.0
 
 New features:

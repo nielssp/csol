@@ -71,32 +71,49 @@ char *find_data_file(const char *name, const char *arg0) {
   return path;
 }
 
-char *find_config_file(const char *name, const char *arg0) {
-  char *path = NULL;
+char *find_system_config_file(const char *name) {
 #ifdef USE_XDG_PATHS
-    char *data_dir = getenv("XDG_CONFIG_HOME");
-    if (data_dir) {
-      char *combined_data_dir = combine_paths(data_dir, "csol");
-      if (mkdir_rec(combined_data_dir)) {
-        path = combine_paths(combined_data_dir, name);
-      }
-      free(combined_data_dir);
-    } else {
-      data_dir = getenv("HOME");
-      if (data_dir) {
-        char *combined_data_dir = combine_paths(data_dir, ".config/csol");
-        if (mkdir_rec(combined_data_dir)) {
-          path = combine_paths(combined_data_dir, name);
+  FILE *f;
+  char *config_file;
+  char *config_dir = getenv("XDG_CONFIG_DIRS");
+  char *relative_path = combine_paths("csol", name);
+  if (config_dir) {
+    int i = 0;
+    while (1) {
+      if (!config_dir[i] || config_dir[i] == ':') {
+        char *dir = malloc(i + 1);
+        strncpy(dir, config_dir, i);
+        dir[i] = '\0';
+        config_file = combine_paths(dir, relative_path);
+        f = fopen(config_file, "r");
+        free(dir);
+        if (f) {
+          fclose(f);
+          free(relative_path);
+          return config_file;
         }
-        free(combined_data_dir);
+        free(config_file);
+        if (!config_dir[i]) {
+          break;
+        }
+        config_dir = config_dir + i + 1;
+        i = 0;
+      } else {
+        i++;
       }
     }
-#else
-  char *copy = strdup(arg0);
-  path = combine_paths(dirname(copy), name);
-  free(copy);
+    free(relative_path);
+  } else {
+    config_file = combine_paths("/etc/xdg", relative_path);
+    free(relative_path);
+    f = fopen(config_file, "r");
+    if (f) {
+      fclose(f);
+      return config_file;
+    }
+  }
 #endif
-  return path;
+  return NULL;
 }
 
 static int check_dir(const char *path) {

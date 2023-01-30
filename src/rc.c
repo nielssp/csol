@@ -240,6 +240,8 @@ int alt_cursor = 0;
 
 int show_menu = 0;
 
+char *user_rc_path = NULL;
+
 static int read_char(FILE *file) {
   int c = fgetc(file);
   if (c == '\n') {
@@ -1100,14 +1102,57 @@ void execute_dir(const char *dir_path) {
 }
 
 void save_config(Theme *theme, Game *game) {
+  char *path, *settings;
   FILE *f;
-  char *path = find_config_file("userrc", "");
-  if (!path) {
+  if (!user_rc_path) {
     return;
   }
-  f = fopen(path, "wb");
+  f = fopen(user_rc_path, "rb+");
+  if (f) {
+    int found = 0;
+    while (1) {
+      int i = 0;
+      char line[20];
+      int c = fgetc(f);
+      while (c != EOF && c != '\n') {
+        if (i < 19) {
+          line[i++] = c;
+        }
+        c = fgetc(f);
+      }
+      line[i] = '\0';
+      if (strcmp("include csolcfg", line) == 0) {
+        found = 1;
+        break;
+      } else if (c == EOF) {
+        break;
+      }
+    }
+    if (!found) {
+      fprintf(f, "\ninclude csolcfg\n");
+    }
+    fclose(f);
+  } else {
+    char *system_rc_path = find_system_config_file("csolrc");
+    if (!system_rc_path) {
+      return;
+    }
+    f = fopen(user_rc_path, "wb");
+    if (!f) {
+      printf("%s: %s\n", user_rc_path, strerror(errno));
+      return;
+    }
+    fprintf(f, "include %s\n", system_rc_path);
+    fprintf(f, "include csolcfg\n");
+    fclose(f);
+    free(system_rc_path);
+  }
+  path = strdup(user_rc_path);
+  settings = combine_paths(dirname(path), "csolcfg");
+  f = fopen(settings, "wb");
+  free(settings);
+  free(path);
   if (!f) {
-    printf("%s: %s\n", path, strerror(errno));
     return;
   }
   fprintf(f, "show_menu %d\n", show_menu);

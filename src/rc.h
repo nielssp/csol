@@ -10,6 +10,8 @@
 #include "theme.h"
 #include "game.h"
 
+extern char *user_rc_path;
+
 extern int smart_cursor;
 extern int keep_vertical_position;
 extern int alt_cursor;
