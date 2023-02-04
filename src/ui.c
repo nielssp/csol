@@ -701,8 +701,7 @@ static int ui_loop(Game **current_game, Theme **current_theme, Pile *piles) {
         mouse_action = '?';
         continue;
       case ACTION_ABOUT:
-        about();
-        clear();
+        mouse_action = KEY_F(13);
         continue;
       default:
         continue;
@@ -1085,6 +1084,10 @@ static int ui_loop(Game **current_game, Theme **current_theme, Pile *piles) {
       case KEY_F(1):
       case '?':
         how_to_play();
+        clear();
+        break;
+      case KEY_F(13):
+        about();
         clear();
         break;
       case 'r':

@@ -17,5 +17,5 @@ clean
 .c.obj: .autodepend
 	$(CC) $(CFLAGS) $<
 
-csol.exe: card.obj game.obj main.obj rc.obj theme.obj ui.obj util.obj scores.obj csv.obj menu.obj color.obj
+csol.exe: card.obj game.obj main.obj rc.obj theme.obj ui.obj util.obj scores.obj csv.obj menu.obj color.obj error.obj
 	$(LINK) $(LDFLAGS) n $@ f *.obj l $(LIBCURSES)

@@ -158,8 +158,7 @@ static int ui_menu(int y, int x, Menu *menu, Menu **selection, int *y_max, int *
 }
 
 
-static int compare_labels(const void *a, const void *b)
-{
+static int compare_labels(const void *a, const void *b) {
   return strcasecmp(((const Menu *) a)->label, ((const Menu *) b)->label);
 }
 

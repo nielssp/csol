@@ -12,6 +12,7 @@
 #include "game.h"
 #include "util.h"
 #include "scores.h"
+#include "error.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1105,6 +1106,7 @@ void save_config(Theme *theme, Game *game) {
   char *path, *settings;
   FILE *f;
   if (!user_rc_path) {
+    print_error("No configuration file found");
     return;
   }
   f = fopen(user_rc_path, "rb+");
@@ -1135,11 +1137,12 @@ void save_config(Theme *theme, Game *game) {
   } else {
     char *system_rc_path = find_system_config_file("csolrc");
     if (!system_rc_path) {
+      print_error("Error: No system configuration file found");
       return;
     }
     f = fopen(user_rc_path, "wb");
     if (!f) {
-      printf("%s: %s\n", user_rc_path, strerror(errno));
+      print_error("Error: Unable to create configuration file: %s: %s", user_rc_path, strerror(errno));
       return;
     }
     fprintf(f, "include %s\n", system_rc_path);
@@ -1150,11 +1153,13 @@ void save_config(Theme *theme, Game *game) {
   path = strdup(user_rc_path);
   settings = combine_paths(dirname(path), "csolcfg");
   f = fopen(settings, "wb");
-  free(settings);
   free(path);
   if (!f) {
+    print_error("Error: Unable to write configuration file: %s: %s", settings, strerror(errno));
+    free(settings);
     return;
   }
+  free(settings);
   fprintf(f, "show_menu %d\n", show_menu);
   fprintf(f, "show_score %d\n", show_score);
   fprintf(f, "smart_cursor %d\n", smart_cursor);

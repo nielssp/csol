@@ -10,6 +10,7 @@
 
 #include "util.h"
 #include "csv.h"
+#include "error.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -125,7 +126,7 @@ int append_score(const char *game_name, int victory, int32_t score,
   }
   f = fopen(scores_file_path, "a");
   if (!f) {
-    printf("%s: %s\n", scores_file_path, strerror(errno));
+    print_error("Error: Scores file could not be opened: %s: %s", scores_file_path, strerror(errno));
     return 0;
   }
   now = time(NULL);
@@ -135,10 +136,10 @@ int append_score(const char *game_name, int victory, int32_t score,
       fprintf(f, "%s,%s,%d,%" PRId32 ",%" PRId32 "\n", date, game_name, victory, score, duration);
       update_stats(game_name, victory, score, duration, now, stats_out);
     } else {
-      printf("Saving score failed: %s\n", strerror(errno));
+      print_error("Saving score failed: %s", strerror(errno));
     }
   } else {
-    printf("Saving score failed: %s\n", strerror(errno));
+    print_error("Saving score failed: %s", strerror(errno));
   }
   fclose(f);
   return 1;
@@ -164,7 +165,7 @@ Stats *get_stats() {
   }
   f = fopen(stats_file_path, "rb");
   if (!f) {
-    printf("%s: %s\n", stats_file_path, strerror(errno));
+    print_error("Error: Stats file could not be opened: %s: %s", stats_file_path, strerror(errno));
     return NULL;
   }
   head = malloc(sizeof(Stats));
@@ -189,7 +190,7 @@ void put_stats(Stats *stats) {
   }
   f = fopen(stats_file_path, "wb");
   if (!f) {
-    printf("%s: %s\n", stats_file_path, strerror(errno));
+    print_error("Error: Stats file could not be opened: %s: %s", stats_file_path, strerror(errno));
     return;
   }
   for (head = stats; head; head = head->next) {
@@ -201,14 +202,14 @@ void put_stats(Stats *stats) {
     if (utc && strftime(date, sizeof(date), "%Y-%m-%dT%H:%M:%SZ", utc)) {
       fprintf(f, "%s", date);
     } else {
-      printf("Saving score failed: %s\n", strerror(errno));
+      print_error("Saving score failed: %s", strerror(errno));
     }
     fprintf(f, ",");
     utc = gmtime(&head->last_played);
     if (utc && strftime(date, sizeof(date), "%Y-%m-%dT%H:%M:%SZ", utc)) {
       fprintf(f, "%s", date);
     } else {
-      printf("Saving score failed: %s\n", strerror(errno));
+      print_error("Saving score failed: %s", strerror(errno));
     }
     fprintf(f, "\n");
   }

@@ -123,6 +123,13 @@ int main(int argc, char *argv[]) {
         describe_option("c <file>", "config <file>", "Select configuration file.");
         describe_option("C", "colors", "List colors");
         describe_option("S", "scores", "List scores");
+        puts("keys:");
+        printf("  %-15s %s\n", "Arrow keys", "Move cursor");
+        printf("  %-15s %s\n", "hjkl", "Move cursor");
+        printf("  %-15s %s\n", "Space", "Select card");
+        printf("  %-15s %s\n", "Enter", "Move card");
+        printf("  %-15s %s\n", "F10", "Open menu");
+        printf("  %-15s %s\n", "q", "Quit");
         return 0;
       case 'v':
         puts("csol " CSOL_VERSION);
