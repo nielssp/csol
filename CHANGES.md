@@ -4,7 +4,11 @@
 
 New features:
 
-- Menu making it possible to change game, theme, and other settings from within csol
+- Menu making it possible to change game, theme, and other settings from within csol.
+
+Fixed issues:
+
+- [#6](https://github.com/nielssp/csol/issues/6): Fix undefined behaviour in handling of working directory when reading configuration files.
 
 ## csol 1.5.0
 

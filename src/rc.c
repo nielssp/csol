@@ -997,7 +997,8 @@ int execute_file(const char *file_name) {
     return 1;
   }
   file_name_copy = strdup(file_name);
-  cwd = dirname(file_name_copy);
+  cwd = strdup(dirname(file_name_copy));
+  free(file_name_copy);
   value = NULL;
   current_file = file_name;
   has_error = 0;
@@ -1082,8 +1083,8 @@ int execute_file(const char *file_name) {
         break;
     }
   }
-  free(file_name_copy);
   fclose(file);
+  free(cwd);
   return !has_error;
 }
 
