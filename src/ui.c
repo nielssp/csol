@@ -494,7 +494,7 @@ static int ui_victory(Pile *piles, Theme *theme, int32_t score, int32_t time, St
         switch (getch()) {
           case 'r':
             nodelay(stdscr, 0);
-            curs_set(1);
+            curs_set(!alt_cursor);
             return 1;
           case 'q':
             return 0;
@@ -520,7 +520,7 @@ static int ui_victory(Pile *piles, Theme *theme, int32_t score, int32_t time, St
   while (1) {
     switch (getch()) {
       case 'r':
-        curs_set(1);
+        curs_set(!alt_cursor);
         return 1;
       case 'q':
         return 0;

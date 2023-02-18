@@ -9,6 +9,8 @@ New features:
 Fixed issues:
 
 - [#6](https://github.com/nielssp/csol/issues/6): Fix undefined behaviour in handling of working directory when reading configuration files.
+- [#7](https://github.com/nielssp/csol/issues/7): Fix incorrect cursor state
+  after redealing from victory screen.
 
 ## csol 1.5.0
 
