@@ -1136,11 +1136,20 @@ void save_config(Theme *theme, Game *game) {
     }
     fclose(f);
   } else {
+    char *user_rc_dir, *temp;
     char *system_rc_path = find_system_config_file("csolrc");
     if (!system_rc_path) {
       print_error("Error: No system configuration file found");
       return;
     }
+    temp = strdup(user_rc_path);
+    user_rc_dir = dirname(temp);
+    if (!mkdir_rec(user_rc_dir)) {
+      print_error("Error: Unable to create configuration directory: %s: %s", user_rc_dir, strerror(errno));
+      free(temp);
+      return;
+    }
+    free(temp);
     f = fopen(user_rc_path, "wb");
     if (!f) {
       print_error("Error: Unable to create configuration file: %s: %s", user_rc_path, strerror(errno));
