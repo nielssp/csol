@@ -1,6 +1,6 @@
 # csol changelog
 
-## unreleased
+## csol 1.6.0
 
 New features:
 
