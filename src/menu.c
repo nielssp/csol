@@ -40,7 +40,7 @@ void ui_message(const char *format, ...) {
 }
 
 int ui_confirm(const char *message) {
-  ui_message("%s (Y/N)", message);
+  ui_message("%s (y/N)", message);
   switch (getch()) {
     case 'y': case 'Y':
       return 1;
